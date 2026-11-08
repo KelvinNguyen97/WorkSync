@@ -1505,7 +1505,8 @@ select.lang-pick option {
   background: var(--surface);
 }
 .mt-add .grow {
-  flex: 1 1 260px;
+  flex: 1 1 160px;
+  min-width: 0;
 }
 .mt-add select,
 .mt-add input[type='date'] {
@@ -1746,15 +1747,6 @@ select.lang-pick option {
 .mt-rules .muted {
   font-size: 12px;
   margin: 8px 0 0;
-}
-@media (max-width: 1000px) {
-  .mt-body {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-  .mt-side {
-    max-height: 45vh;
-  }
 }
 
 /* ---------- Notes ---------- */
@@ -2000,12 +1992,6 @@ select.lang-pick option {
   display: flex;
   gap: 14px;
   font-size: 12px;
-}
-@media (max-width: 1000px) {
-  .notes-body {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 40%) minmax(0, 1fr);
-  }
 }
 
 /* The window's rows stay fixed, even when the notices bar or a header is empty. */
@@ -2441,5 +2427,149 @@ html.quick #root {
 }
 
 .set-row .switch {
+  flex: none;
+}
+
+/* ---------- responsive Mine pages: by the space they have, not the window ---------- */
+.mine-page {
+  container: page / inline-size;
+}
+.mt-list,
+.cat-list,
+.cat-found-list {
+  container-type: inline-size;
+}
+.mt-list {
+  container-name: mtlist;
+}
+.cat-list {
+  container-name: catlist;
+}
+.cat-found-list {
+  container-name: catfound;
+}
+/* Rows never get wider than their list. */
+.mt-row,
+.cat-row,
+.cat-found-row {
+  min-width: 0;
+}
+.mt-row {
+  grid-template-columns: 28px minmax(0, 1fr) 84px 70px 112px 88px 66px;
+}
+.mt-acts .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+.mt-mini {
+  display: none;
+}
+@container mtlist (max-width: 640px) {
+  .mt-row {
+    grid-template-columns: 28px minmax(0, 1fr) 84px 70px 108px 66px;
+  }
+  .mt-row .c-next {
+    display: none;
+  }
+}
+@container mtlist (max-width: 540px) {
+  .mt-row {
+    grid-template-columns: 28px minmax(0, 1fr) 100px 66px;
+  }
+  .mt-row .c-status,
+  .mt-row .c-pri {
+    display: none;
+  }
+  .mt-title .mt-mini {
+    display: block;
+  }
+}
+@container page (max-width: 1000px) {
+  .mt-body {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+@container page (max-width: 900px) {
+  .notes-body {
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+  }
+}
+@container page (max-width: 760px) {
+  /* Narrow: the list takes the space; the editor opens over it. */
+  .mt-body {
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+  }
+  .mt-side {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    box-shadow: 0 18px 40px rgb(0 0 0 / calc(0.6 * var(--shadow-k) + 0.1));
+  }
+  .mt-side:has(.mt-help) {
+    display: none;
+  }
+  .mt-chips .mt-sort {
+    display: none;
+  }
+}
+
+.cat-row {
+  grid-template-columns: 30px minmax(0, 1.4fr) minmax(0, 1fr) 118px auto;
+}
+.cat-acts .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+@container catlist (max-width: 900px) {
+  .cat-row {
+    grid-template-columns: 30px minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  }
+  .cat-row .cat-when {
+    display: none;
+  }
+}
+@container catlist (max-width: 680px) {
+  .cat-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+  }
+  .cat-row .cat-meta {
+    display: none;
+  }
+}
+@container catlist (max-width: 460px) {
+  .cat-acts .btn.sm {
+    display: none;
+  }
+}
+@container catfound (max-width: 520px) {
+  .cat-found-row .cat-acts .btn.sm:first-child {
+    display: none;
+  }
+}
+@container page (max-width: 520px) {
+  .notes-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 38%) minmax(0, 1fr);
+  }
+}
+/* The note editor shrinks with its column: no part may push it wider. */
+.note-editor,
+.note-edit {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.note-edit-head {
+  min-width: 0;
+}
+.note-title {
+  width: 0;
+}
+.note-body {
+  width: 100%;
+  box-sizing: border-box;
+}
+.note-edit-head .icon-btn,
+.note-state {
   flex: none;
 }

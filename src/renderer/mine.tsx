@@ -239,10 +239,10 @@ export function MyTasksView({
           <div className="mt-row mt-headrow" aria-hidden="true">
             <span />
             <span>{tr('Task')}</span>
-            <span>{tr('Status')}</span>
-            <span>{tr('Priority')}</span>
-            <span>{tr('Due')}</span>
-            <span>{tr('Reminder')}</span>
+            <span className="c-status">{tr('Status')}</span>
+            <span className="c-pri">{tr('Priority')}</span>
+            <span className="c-due">{tr('Due')}</span>
+            <span className="c-next">{tr('Reminder')}</span>
             <span />
           </div>
           {shown.map((t) => {
@@ -272,19 +272,23 @@ export function MyTasksView({
                 >
                   <b>{t.title}</b>
                   {t.description && <small>{t.description}</small>}
+                  <small className="mt-mini">
+                    {tr(MY_STATUS_NAME[t.status])} ·{' '}
+                    {tr(MY_PRIORITY_NAME[t.priority])}
+                  </small>
                 </button>
-                <span>
+                <span className="c-status">
                   <span className={`mt-status ${t.status}`}>
                     {tr(MY_STATUS_NAME[t.status])}
                   </span>
                 </span>
-                <span>
+                <span className="c-pri">
                   <span className={`mt-pri ${t.priority}`}>
                     {tr(MY_PRIORITY_NAME[t.priority])}
                   </span>
                 </span>
-                <span className={`mt-due ${due.tone}`}>{due.text}</span>
-                <span className="mono mt-next">
+                <span className={`c-due mt-due ${due.tone}`}>{due.text}</span>
+                <span className="c-next mono mt-next">
                   {settings.reminders ? tr(nextReminder(t, now)) : '—'}
                 </span>
                 <span className="mt-acts">
