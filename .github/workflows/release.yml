@@ -74,24 +74,22 @@ jobs:
       - name: Install Linux packaging tools
         if: matrix.name == 'linux'
         run: sudo apt-get update && sudo apt-get install -y rpm fakeroot dpkg
-      # Keep the Electron download between runs, so a slow or failing GitHub
-      # download does not break the build.
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/electron
-            ~/Library/Caches/electron
-            ~/AppData/Local/electron/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: electron-${{ runner.os }}-
-      # Downloads sometimes fail for a moment (for example a 504 from GitHub),
-      # so each step is tried up to three times.
+      # npm sometimes fails for a moment, so install is tried up to three times.
       - name: Install
         shell: bash
         run: for i in 1 2 3; do npm ci && exit 0; echo "Install failed, try $i"; sleep $((i * 20)); done; exit 1
-      - name: Build
+      # Keep the checked Electron zip between runs.
+      - uses: actions/cache@v4
+        with:
+          path: electron-zips
+          key: electron-zip-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+      - name: Get Electron
         shell: bash
-        run: for i in 1 2 3; do npm run make && exit 0; echo "Build failed, try $i"; sleep $((i * 20)); done; exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/get-electron.sh
+      - name: Build
+        run: npm run make
       - uses: actions/upload-artifact@v4
         with:
           name: WorkSync-${{ matrix.name }}
