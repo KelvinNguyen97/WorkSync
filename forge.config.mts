@@ -47,9 +47,20 @@ const config: ForgeConfig = {
   makers: [
     // Windows and macOS: a zip that runs without installing. On Windows the
     // owner unzips it and runs worksync.exe, with no administrator rights.
-    new MakerZIP({}, ['win32', 'darwin']),
-    // Linux
-    new MakerRpm({}),
+    // Linux also gets a zip: unzip and run, with nothing to install.
+    new MakerZIP({}, ['win32', 'darwin', 'linux']),
+    // Linux packages. The rpm uses our own spec (build/rpm.spec.ejs), which
+    // works with rpm 4.20, where the default one no longer finds its files.
+    new MakerRpm({
+      // specTemplate is passed to electron-installer-redhat; Forge's types omit it.
+      options: {
+        specTemplate: path.resolve('build/rpm.spec.ejs'),
+      } as ConstructorParameters<typeof MakerRpm>[0] extends {
+        options?: infer O;
+      }
+        ? O
+        : never,
+    }),
     new MakerDeb({}),
   ],
   plugins: [
