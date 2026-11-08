@@ -148,7 +148,12 @@ export function CatalogView({
     if (!r) return;
     r.added.forEach(put);
     toast(
-      `${r.added.length ? `Added ${r.added.length === 1 ? r.added[0].name : `${r.added.length} entries`}.` : 'Nothing added.'}${r.skipped ? ` ${r.skipped} ${r.skipped === 1 ? 'was' : 'were'} already in the Catalog.` : ''}`,
+      (r.added.length === 1
+        ? tr('Added {name}.', { name: r.added[0].name })
+        : r.added.length
+          ? tr('Added {n} entries.', { n: r.added.length })
+          : tr('Nothing added.')) +
+        (r.skipped ? tr(' {n} already in the Catalog.', { n: r.skipped }) : ''),
     );
   };
   const open = async (e: CatalogEntry) => {

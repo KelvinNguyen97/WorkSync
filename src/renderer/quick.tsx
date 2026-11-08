@@ -7,7 +7,7 @@ import {
   type EverythingAnswer,
 } from '../shared/catalog';
 import { Icon } from './Icon';
-import { setUiLanguage, tr } from './i18n';
+import { setTheme, setUiLanguage, tr } from './i18n';
 
 /** Up to 8 Catalog entries and 8 files from Everything, as in FileManagement. */
 const CATALOG_LIMIT = 8;
@@ -44,6 +44,7 @@ export function QuickSearch() {
       (s) => {
         if (s.ok) {
           setUiLanguage(s.settings.uiLanguage);
+          setTheme(s.settings.theme);
           rerender((n) => n + 1);
         }
       },

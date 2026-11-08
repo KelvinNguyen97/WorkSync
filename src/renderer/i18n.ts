@@ -16,6 +16,16 @@ export function setUiLanguage(choice: UiLanguageChoice): UiLanguage {
 
 export const uiLanguage = (): UiLanguage => current;
 
+/**
+ * The theme chosen in Settings, on the page itself: it does not depend on
+ * the system telling the page whether it is dark.
+ */
+export function setTheme(theme: 'system' | 'light' | 'dark'): void {
+  const root = document.documentElement;
+  if (theme === 'system') delete root.dataset.theme;
+  else root.dataset.theme = theme;
+}
+
 /** WorkSync's own text in the chosen language; English when there is no translation. */
 export const tr = (text: string, vars?: Record<string, string | number>) =>
   translate(current, text, vars);

@@ -29,8 +29,8 @@ import { assigneeText, linkKind, toIsoDate } from '../shared/model';
 import { OPEN_EVENT, SOURCES_EVENT, type OpenTarget } from '../shared/ipc';
 import { reminderKey, reminderText } from '../shared/myTasks';
 import { noteLinks } from '../shared/notes';
-import { resolveUiLanguage, translate } from '../shared/i18n';
-import { isApp, pathKey, type EntryKind } from '../shared/catalog';
+import { resolveUiLanguage, translate, translateMessage } from '../shared/i18n';
+import { pathKey, type EntryKind } from '../shared/catalog';
 import { everythingStatus, searchEverything } from './everything';
 import { hideQuickSearch, setQuickSearchKey } from './quickSearch';
 import { spawn } from 'node:child_process';
@@ -1101,6 +1101,15 @@ export function registerIpcHandlers(): void {
           refused ? 'info' : 'error',
           `${refused ? 'Refused ' : ''}${method}: ${error instanceof Error ? error.message : String(error)}`,
         );
+        // The log keeps English; the window gets the message in the app language.
+        if (error instanceof Error) {
+          const lang = resolveUiLanguage(
+            store?.getSettings().uiLanguage ?? 'system',
+            app.getLocale(),
+          );
+          const text = translateMessage(lang, error.message);
+          if (text !== error.message) throw new Error(text);
+        }
         throw error;
       }
     });

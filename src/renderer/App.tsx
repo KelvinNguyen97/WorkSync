@@ -296,7 +296,26 @@ function Shell({
     setActive(r.projectId);
     go({ view: 'focus', scope: r.projectId });
     toast(
-      `${replace ? 'Replaced' : 'Imported'} ${r.name} with ${r.tasks} task${r.tasks === 1 ? '' : 's'}.${replace ? ' The old one is in the backups.' : ''}${r.missingFiles ? ` ${r.missingFiles} linked file${r.missingFiles === 1 ? ' is' : 's are'} not at the same place on this PC: use Find the file under Files.` : ''}`,
+      [
+        tr(
+          replace
+            ? 'Replaced {name} with {n} tasks.'
+            : 'Imported {name} with {n} tasks.',
+          {
+            name: r.name,
+            n: r.tasks,
+          },
+        ),
+        replace ? tr('The old one is in the backups.') : '',
+        r.missingFiles
+          ? tr(
+              '{n} linked files are not at the same place on this PC: use Find the file under Files.',
+              { n: r.missingFiles },
+            )
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
     );
   };
 

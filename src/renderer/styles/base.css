@@ -2866,9 +2866,10 @@ pre.prompt {
   }
 }
 
-/* Light mode follows the system setting (spec 03, Light and dark). */
+/* Light mode: the system setting, unless Settings chooses Light or Dark
+   (the page then carries data-theme, set from the saved choice). */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme='dark']) {
     color-scheme: light;
     --bg: #e9edf2;
     --win: #f6f7f9;
@@ -2901,4 +2902,37 @@ pre.prompt {
     --ok-ink: #19744a;
     --knob: #ffffff;
   }
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #e9edf2;
+  --win: #f6f7f9;
+  --surface: #ffffff;
+  --raised: #edf0f4;
+  --line: rgba(30, 45, 80, 0.12);
+  --line-strong: rgba(30, 45, 80, 0.22);
+  --fg: #182030;
+  --fg-2: #3b4556;
+  --muted: #5d6677;
+  --accent: #0b7f91;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(11, 127, 145, 0.12);
+  --urgent: #d63a36;
+  --urgent-ink: #a01d19;
+  --high: #d4950a;
+  --high-ink: #734c00;
+  --low: #a4acba;
+  --s-ns: #5d6677;
+  --hl: 20 30 50;
+  --ln: 30 45 80;
+  --fgc: 24 32 48;
+  --acc: 11 127 145;
+  --shadow-k: 0.2;
+  --sunken: #edf0f4;
+  --panel: #ffffff;
+  --chip: #e2e6ed;
+  --st-ip-ink: #2c4bb0;
+  --st-ir-ink: #6a3cc0;
+  --ok-ink: #19744a;
+  --knob: #ffffff;
 }

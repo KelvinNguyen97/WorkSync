@@ -136,8 +136,8 @@ sudo dnf install ./worksync-<version>-1.x86_64.rpm
 
 ### Updating
 
-Download the new version and replace the app folder. On Windows and macOS your
-data lives beside the app folder, not inside it, so it carries over.
+Download the new version and replace the app. Your data is kept outside the
+app (beside its folder on Windows), so it carries over.
 
 ## First steps
 
@@ -161,8 +161,10 @@ data lives beside the app folder, not inside it, so it carries over.
 ## Your data
 
 - **Where it lives**
-  - Windows and macOS: a `WorkSync-data` folder next to the app folder.
-  - Linux, and when you run from source: the system's app-data folder.
+  - Windows: a `WorkSync-data` folder next to the app folder.
+  - macOS: `~/Library/Application Support/WorkSync/WorkSync-data`.
+  - Linux: `~/.config/WorkSync/WorkSync-data`.
+  - When you run from source: the system's app-data folder.
   - **Settings** shows the exact location.
 - **What's in it**
   - A SQLite database, `worksync.db`.

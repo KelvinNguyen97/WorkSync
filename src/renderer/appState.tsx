@@ -10,7 +10,8 @@ import {
 import type { GlossaryTerm, Person, Project, Task } from '../shared/model';
 import type { SourceFile } from '../shared/sources';
 import type { AppSettings } from '../shared/settings';
-import { setUiLanguage } from './i18n';
+import { setTheme, setUiLanguage, tr, uiLanguage } from './i18n';
+import { translateMessage } from '../shared/i18n';
 import { useEffect } from 'react';
 
 export interface ToastMessage {
@@ -100,6 +101,7 @@ export function AppProvider({
 
   // The app language applies before anything renders with it.
   setUiLanguage(settings.uiLanguage);
+  setTheme(settings.theme);
 
   const value = useMemo<AppState>(
     () => ({
@@ -144,7 +146,12 @@ export function AppProvider({
           setToday(s.today);
         }
       },
-      toast: (text, action) => show({ text, action }),
+      // Messages and buttons in the app language (also those built in code).
+      toast: (text, action) =>
+        show({
+          text: translateMessage(uiLanguage(), text),
+          action: action && { ...action, label: tr(action.label) },
+        }),
       attempt: async (fn) => {
         try {
           return await fn();

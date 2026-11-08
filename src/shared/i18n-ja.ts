@@ -904,4 +904,12 @@ export const JA: Record<string, string> = {
   'Planned to start {date}': '{date} に開始予定',
   'Your action: {action}': '自分のアクション: {action}',
   ongoing: '進行中',
+  'Replaced {name} with {n} tasks.':
+    '{name} を置き換えました（タスク {n} 件）。',
+  'Imported {name} with {n} tasks.':
+    '{name} を取り込みました（タスク {n} 件）。',
+  'The old one is in the backups.': '元のものはバックアップにあります。',
+  '{n} linked files are not at the same place on this PC: use Find the file under Files.':
+    'リンクしたファイルのうち {n} 件はこの PC の同じ場所にありません。「ファイル」の「ファイルを探す」を使ってください。',
+  'Open the page': 'ページを開く',
 };
