@@ -85,7 +85,7 @@ export function FilterButton({
   return (
     <div className="fb-wrap" ref={ref}>
       <button
-        className="btn"
+        className="btn top-filter"
         aria-label={tr('Filter')}
         aria-expanded={open}
         aria-pressed={n > 0}

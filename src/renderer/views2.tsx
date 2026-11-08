@@ -9,6 +9,7 @@ import {
   fileDate,
   flags,
   isClosed,
+  monthName,
   shortDate,
   shownPriority,
   type ImportSummary,
@@ -20,7 +21,6 @@ import { PriorityTag } from './parts';
 import type { ViewProps } from './views';
 import { tr } from './i18n';
 
-const MON = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 const dow = (iso: string) => new Date(`${iso}T00:00:00Z`).getUTCDay();
 /** The Monday on or before a date. */
 const monday = (iso: string) => addDays(iso, -((dow(iso) + 6) % 7));
@@ -93,7 +93,7 @@ export function TimelineView({
         Math.min(daysBetween(d, next), days - daysBetween(first, d)) * dw;
       head.push(
         <span key={d} style={{ left: x(d), width: w }}>
-          {MON[m - 1]} {y}
+          {monthName(m)} {y}
         </span>,
       );
       bg.push(<i key={d} className="wk" style={{ left: x(d) }} />);
@@ -134,7 +134,7 @@ export function TimelineView({
     <div className="seg-ctl" role="group" aria-label={tr('Zoom')}>
       {(['days', 'weeks', 'months'] as const).map((z) => (
         <button key={z} aria-pressed={zoom === z} onClick={() => setZoom(z)}>
-          {z[0].toUpperCase() + z.slice(1)}
+          {tr(z[0].toUpperCase() + z.slice(1))}
         </button>
       ))}
     </div>
@@ -388,7 +388,7 @@ export function CalendarView({
   };
   const label =
     mode === 'month'
-      ? `${MON[month - 1]} ${anchor.slice(0, 4)}`
+      ? `${monthName(month)} ${anchor.slice(0, 4)}`
       : `Week of ${shortDate(start)} ${start.slice(0, 4)}`;
   const max = mode === 'month' ? 3 : 50;
 
@@ -469,7 +469,7 @@ export function CalendarView({
               <div key={d} className={`cal-day ${cls}`}>
                 <span className="dn">
                   {d.endsWith('-01')
-                    ? `${MON[Number(d.slice(5, 7)) - 1]} `
+                    ? `${monthName(Number(d.slice(5, 7)))} `
                     : ''}
                   {Number(d.slice(8))}
                 </span>
@@ -632,14 +632,18 @@ export function DashboardView({
             <div className="nx">
               {t.situation.nextStep || tr('No next step yet')}
               {t.situation.nextDate
-                ? ` · by ${shortDate(t.situation.nextDate)}`
+                ? ` · ${tr('by {date}', { date: shortDate(t.situation.nextDate) })}`
                 : ''}
-              {t.plannedEnd ? ` · due ${shortDate(t.plannedEnd)}` : ''}
+              {t.plannedEnd
+                ? ` · ${tr('due {date}', { date: shortDate(t.plannedEnd) })}`
+                : ''}
             </div>
           </div>
         ))}
         {list.length > 8 && (
-          <div className="hint">and {list.length - 8} more</div>
+          <div className="hint">
+            {tr('and {n} more', { n: list.length - 8 })}
+          </div>
         )}
       </div>
     ) : (
@@ -656,20 +660,22 @@ export function DashboardView({
         {tile(
           'Open tasks',
           open.length,
-          `${all.length - open.length} done or cancelled`,
+          tr('{n} done or cancelled', { n: all.length - open.length }),
           'focus',
         )}
-        {tile('Overdue', overdue.length, 'past the planned end', 'clock')}
+        {tile('Overdue', overdue.length, tr('past the planned end'), 'clock')}
         {tile(
           'Due soon',
           thisWeek.length,
-          `within ${days} day${days === 1 ? '' : 's'}`,
+          tr(days === 1 ? 'within {n} day' : 'within {n} days', { n: days }),
           'clock',
         )}
         {tile(
           'Open difficulties',
           diffCount,
-          `on ${withDiff.length} task${withDiff.length === 1 ? '' : 's'}`,
+          tr(withDiff.length === 1 ? 'on {n} task' : 'on {n} tasks', {
+            n: withDiff.length,
+          }),
           'alert',
         )}
       </div>
@@ -690,14 +696,21 @@ export function DashboardView({
               <div
                 className="segbar"
                 role="img"
-                aria-label={statusCounts.map((x) => `${x.s} ${x.n}`).join(', ')}
+                aria-label={statusCounts
+                  .map((x) => `${tr(x.s)} ${x.n}`)
+                  .join(', ')}
               >
                 {statusCounts.map((x) => {
                   const pct = (x.n / total) * 100;
                   return (
                     <div
                       key={x.s}
-                      title={`${x.s}: ${x.n} of ${all.length} · ${Math.round(pct)}%`}
+                      title={tr('{status}: {n} of {all} · {pct}%', {
+                        status: tr(x.s),
+                        n: x.n,
+                        all: all.length,
+                        pct: Math.round(pct),
+                      })}
                       style={{
                         flex: `${x.n} 1 0`,
                         background: STATUS_COLOR[x.s],
@@ -713,7 +726,7 @@ export function DashboardView({
                 {statusCounts.map((x) => (
                   <span key={x.s}>
                     <i style={{ background: STATUS_COLOR[x.s] }} />
-                    {x.s} {x.n}
+                    {tr(x.s)} {x.n}
                   </span>
                 ))}
               </div>
@@ -734,7 +747,7 @@ export function DashboardView({
                 <tbody>
                   {statusCounts.map((x) => (
                     <tr key={x.s}>
-                      <td>{x.s}</td>
+                      <td>{tr(x.s)}</td>
                       <td className="num">{x.n}</td>
                       <td className="num">
                         {Math.round((x.n / total) * 100)}%
@@ -758,7 +771,9 @@ export function DashboardView({
                       width: `${(x.n / maxLevel) * 78}%`,
                       background: LEVEL_COLOR[x.k],
                     }}
-                    title={`${x.n} open task${x.n === 1 ? '' : 's'}`}
+                    title={tr(x.n === 1 ? '{n} open task' : '{n} open tasks', {
+                      n: x.n,
+                    })}
                   />
                   <b>{x.n}</b>
                 </span>
@@ -794,18 +809,23 @@ export function DashboardView({
           <div className="panel-h">
             <h2>{tr('Overdue')}</h2>
           </div>
-          {miniList(overdue.sort(byPriority), 'Nothing is overdue.')}
+          {miniList(overdue.sort(byPriority), tr('Nothing is overdue.'))}
           <div className="panel-h" style={{ marginTop: 22 }}>
             <h2>{tr('Due soon')}</h2>
           </div>
           {miniList(
             thisWeek.sort(byPriority),
-            `Nothing is due in the next ${days} day${days === 1 ? '' : 's'}.`,
+            tr(
+              days === 1
+                ? 'Nothing is due in the next {n} day.'
+                : 'Nothing is due in the next {n} days.',
+              { n: days },
+            ),
           )}
           <div className="panel-h" style={{ marginTop: 22 }}>
             <h2>{tr('Open difficulties')}</h2>
           </div>
-          {miniList(withDiff.sort(byPriority), 'No open difficulties.')}
+          {miniList(withDiff.sort(byPriority), tr('No open difficulties.'))}
         </section>
       </div>
     </>

@@ -1283,24 +1283,39 @@ select.lang-pick option {
   width: 200px;
 }
 
-/* The top bar keeps one row: the less used buttons drop their words first. */
-@media (max-width: 1500px) {
-  .topbar .btn.compact .lbl {
+/* The top bar: one row on a wide window; narrower, the search takes its own
+   row and the buttons keep their words on the row below. */
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+@media (max-width: 1400px) {
+  .topbar .search {
+    flex-basis: 100%;
+  }
+  .top-actions {
+    width: 100%;
+  }
+  .top-actions .btn.primary {
+    margin-left: auto;
+  }
+}
+/* Narrower: the buttons whose icons are plain (filter, upload, save) go
+   first; Original first, the AI buttons and New task keep their words. */
+@media (max-width: 1150px) {
+  .top-actions .top-filter .lbl,
+  .top-actions .top-publish .lbl,
+  .top-actions .top-write .lbl {
     display: none;
   }
 }
-@media (max-width: 1200px) {
-  .topbar .btn:not(.primary) .lbl {
-    display: none;
-  }
-}
-/* At the narrowest window, New task shows only its icon too. */
+/* The smallest window: the buttons wrap rather than being cut off. */
 @media (max-width: 1000px) {
-  .topbar .btn.primary .lbl {
-    display: none;
-  }
-  .search .kbd {
-    display: none;
+  .top-actions {
+    flex-wrap: wrap;
   }
 }
 .export-zone {
@@ -2572,4 +2587,70 @@ html.quick #root {
 .note-edit-head .icon-btn,
 .note-state {
   flex: none;
+}
+
+/* Dialogs: the title and the buttons stay in view; only the middle scrolls. */
+.modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal > .m-head,
+.modal > .m-foot {
+  flex: none;
+}
+.modal > .m-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.hist-wide .hist-filter {
+  top: 0;
+}
+
+/* Round-4 review: targets, line breaks, separators, scroll cue. */
+.mt-title {
+  min-height: 28px;
+  align-content: center;
+}
+.mt-rule-grid,
+.mt-help,
+.mt-remind small {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+:lang(ja) .mt-rule-grid span {
+  line-break: strict;
+}
+.subnav-sep {
+  height: 1px;
+  margin: 6px 10px;
+  background: var(--line);
+}
+.foot-why {
+  margin-right: auto;
+  font-size: 12.5px;
+}
+.board {
+  grid-auto-columns: minmax(180px, 1fr);
+}
+/* Scroll bars stay visible, so a wide Board or table shows it scrolls. */
+.view::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.view::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.view::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* Narrow Board columns: the card's top line wraps instead of spilling out. */
+.board .tc-top {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  min-width: 0;
 }

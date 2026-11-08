@@ -275,6 +275,7 @@ export function Modal({
             className="icon-btn"
             data-close
             aria-label={tr('Close')}
+            title={tr('Close')}
             onClick={onClose}
           >
             <Icon name="x" />

@@ -521,6 +521,7 @@ function Shell({
                   <div className="proj" key={p.id}>
                     <button
                       className={`proj-btn ${isActive ? 'active' : ''}`}
+                      title={p.name}
                       aria-expanded={isActive}
                       onClick={() => setActive(isActive ? null : p.id)}
                     >
@@ -589,6 +590,7 @@ function Shell({
                               ''}
                           </span>
                         </button>
+                        <div className="subnav-sep" role="separator" />
                         <button
                           className="nav-item custom"
                           onClick={() =>
@@ -604,7 +606,7 @@ function Shell({
                             setDialog({ kind: 'views', projectId: p.id })
                           }
                         >
-                          <Icon name="sliders" />
+                          <Icon name="eye" />
                           <span className="grow">{tr('Choose views')}</span>
                         </button>
                         <button
@@ -662,7 +664,7 @@ function Shell({
                 )}
                 onClick={() => void importCopy()}
               >
-                <Icon name="upload" />
+                <Icon name="download" />
                 <span className="grow">{tr('Import a project')}</span>
               </button>
             </div>
@@ -716,7 +718,7 @@ function Shell({
               <span className="kbd">{tr('Ctrl K')}</span>
             </label>
             {!mine && (
-              <>
+              <div className="top-actions">
                 <FilterButton
                   filter={filter}
                   setFilter={setFilter}
@@ -778,7 +780,7 @@ function Shell({
                     })
                   }
                 >
-                  <Icon name="copy" />
+                  <Icon name="paste" />
                   <span className="lbl">{tr('Paste from AI')}</span>
                   {aiSession &&
                     aiSession.batches.length - aiSession.done.length > 0 && (
@@ -790,10 +792,12 @@ function Shell({
                 {sources.length > 0 && (
                   <button
                     aria-label={tr('Write to copy')}
-                    className="btn"
+                    className="btn top-write"
                     title={
                       pendingWrites
-                        ? `${pendingWrites} changes not yet written to your copy`
+                        ? tr('{n} changes not yet written to your copy', {
+                            n: pendingWrites,
+                          })
                         : tr('Write changes to your copy of a customer file')
                     }
                     onClick={() => setDialog({ kind: 'write' })}
@@ -807,11 +811,13 @@ function Shell({
                 )}
                 <button
                   aria-label={tr('Publish')}
-                  className="btn"
+                  className="btn top-publish"
                   disabled={!currentProjectId}
                   title={
                     pubStatus?.unpublished
-                      ? `${pubStatus.unpublished} changes not published yet`
+                      ? tr('{n} changes not published yet', {
+                          n: pubStatus.unpublished,
+                        })
                       : tr('Publish to the shared folder')
                   }
                   onClick={() =>
@@ -842,7 +848,7 @@ function Shell({
                   <Icon name="plus" />
                   <span className="lbl">{tr('New task')}</span>
                 </button>
-              </>
+              </div>
             )}
           </header>
           <div className="notices">

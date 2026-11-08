@@ -306,9 +306,9 @@ export function TasksView({
                 <button
                   className={`tt-sort ${on ? 'on' : ''}`}
                   onClick={() => sortBy(c.key)}
-                  title={`Sort by ${c.label}`}
+                  title={tr('Sort by {name}', { name: tr(c.label) })}
                 >
-                  {c.label}
+                  {tr(c.label)}
                   <span className={`tt-arrow ${on ? settings.sort.dir : ''}`}>
                     <Icon name="chev" />
                   </span>
@@ -573,7 +573,7 @@ function ColumnChooser({
               disabled={c.key === 'title'}
               onChange={(e) => set(c.key, e.target.checked)}
             />{' '}
-            {c.label}
+            {tr(c.label)}
           </label>
         ))}
       </div>

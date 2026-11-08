@@ -12,6 +12,11 @@ const config: ForgeConfig = {
   packagerConfig: {
     // Native files can't load from inside the archive.
     asar: { unpack: '**/*.node' },
+    // For a local build when GitHub is unreachable: a folder of Electron zips
+    // already downloaded (and checked) before, such as ~/.cache/electron/<hash>.
+    ...(process.env.WORKSYNC_ELECTRON_ZIP_DIR
+      ? { electronZipDir: process.env.WORKSYNC_ELECTRON_ZIP_DIR }
+      : {}),
     name: 'WorkSync',
     executableName: 'worksync',
     appBundleId: 'com.worksync.desktop',

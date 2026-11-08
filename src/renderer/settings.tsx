@@ -409,7 +409,9 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           <div className="set-head">
             <b>
               {info
-                ? `${info.backups.length} backup${info.backups.length === 1 ? '' : 's'}`
+                ? tr(info.backups.length === 1 ? '{n} backup' : '{n} backups', {
+                    n: info.backups.length,
+                  })
                 : tr('Backups')}
             </b>
             <span className="set-actions">

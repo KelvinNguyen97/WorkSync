@@ -360,7 +360,9 @@ export function BoardView({
               className="btn sm"
               aria-pressed={showHidden}
               onClick={() => setShowHidden(!showHidden)}
-              title={`Hidden: ${p.board.hidden.join(', ')}`}
+              title={tr('Hidden: {list}', {
+                list: p.board.hidden.map((h) => tr(h)).join(', '),
+              })}
             >
               {showHidden
                 ? tr('Hide hidden columns')
@@ -377,7 +379,7 @@ export function BoardView({
         <BoardColumnsDialog project={p} onClose={() => setManaging(false)} />
       )}
       <div className="hscroll">
-        <div className="board" style={{ minWidth: columns.length * 218 }}>
+        <div className="board" style={{ minWidth: columns.length * 192 }}>
           {columns.map((slot) => {
             const col = sorted(slot);
             const hidden =

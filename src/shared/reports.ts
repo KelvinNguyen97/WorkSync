@@ -30,7 +30,7 @@ export const REPORTS: Record<
   progress: {
     name: 'Progress report',
     description:
-      'An overview of the period, then each task’s brief: what it is, 現状, 課題 and 今後の予定.',
+      'An overview of the period, then each task’s brief: what it is, its situation, difficulties and next steps.',
     formats: ['docx', 'xlsx'],
   },
   taskList: {

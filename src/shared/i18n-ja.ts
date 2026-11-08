@@ -355,7 +355,7 @@ export const JA: Record<string, string> = {
   'Language of the title and description': 'タイトルと説明の言語',
   'Detected from the characters. Choose it when the guess is wrong.':
     '文字から判定しました。違うときは選んでください。',
-  Detect: '判定',
+  Detect: '自動判定',
   'From the customer’s file. You can change it here; if the file changes it too, the review asks which to keep.':
     'お客様ファイルの値です。ここで変えられます。ファイル側でも変わった場合は、確認画面でどちらを残すか聞きます。',
   'As written by the customer': 'お客様が書いたとおり',
@@ -520,7 +520,7 @@ export const JA: Record<string, string> = {
     'ここに書いてください。入力しながら保存されます。ウェブアドレスは Ctrl+クリックで開きます。',
   'Links in this note': 'このノートのリンク',
   Created: '作成',
-  Changed: '変更',
+  Changed: '変更日',
   'Needs review': '要確認',
   'Not translated': '未翻訳',
   'As written in the files': 'ファイルでの表記',
@@ -912,4 +912,69 @@ export const JA: Record<string, string> = {
   '{n} linked files are not at the same place on this PC: use Find the file under Files.':
     'リンクしたファイルのうち {n} 件はこの PC の同じ場所にありません。「ファイル」の「ファイルを探す」を使ってください。',
   'Open the page': 'ページを開く',
+  Days: '日',
+  Weeks: '週',
+  Months: '月',
+  '{n} done or cancelled': '完了・中止 {n} 件',
+  'past the planned end': '予定終了を過ぎたもの',
+  'within {n} day': '{n} 日以内',
+  'within {n} days': '{n} 日以内',
+  'on {n} task': '{n} 件のタスク',
+  'on {n} tasks': '{n} 件のタスク',
+  '{status}: {n} of {all} · {pct}%': '{status}: {all} 件中 {n} 件 ・ {pct}%',
+  '{n} open task': '未完了 {n} 件',
+  '{n} open tasks': '未完了 {n} 件',
+  'by {date}': '{date} まで',
+  'due {date}': '期限 {date}',
+  'and {n} more': 'ほか {n} 件',
+  'Nothing is overdue.': '期限切れのものはありません。',
+  'Nothing is due in the next {n} day.': '{n} 日以内に期限のものはありません。',
+  'Nothing is due in the next {n} days.':
+    '{n} 日以内に期限のものはありません。',
+  'No open difficulties.': '未解決の課題はありません。',
+  'Sort by {name}': '{name} で並べ替え',
+  'Next date': '次の日付',
+  '{name} · built from each task’s summary, situation and dates':
+    '{name} ・ 各タスクの要約、状況、日付から作成',
+  '{n} task in this report': 'このレポートのタスク: {n} 件',
+  '{n} tasks in this report': 'このレポートのタスク: {n} 件',
+  'Make the {format} report': '{format} のレポートを作成',
+  'Progress report': '進捗レポート',
+  'Task list': 'タスク一覧',
+  Schedule: 'スケジュール',
+  'Task briefs': 'タスクの概要',
+  'An overview of the period, then each task’s brief: what it is, its situation, difficulties and next steps.':
+    '期間の概要と、各タスクの概要（内容、現状、課題、今後の予定）。',
+  'A table of tasks with the columns you choose.':
+    '選んだ列でタスクを表にします。',
+  'Planned and actual dates for each task, drawn as shaded cells.':
+    '各タスクの予定と実績の日付を、塗りつぶしたセルで表します。',
+  'The brief of each task, for a meeting with your manager or the customer.':
+    '上司やお客様との打ち合わせ用の、各タスクの概要。',
+  'Only the {n} task you selected in the Tasks table.':
+    'タスク表で選んだ {n} 件だけ。',
+  'Only the {n} tasks you selected in the Tasks table.':
+    'タスク表で選んだ {n} 件だけ。',
+  to: '〜',
+  '{n} changes not published yet': '未公開の変更が {n} 件あります',
+  'Hidden: {list}': '非表示: {list}',
+  'Edit {field}': '{field}を編集',
+  'The brief in {lang}, for the customer side': '{lang}の概要（お客様向け）',
+  'In {lang}, such as Tanaka': '{lang}で（例: Tanaka）',
+  'In {lang}, such as acceptance test': '{lang}で（例: acceptance test）',
+  '{n} backup': 'バックアップ {n} 件',
+  '{n} backups': 'バックアップ {n} 件',
+  English: '英語',
+  Japanese: '日本語',
+  Vietnamese: 'ベトナム語',
+  '{name} · added by hand, so it is never written to a customer file':
+    '{name} ・ 手で追加するタスクなので、お客様ファイルには書き込みません',
+  '{n} of {all} selected': '{all} 件中 {n} 件を選択',
+  Translated: '翻訳済み',
+  'Not needed': '不要',
+  '{n} changes not yet written to your copy':
+    'コピーに未書き込みの変更が {n} 件あります',
+  ' {n} was already in the Catalog.': ' {n} 件はすでにカタログにあります。',
+  ' {n} were already in the Catalog.': ' {n} 件はすでにカタログにあります。',
+  'Choose the folder first': '先にフォルダーを選んでください',
 };

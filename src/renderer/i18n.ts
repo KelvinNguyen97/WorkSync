@@ -4,12 +4,14 @@ import {
   type UiLanguage,
   type UiLanguageChoice,
 } from '../shared/i18n';
+import { setDateStyle } from '../shared/model';
 
 /** The language of the screens now; set from Settings before each render. */
 let current: UiLanguage = resolveUiLanguage('system', navigator.language);
 
 export function setUiLanguage(choice: UiLanguageChoice): UiLanguage {
   current = resolveUiLanguage(choice, navigator.language);
+  setDateStyle(current);
   document.documentElement.lang = current;
   return current;
 }

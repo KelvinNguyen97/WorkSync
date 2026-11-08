@@ -338,7 +338,7 @@ textarea {
 }
 .proj-lang {
   display: block;
-  font: 500 10.5px var(--mono);
+  font: 500 11.5px var(--mono);
   color: var(--muted);
   margin-top: 1px;
 }
@@ -669,7 +669,7 @@ textarea {
 
 /* ---------- shared chips ---------- */
 .ptag {
-  font: 700 10.5px var(--ui);
+  font: 700 11px var(--ui);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   padding: 2px 7px;
@@ -2880,7 +2880,7 @@ pre.prompt {
     --fg: #182030;
     --fg-2: #3b4556;
     --muted: #5d6677;
-    --accent: #0b7f91;
+    --accent: #097384;
     --accent-ink: #ffffff;
     --accent-soft: rgba(11, 127, 145, 0.12);
     --urgent: #d63a36;
@@ -2892,7 +2892,7 @@ pre.prompt {
     --hl: 20 30 50;
     --ln: 30 45 80;
     --fgc: 24 32 48;
-    --acc: 11 127 145;
+    --acc: 9 115 132;
     --shadow-k: 0.2;
     --sunken: #edf0f4;
     --panel: #ffffff;
@@ -2914,7 +2914,7 @@ pre.prompt {
   --fg: #182030;
   --fg-2: #3b4556;
   --muted: #5d6677;
-  --accent: #0b7f91;
+  --accent: #097384;
   --accent-ink: #ffffff;
   --accent-soft: rgba(11, 127, 145, 0.12);
   --urgent: #d63a36;
@@ -2926,7 +2926,7 @@ pre.prompt {
   --hl: 20 30 50;
   --ln: 30 45 80;
   --fgc: 24 32 48;
-  --acc: 11 127 145;
+  --acc: 9 115 132;
   --shadow-k: 0.2;
   --sunken: #edf0f4;
   --panel: #ffffff;

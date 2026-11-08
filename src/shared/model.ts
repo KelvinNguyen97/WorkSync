@@ -309,11 +309,19 @@ export function addDays(date: string, days: number): string {
 }
 
 const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
-/** `2026-11-03` → `3 Nov`. */
+/** How the screens write short dates; the renderer sets it from the app language. */
+let dateStyle: 'en' | 'ja' = 'en';
+export function setDateStyle(style: 'en' | 'ja'): void {
+  dateStyle = style;
+}
+/** A month's short name: `Nov`, or `11月` in Japanese. */
+export const monthName = (m: number): string =>
+  dateStyle === 'ja' ? `${m}月` : MONTHS[m - 1];
+/** `2026-11-03` → `3 Nov` (`11月3日` in Japanese). */
 export function shortDate(date: string | null): string {
   if (!date) return '';
   const [, m, d] = date.split('-').map(Number);
-  return `${d} ${MONTHS[m - 1]}`;
+  return dateStyle === 'ja' ? `${m}月${d}日` : `${d} ${MONTHS[m - 1]}`;
 }
 /** `2026-11-03` → `2026/11/03`, the usual format in Japanese files. */
 export function fileDate(date: string | null): string {

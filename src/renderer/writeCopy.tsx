@@ -79,7 +79,7 @@ export function WriteDialog({ onClose }: { onClose: () => void }) {
   const open = Object.keys(results).length > 0;
   return (
     <Modal
-      title={tr('Write to your copy')}
+      title={tr('Write to copy')}
       subtitle={tr(
         'Only these cells change. The customer’s file in Box is never touched.',
       )}

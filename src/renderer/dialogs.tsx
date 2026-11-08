@@ -428,11 +428,14 @@ export function TaskDialog({
 
   return (
     <Modal
-      title={task ? `Edit ${label(task)}` : tr('New task')}
+      title={task ? tr('Edit {name}', { name: label(task) }) : tr('New task')}
       subtitle={
         task
           ? p.name
-          : `${p.name} · added by hand, so it is never written to a customer file`
+          : tr(
+              '{name} · added by hand, so it is never written to a customer file',
+              { name: p.name },
+            )
       }
       onClose={onClose}
       footer={
@@ -792,7 +795,7 @@ export function ViewsDialog({
                 <Icon name={VIEW_INFO[k].icon} />
               </span>
               <span>
-                <b>{VIEW_INFO[k].name}</b>
+                <b>{tr(VIEW_INFO[k].name)}</b>
                 <small>
                   {built
                     ? tr(VIEW_INFO[k].desc)

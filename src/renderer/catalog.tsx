@@ -153,7 +153,14 @@ export function CatalogView({
         : r.added.length
           ? tr('Added {n} entries.', { n: r.added.length })
           : tr('Nothing added.')) +
-        (r.skipped ? tr(' {n} already in the Catalog.', { n: r.skipped }) : ''),
+        (r.skipped
+          ? tr(
+              r.skipped === 1
+                ? ' {n} was already in the Catalog.'
+                : ' {n} were already in the Catalog.',
+              { n: r.skipped },
+            )
+          : ''),
     );
   };
   const open = async (e: CatalogEntry) => {

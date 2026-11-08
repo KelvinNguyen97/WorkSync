@@ -222,8 +222,10 @@ export function AiDialog({
         <>
           <div className="ai-pick-head">
             <span className="muted">
-              {candidates.filter((t) => picked.has(t.id)).length} of{' '}
-              {candidates.length} selected
+              {tr('{n} of {all} selected', {
+                n: candidates.filter((t) => picked.has(t.id)).length,
+                all: candidates.length,
+              })}
             </span>
             <span style={{ display: 'flex', gap: 8 }}>
               <button
@@ -262,7 +264,7 @@ export function AiDialog({
                   <div>
                     <span className="tid">
                       {tr('No.')} {t.customerId} · {LANGUAGES[t.language]} ·{' '}
-                      {t.translationState}
+                      {tr(t.translationState)}
                       {!t.summary ? tr(' · no summary') : ''}
                     </span>
                     <div
@@ -535,7 +537,9 @@ export function GlossaryDialog({
         />
         <input
           className="inp"
-          placeholder={`In ${LANGUAGES[project.workingLanguage]}, such as acceptance test`}
+          placeholder={tr('In {lang}, such as acceptance test', {
+            lang: tr(LANGUAGES[project.workingLanguage]),
+          })}
           value={draft.translation}
           onChange={(e) => setDraft({ ...draft, translation: e.target.value })}
           aria-label={tr('Translation')}

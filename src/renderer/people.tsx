@@ -112,7 +112,7 @@ export function PeopleDialog({
           {tr('Shown as')}
           <input
             className="inp"
-            placeholder={`In ${working}, such as Tanaka`}
+            placeholder={tr('In {lang}, such as Tanaka', { lang: tr(working) })}
             value={draft.displayName}
             onChange={(e) =>
               setDraft({ ...draft, displayName: e.target.value })

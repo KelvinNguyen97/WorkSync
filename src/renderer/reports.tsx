@@ -151,7 +151,10 @@ export function ReportDialog({
   return (
     <Modal
       title={tr('Make a report')}
-      subtitle={`${project.name} · built from each task’s summary, situation and dates`}
+      subtitle={tr(
+        '{name} · built from each task’s summary, situation and dates',
+        { name: project.name },
+      )}
       onClose={onClose}
       footer={
         <>
@@ -159,7 +162,12 @@ export function ReportDialog({
             className="muted"
             style={{ marginRight: 'auto', fontSize: 12.5 }}
           >
-            {count} task{count === 1 ? '' : 's'} {tr('in this report')}
+            {tr(
+              count === 1
+                ? '{n} task in this report'
+                : '{n} tasks in this report',
+              { n: count },
+            )}
           </span>
           <button className="btn" onClick={onClose}>
             {tr('Cancel')}
@@ -170,7 +178,11 @@ export function ReportDialog({
             onClick={() => void make()}
           >
             <Icon name="save" />
-            {busy ? tr('Making…') : `Make the ${FORMAT_NAME[o.format]} report`}
+            {busy
+              ? tr('Making…')
+              : tr('Make the {format} report', {
+                  format: FORMAT_NAME[o.format],
+                })}
           </button>
         </>
       }
@@ -185,8 +197,8 @@ export function ReportDialog({
             onClick={() => pick(k)}
           >
             <Icon name={ICONS[k]} />
-            <b>{REPORTS[k].name}</b>
-            <small>{REPORTS[k].description}</small>
+            <b>{tr(REPORTS[k].name)}</b>
+            <small>{tr(REPORTS[k].description)}</small>
             <span className="fmt">
               {REPORTS[k].formats.map((f) => FORMAT_NAME[f]).join(' · ')}
             </span>
@@ -197,9 +209,12 @@ export function ReportDialog({
         <p className="report-note">
           <Icon name="check" />
           <span>
-            {tr('Only the')} {o.taskIds.length} task
-            {o.taskIds.length === 1 ? '' : 's'}{' '}
-            {tr('you selected in the Tasks table.')}
+            {tr(
+              o.taskIds.length === 1
+                ? 'Only the {n} task you selected in the Tasks table.'
+                : 'Only the {n} tasks you selected in the Tasks table.',
+              { n: o.taskIds.length },
+            )}
           </span>
           <button
             className="btn sm"
@@ -292,7 +307,7 @@ export function ReportDialog({
               />
             </label>
             <label>
-              to
+              {tr('to')}
               <input
                 className="inp"
                 type="date"
@@ -314,7 +329,7 @@ export function ReportDialog({
                     set({ statuses: toggle<Status>(o.statuses, s) })
                   }
                 />{' '}
-                {s}
+                {tr(s)}
               </label>
             ))}
           </div>

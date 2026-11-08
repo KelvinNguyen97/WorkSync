@@ -142,9 +142,19 @@ export function PublishDialog({
             <Icon name="globe" />
             {tr('Preview')}
           </button>
+          {status && !status.folder && (
+            <span className="muted foot-why">
+              {tr('Choose the folder first')}
+            </span>
+          )}
           <button
             className="btn primary"
             disabled={busy || !status?.folder || !!status.folderProblem}
+            title={
+              status && !status.folder
+                ? tr('Choose the folder first')
+                : undefined
+            }
             onClick={() => void publish()}
           >
             <Icon name="upload" />

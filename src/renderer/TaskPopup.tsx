@@ -568,7 +568,9 @@ function EditField({
         {!draft && (
           <button
             className="fix-btn"
-            title={label ? `Edit ${label.toLowerCase()}` : tr('Edit')}
+            title={
+              label ? tr('Edit {field}', { field: tr(label) }) : tr('Edit')
+            }
             aria-label={label ? `Edit ${label.toLowerCase()}` : tr('Edit')}
             onClick={() => setDraft(start())}
           >
@@ -1124,7 +1126,9 @@ export function TaskPopup({
                 <button
                   className="btn"
                   onClick={() => void copyBriefInFile()}
-                  title={`The brief in ${LANGUAGES[task.language]}, for the customer side`}
+                  title={tr('The brief in {lang}, for the customer side', {
+                    lang: tr(LANGUAGES[task.language]),
+                  })}
                 >
                   <Icon name="globe" />
                   {task.language === 'ja'
