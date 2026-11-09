@@ -150,6 +150,11 @@ function open(): Startup {
     store = new Store(db);
     sources = new Sources(db, store);
     mine = new Mine(db);
+    try {
+      mine.dropUnusedNoteImages();
+    } catch (error) {
+      log('warn', `Could not tidy note images: ${String(error)}`);
+    }
     links = new FileLinks(sources, path.join(dataFolder, 'snapshots'));
     publisher = new Publisher(store, sources, path.join(dataFolder, 'preview'));
     writer = new CopyWriter(
@@ -351,6 +356,19 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
     if (!noteLinks(needMine().getNote(noteId).body).includes(url))
       throw new Error('This address is not in the note.');
     await shell.openExternal(url);
+  },
+  addNoteImage: async (bytes) => needMine().addNoteImage(bytes),
+  getNoteImage: async (id) => needMine().getNoteImage(id),
+  saveNoteImage: async (id) => {
+    const { mime, data } = needMine().getNoteImage(id);
+    const ext = mime.split('/')[1].replace('jpeg', 'jpg');
+    const r = await dialog.showSaveDialog({
+      defaultPath: path.join(app.getPath('pictures'), `WorkSync image.${ext}`),
+      filters: [{ name: `${ext.toUpperCase()} image`, extensions: [ext] }],
+    });
+    if (r.canceled || !r.filePath) return false;
+    fs.writeFileSync(r.filePath, data);
+    return true;
   },
   getAppInfo: async (): Promise<AppInfo> => ({
     name: app.getName(),

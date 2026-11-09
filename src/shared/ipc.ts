@@ -287,6 +287,12 @@ export interface WorkSyncApi {
   restoreNote(note: Note): Promise<Note>;
   /** Opens a web address written in a note, in the browser. */
   openNoteLink(noteId: string, url: string): Promise<void>;
+  /** Keeps an image pasted into a note (PNG, JPEG, GIF, WebP or BMP); returns its id. */
+  addNoteImage(bytes: Uint8Array): Promise<string>;
+  /** An image in a note. */
+  getNoteImage(id: string): Promise<{ mime: string; data: Uint8Array }>;
+  /** Asks where to save an image from a note, and saves it. False when cancelled. */
+  saveNoteImage(id: string): Promise<boolean>;
 
   /** The Catalog, each entry checked for whether its path is still there. */
   listCatalog(): Promise<CatalogEntry[]>;
@@ -345,6 +351,9 @@ export const API_METHODS = [
   'deleteNote',
   'restoreNote',
   'openNoteLink',
+  'addNoteImage',
+  'getNoteImage',
+  'saveNoteImage',
   'listCatalog',
   'addToCatalog',
   'addFoundToCatalog',

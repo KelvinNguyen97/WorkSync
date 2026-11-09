@@ -70,7 +70,9 @@ export function filterNotes(
         (filter === 'tagged' && n.tags.length > 0) ||
         (filter === 'recent' && !!n.viewedAt && n.viewedAt >= since)) &&
       (!q ||
-        `${n.title}\n${n.body}\n${n.tags.join(' ')}`.toLowerCase().includes(q)),
+        `${n.title}\n${noteText(n.body)}\n${n.tags.join(' ')}`
+          .toLowerCase()
+          .includes(q)),
   );
   return list.sort((a, b) =>
     filter === 'recent'
@@ -79,4 +81,85 @@ export function filterNotes(
         b.createdAt.localeCompare(a.createdAt) ||
         b.id.localeCompare(a.id),
   );
+}
+
+// ------------------------------------------------------------ Images
+//
+// An image in a note is a line of its own in the note text:
+//   ![image](image:<id>)
+// The image itself is kept in the database. Everything else in the note stays
+// plain text, so search, tags and links work as before.
+
+export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+
+const IMAGE_LINE = /^!\[image\]\(image:([0-9a-f-]{36})\)$/;
+
+/** The text line that places an image in a note. */
+export const imageLine = (id: string) => `![image](image:${id})`;
+
+/** A piece of a note: some text, or an image. */
+export type NoteBlock =
+  | { kind: 'text'; text: string }
+  | { kind: 'image'; id: string };
+
+/**
+ * A note as text and images, in order. It always starts and ends with text,
+ * and text sits between any two images (it may be empty), so there is always
+ * somewhere to type.
+ */
+export function noteBlocks(body: string): NoteBlock[] {
+  const blocks: NoteBlock[] = [];
+  let lines: string[] = [];
+  for (const line of body.split('\n')) {
+    const m = IMAGE_LINE.exec(line.trim());
+    if (m) {
+      blocks.push({ kind: 'text', text: lines.join('\n') });
+      blocks.push({ kind: 'image', id: m[1] });
+      lines = [];
+    } else lines.push(line);
+  }
+  blocks.push({ kind: 'text', text: lines.join('\n') });
+  return blocks;
+}
+
+/**
+ * The note text for blocks, the reverse of noteBlocks. Empty text before the
+ * first image or after the last adds nothing, so a note can start or end
+ * with an image.
+ */
+export const joinBlocks = (blocks: NoteBlock[]): string =>
+  blocks
+    .filter(
+      (b, i) =>
+        !(
+          b.kind === 'text' &&
+          !b.text &&
+          blocks.length > 1 &&
+          (i === 0 || i === blocks.length - 1)
+        ),
+    )
+    .map((b) => (b.kind === 'text' ? b.text : imageLine(b.id)))
+    .join('\n');
+
+/** The images in a note, in order. */
+export const noteImageIds = (body: string): string[] =>
+  noteBlocks(body).flatMap((b) => (b.kind === 'image' ? [b.id] : []));
+
+/** A note's text without its image lines, for previews and search. */
+export const noteText = (body: string): string =>
+  body
+    .split('\n')
+    .filter((l) => !IMAGE_LINE.test(l.trim()))
+    .join('\n');
+
+/** The kind of image the bytes hold, from their first bytes, or null. */
+export function imageType(b: Uint8Array): string | null {
+  const at = (i: number, ...v: number[]) => v.every((x, k) => b[i + k] === x);
+  if (at(0, 0x89, 0x50, 0x4e, 0x47)) return 'image/png';
+  if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50))
+    return 'image/webp';
+  if (at(0, 0x42, 0x4d)) return 'image/bmp';
+  return null;
 }

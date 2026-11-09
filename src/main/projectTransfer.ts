@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { SCHEMA_VERSION } from './db';
+import { imageLine, imageType, noteImageIds } from '../shared/notes';
 
 /**
  * Handing a project to another WorkSync user (a copy, not a sync): one
@@ -115,6 +116,13 @@ export function exportProject(
       t.next_action_date = null;
     }
   const files: Record<string, Uint8Array> = {};
+  // Images pasted into the project's notes go along with them.
+  const image = db.prepare('SELECT data FROM note_images WHERE id = ?');
+  for (const n of tables.notes)
+    for (const id of noteImageIds(String(n.body ?? ''))) {
+      const r = image.get(id) as Row | undefined;
+      if (r) files[`note-images/${id}`] = new Uint8Array(r.data as Uint8Array);
+    }
   for (const v of tables.file_versions) {
     const snap = String(v.snapshot ?? '');
     if (snap && fs.existsSync(snap))
@@ -250,6 +258,21 @@ export function importProject(
           // Checked again on this PC: the file may be somewhere else here.
           r.state = 'ok';
           r.state_detail = '';
+        }
+        if (t.name === 'notes') {
+          // Each image gets a new id too, so importing twice never clashes.
+          let body = String(r.body ?? '');
+          for (const oldId of noteImageIds(body)) {
+            const bytes = x.files[`note-images/${oldId}`];
+            const mime = bytes && imageType(bytes);
+            if (!bytes || !mime) continue;
+            const id = idOf('note_images', oldId);
+            db.prepare(
+              'INSERT OR IGNORE INTO note_images (id, mime, data, created_at) VALUES (?, ?, ?, ?)',
+            ).run(id, mime, bytes, now);
+            body = body.split(imageLine(oldId)).join(imageLine(id));
+          }
+          r.body = body;
         }
         if (t.name === 'file_versions') {
           const old = String(raw.id);

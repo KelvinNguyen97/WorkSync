@@ -5,7 +5,8 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  // blob: for images pasted into notes, which the page itself makes.
+  "img-src 'self' data: blob:",
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'none'",

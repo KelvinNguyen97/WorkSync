@@ -259,6 +259,15 @@ const MIGRATIONS: string[] = [
     last_opened TEXT
   );
   `,
+  // 20: images pasted into notes (placed in the note text by id)
+  `
+  CREATE TABLE note_images (
+    id TEXT PRIMARY KEY,
+    mime TEXT NOT NULL,
+    data BLOB NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

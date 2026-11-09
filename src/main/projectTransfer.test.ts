@@ -15,6 +15,7 @@ import {
 import { Sources, type ReadVersion } from './sources';
 import { Store } from './store';
 import { Mine } from './mine';
+import { imageLine, noteImageIds } from '../shared/notes';
 
 const FORMAT: FileFormat = {
   name: 'WBS',
@@ -132,9 +133,12 @@ function setUp() {
   });
   a.store.setPublishOptions(p.id, { folder: '/share/Portal', onClose: true });
   a.store.createTask(p.id, input());
+  const shot = new Mine(a.db).addNoteImage(
+    new Uint8Array([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 7]),
+  );
   new Mine(a.db).saveNote({
     title: 'Minutes',
-    body: 'Kick-off',
+    body: `Kick-off\n${imageLine(shot)}`,
     projectId: p.id,
   });
   new Mine(a.db).saveNote({ title: 'Mine alone', body: '' });
@@ -179,6 +183,12 @@ describe('giving a project to another WorkSync user', () => {
     expect(
       new Mine(b.db).listNotes().map((x) => [x.title, x.projectId]),
     ).toEqual([['Minutes', q.id]]);
+    // Its image comes too, under a new id.
+    const note = new Mine(b.db).listNotes()[0];
+    const [img] = noteImageIds(note.body);
+    expect(img).toBeTruthy();
+    expect(note.body).toBe(`Kick-off\n${imageLine(img)}`);
+    expect(new Mine(b.db).getNoteImage(img).data.at(-1)).toBe(7);
     expect(b.store.listPeople(q.id)[0].displayName).toBe('Tanaka');
     expect(b.store.listActivity(t.id).length).toBeGreaterThan(0);
     // The translation of a difficulty follows the difficulty's new id.

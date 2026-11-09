@@ -977,4 +977,23 @@ export const JA: Record<string, string> = {
   ' {n} was already in the Catalog.': ' {n} 件はすでにカタログにあります。',
   ' {n} were already in the Catalog.': ' {n} 件はすでにカタログにあります。',
   'Choose the folder first': '先にフォルダーを選んでください',
+  // Images in notes
+  'This image is no longer there.': 'この画像はもうありません。',
+  'Remove image': '画像を削除',
+  'Open the image': '画像を開く',
+  Image: '画像',
+  'Zoom out': '縮小',
+  'Zoom in': '拡大',
+  'Actual size': '実寸',
+  'Fit to the window': 'ウィンドウに合わせる',
+  Fit: '合わせる',
+  Copy: 'コピー',
+  Copied: 'コピーしました',
+  'Could not copy': 'コピーできませんでした',
+  'Save…': '保存…',
+  'Removed the image.': '画像を削除しました。',
+  '1 image': '画像 1 枚',
+  '{n} images': '画像 {n} 枚',
+  'Write here. It saves as you type. Paste an image to add it. Web addresses open with Ctrl+click.':
+    'ここに書きます。入力すると保存されます。画像は貼り付けで追加できます。Web アドレスは Ctrl+クリックで開きます。',
 };

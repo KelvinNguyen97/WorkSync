@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { migrate } from './db';
 import { Mine } from './mine';
+import { imageLine } from '../shared/notes';
 
 let mine: Mine;
 beforeEach(() => {
@@ -81,6 +82,36 @@ describe('Notes', () => {
     const gone = mine.deleteNote(n.id);
     expect(mine.listNotes()).toHaveLength(0);
     expect(mine.restoreNote(gone).body).toBe('two');
+  });
+});
+
+describe('Images in notes', () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 1, 2]);
+  it('keeps an image and gives it back', () => {
+    const id = mine.addNoteImage(png);
+    expect(mine.getNoteImage(id)).toEqual({ mime: 'image/png', data: png });
+  });
+  it('refuses what is not an image, or too large', () => {
+    expect(() => mine.addNoteImage(new TextEncoder().encode('hi'))).toThrow(
+      /Only PNG/,
+    );
+    const big = new Uint8Array(20 * 1024 * 1024 + 1);
+    big.set(png);
+    expect(() => mine.addNoteImage(big)).toThrow(/too large/);
+  });
+  it('drops images no note uses, once they are a day old', () => {
+    let now = '2026-11-06T01:00:00.000Z';
+    const db = new DatabaseSync(':memory:');
+    migrate(db);
+    const m = new Mine(db, () => now);
+    const used = m.addNoteImage(png);
+    const loose = m.addNoteImage(png);
+    m.saveNote({ title: 'Shot', body: `See\n${imageLine(used)}` });
+    expect(m.dropUnusedNoteImages()).toBe(0);
+    now = '2026-11-08T01:00:00.000Z';
+    expect(m.dropUnusedNoteImages()).toBe(1);
+    expect(m.getNoteImage(used).mime).toBe('image/png');
+    expect(() => m.getNoteImage(loose)).toThrow(/no longer there/);
   });
 });
 

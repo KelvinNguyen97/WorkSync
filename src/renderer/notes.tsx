@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   filterNotes,
+  joinBlocks,
   linkAt,
+  noteBlocks,
+  noteImageIds,
   noteLinks,
+  noteText,
   parseTags,
   type Note,
+  type NoteBlock,
   type NoteFilter,
 } from '../shared/notes';
+import { imageFrom, keepImage, NoteImage } from './noteImages';
 import { useApp } from './appState';
 import { Icon } from './Icon';
 import type { HeaderSlot } from './mine';
@@ -28,13 +34,19 @@ const when = (iso: string | null) => {
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
 };
 
-const preview = (n: Note) =>
-  n.body
+const preview = (n: Note) => {
+  const text = noteText(n.body)
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
     .slice(0, 2)
     .join(' · ');
+  const images = noteImageIds(n.body).length;
+  const pics = images
+    ? tr(images === 1 ? '1 image' : '{n} images', { n: images })
+    : '';
+  return [pics, text].filter(Boolean).join(' · ');
+};
 
 /**
  * Notes: every note, or the notes of one project. The editor saves while
@@ -414,25 +426,13 @@ function NoteEditor({
           />
         </span>
       </div>
-      <textarea
-        className="note-body"
-        aria-label={tr('Note text')}
-        placeholder={tr(
-          'Write here. It saves as you type. Web addresses open with Ctrl+click.',
-        )}
-        value={body}
-        onChange={(e) => {
-          setBody(e.target.value);
-          queue({ body: e.target.value });
+      <NoteBody
+        body={body}
+        onChange={(b) => {
+          setBody(b);
+          queue({ body: b });
         }}
-        onClick={(e) => {
-          if (!(e.ctrlKey || e.metaKey)) return;
-          const url = linkAt(body, e.currentTarget.selectionStart);
-          if (url) {
-            e.preventDefault();
-            openLink(url);
-          }
-        }}
+        onLink={openLink}
         onBlur={() => void flush()}
       />
       {links.length > 0 && (
@@ -460,5 +460,204 @@ function NoteEditor({
         </span>
       </div>
     </div>
+  );
+}
+
+type Block = NoteBlock & { key: number };
+let nextKey = 1;
+const keyed = (blocks: NoteBlock[]): Block[] =>
+  blocks.map((b) => ({ ...b, key: nextKey++ }));
+
+/**
+ * The note text with its images, in order. Each piece of text is its own
+ * box that grows with its text, and an image pasted (or dropped) into one
+ * goes where the cursor is. Copied text is pasted as text, even when the
+ * clipboard also holds a picture of it (as Excel does).
+ */
+function NoteBody({
+  body,
+  onChange,
+  onLink,
+  onBlur,
+}: {
+  body: string;
+  onChange: (body: string) => void;
+  onLink: (url: string) => void;
+  onBlur: () => void;
+}) {
+  const { attempt, toast } = useApp();
+  const [blocks, setBlocks] = useState<Block[]>(() => keyed(noteBlocks(body)));
+  const boxes = useRef(new Map<number, HTMLTextAreaElement>());
+  const focusNext = useRef<{ key: number; at: number } | null>(null);
+
+  const latest = useRef(blocks);
+  const update = (next: Block[]) => {
+    latest.current = next;
+    setBlocks(next);
+    onChange(joinBlocks(next));
+  };
+
+  useLayoutEffect(() => {
+    const f = focusNext.current;
+    if (!f) return;
+    focusNext.current = null;
+    const el = boxes.current.get(f.key);
+    if (el) {
+      el.focus();
+      el.setSelectionRange(f.at, f.at);
+    }
+  });
+
+  /** Puts an image into a text block, between start and end of its text. */
+  const insert = async (
+    key: number,
+    file: File,
+    start: number,
+    end: number,
+  ) => {
+    const id = await attempt(() => keepImage(file));
+    if (!id) return;
+    const now = latest.current;
+    const i = now.findIndex((x) => x.key === key);
+    const b = now[i];
+    if (!b || b.kind !== 'text') return;
+    const before = b.text.slice(0, start).replace(/\n$/, '');
+    const after = b.text.slice(end).replace(/^\n/, '');
+    const [t1, img, t2] = keyed([
+      { kind: 'text', text: before },
+      { kind: 'image', id },
+      { kind: 'text', text: after },
+    ]);
+    focusNext.current = { key: t2.key, at: 0 };
+    update([...now.slice(0, i), t1, img, t2, ...now.slice(i + 1)]);
+  };
+
+  const remove = (key: number) => {
+    const blocks = latest.current;
+    const i = blocks.findIndex((x) => x.key === key);
+    const before = blocks;
+    const prev = blocks[i - 1];
+    const next = blocks[i + 1];
+    if (prev?.kind !== 'text' || next?.kind !== 'text') return;
+    const text = [prev.text, next.text].filter((t) => t !== '').join('\n');
+    const [merged] = keyed([{ kind: 'text', text }]);
+    focusNext.current = { key: merged.key, at: prev.text.length };
+    update([...blocks.slice(0, i - 1), merged, ...blocks.slice(i + 2)]);
+    toast(tr('Removed the image.'), {
+      label: tr('Undo'),
+      run: () => update(before),
+    });
+  };
+
+  const onlyText = blocks.length === 1;
+  return (
+    <div className="note-body" onBlur={onBlur}>
+      {blocks.map((b, i) =>
+        b.kind === 'image' ? (
+          <NoteImage key={b.key} id={b.id} onRemove={() => remove(b.key)} />
+        ) : (
+          <TextPiece
+            key={b.key}
+            ref={(el) => {
+              if (el) boxes.current.set(b.key, el);
+              else boxes.current.delete(b.key);
+            }}
+            last={i === blocks.length - 1}
+            placeholder={
+              onlyText
+                ? tr(
+                    'Write here. It saves as you type. Paste an image to add it. Web addresses open with Ctrl+click.',
+                  )
+                : undefined
+            }
+            value={b.text}
+            onChange={(text) =>
+              update(
+                latest.current.map((x) =>
+                  x.key === b.key ? { ...b, text } : x,
+                ),
+              )
+            }
+            onPaste={(e) => {
+              const file = imageFrom(e.clipboardData);
+              if (!file) return;
+              e.preventDefault();
+              const t = e.currentTarget;
+              void insert(b.key, file, t.selectionStart, t.selectionEnd);
+            }}
+            onDrop={(e) => {
+              const file = [...e.dataTransfer.files].find((f) =>
+                f.type.startsWith('image/'),
+              );
+              if (!file) return;
+              e.preventDefault();
+              void insert(b.key, file, b.text.length, b.text.length);
+            }}
+            onLinkAt={(at) => {
+              const url = linkAt(b.text, at);
+              if (url) onLink(url);
+              return !!url;
+            }}
+          />
+        ),
+      )}
+    </div>
+  );
+}
+
+/** A piece of note text: a box as tall as its text. */
+function TextPiece({
+  ref,
+  value,
+  last,
+  placeholder,
+  onChange,
+  onPaste,
+  onDrop,
+  onLinkAt,
+}: {
+  ref: (el: HTMLTextAreaElement | null) => void;
+  value: string;
+  last: boolean;
+  placeholder?: string;
+  onChange: (text: string) => void;
+  onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLTextAreaElement>) => void;
+  onLinkAt: (at: number) => boolean;
+}) {
+  const own = useRef<HTMLTextAreaElement | null>(null);
+  const fit = () => {
+    const el = own.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  useLayoutEffect(fit, [value]);
+  useEffect(() => {
+    const el = own.current;
+    if (!el) return;
+    const watch = new ResizeObserver(fit);
+    watch.observe(el.parentElement ?? el);
+    return () => watch.disconnect();
+  }, []);
+  return (
+    <textarea
+      ref={(el) => {
+        own.current = el;
+        ref(el);
+      }}
+      className={`note-text ${last ? 'last' : ''}`}
+      rows={1}
+      aria-label={tr('Note text')}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onPaste={onPaste}
+      onDrop={onDrop}
+      onClick={(e) => {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        if (onLinkAt(e.currentTarget.selectionStart)) e.preventDefault();
+      }}
+    />
   );
 }

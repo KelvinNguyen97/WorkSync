@@ -4,6 +4,16 @@
  * or a number; they are matched in the English and put into the Japanese.
  */
 export const ERRORS_JA: [string, string][] = [
+  ['This is not an image.', 'これは画像ではありません。'],
+  [
+    'This image is too large (20 MB at most).',
+    'この画像は大きすぎます（最大 20 MB）。',
+  ],
+  [
+    'Only PNG, JPEG, GIF, WebP and BMP images can be added.',
+    '追加できる画像は PNG、JPEG、GIF、WebP、BMP だけです。',
+  ],
+  ['This image is no longer there.', 'この画像はもうありません。'],
   [
     'This backup was made by a newer version of WorkSync. Use that version to restore it.',
     'このバックアップは新しい版の WorkSync で作られました。その版で復元してください。',

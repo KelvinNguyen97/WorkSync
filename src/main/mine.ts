@@ -6,7 +6,14 @@ import type {
   MyTask,
   MyTaskInput,
 } from '../shared/myTasks';
-import { parseTags, type Note, type NoteInput } from '../shared/notes';
+import {
+  imageType,
+  MAX_IMAGE_BYTES,
+  noteImageIds,
+  parseTags,
+  type Note,
+  type NoteInput,
+} from '../shared/notes';
 import {
   baseName,
   pathKey,
@@ -276,6 +283,58 @@ export class Mine {
   }
 
   /** Puts back a note deleted a moment ago (Undo). */
+  /** Keeps an image pasted into a note; the note places it by the id returned. */
+  addNoteImage(bytes: Uint8Array): string {
+    if (!(bytes instanceof Uint8Array) || !bytes.length)
+      throw new Error('This is not an image.');
+    if (bytes.length > MAX_IMAGE_BYTES)
+      throw new Error('This image is too large (20 MB at most).');
+    const mime = imageType(bytes);
+    if (!mime)
+      throw new Error('Only PNG, JPEG, GIF, WebP and BMP images can be added.');
+    const id = randomUUID();
+    this.db
+      .prepare(
+        'INSERT INTO note_images (id, mime, data, created_at) VALUES (?, ?, ?, ?)',
+      )
+      .run(id, mime, bytes, this.now());
+    return id;
+  }
+
+  getNoteImage(id: string): { mime: string; data: Uint8Array } {
+    const r = this.db
+      .prepare('SELECT mime, data FROM note_images WHERE id = ?')
+      .get(id) as Row | undefined;
+    if (!r) throw new Error('This image is no longer there.');
+    return { mime: str(r.mime), data: new Uint8Array(r.data as Uint8Array) };
+  }
+
+  /**
+   * Removes images no note uses any more. Only images older than a day go,
+   * so a note deleted and put back, or not yet saved, keeps its images.
+   */
+  dropUnusedNoteImages(): number {
+    const used = new Set(
+      (this.db.prepare('SELECT body FROM notes').all() as Row[]).flatMap((r) =>
+        noteImageIds(str(r.body)),
+      ),
+    );
+    const before = new Date(
+      new Date(this.now()).getTime() - 86400000,
+    ).toISOString();
+    const old = this.db
+      .prepare('SELECT id FROM note_images WHERE created_at < ?')
+      .all(before) as Row[];
+    const drop = this.db.prepare('DELETE FROM note_images WHERE id = ?');
+    let n = 0;
+    for (const r of old)
+      if (!used.has(str(r.id))) {
+        drop.run(str(r.id));
+        n++;
+      }
+    return n;
+  }
+
   restoreNote(n: Note): Note {
     const projectId =
       n.projectId &&
