@@ -91,8 +91,8 @@ fs.writeFileSync(
 // which the menu bar recolors for light and dark.
 const tray = { 1: out[16], 2: out[32] };
 const tmpl = {
-  1: await png(trayGlyph('#000'), 16),
-  2: await png(trayGlyph('#000'), 32),
+  1: await png(trayGlyph('#000', pick), 16),
+  2: await png(trayGlyph('#000', pick), 32),
 };
 const b64 = (b) => b.toString('base64');
 fs.writeFileSync(

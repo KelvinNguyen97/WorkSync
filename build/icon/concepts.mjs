@@ -41,6 +41,12 @@ const tile = (id, from, to) => `
 const svg = (body) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`;
 
+// Linked circles from Tabler Icons (MIT, Copyright (c) 2020-2026 Pawel Kuna;
+// see build/icon/LICENSE-tabler), 24x24.
+const LINKED = `<path d="M9.183 6.117a6 6 0 1 0 4.511 3.986"/><path d="M14.813 17.883a6 6 0 1 0 -4.496 -3.954"/>`;
+const linked = (color, scale, extra = '') =>
+  `<g transform="translate(${50 - 12 * scale} ${50 - 12 * scale}) scale(${scale})" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${extra}>${LINKED}</g>`;
+
 export const concepts = {
   // A: a task tick inside two sync arrows: work kept in step.
   a: svg(
@@ -48,6 +54,22 @@ export const concepts = {
       arrowArc(50, 50, 29, 200, 335, 6.5) +
       arrowArc(50, 50, 29, 20, 155, 6.5) +
       `<path d="M37 51 L46.5 60.5 L64 42" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ),
+  // D: two linked circles, in neon teal on a dark tile: two sides kept in step.
+  d: svg(
+    `<defs>
+      <radialGradient id="gd" cx=".3" cy=".18" r=".85">
+        <stop offset="0" stop-color="#2f4470"/><stop offset=".72" stop-color="#0d1322"/><stop offset="1" stop-color="#0a0f1b"/>
+      </radialGradient>
+      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation=".9" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <rect x="4" y="4" width="92" height="92" rx="22" fill="url(#gd)"/>
+    <rect x="4.5" y="4.5" width="91" height="91" rx="21.5" fill="none" stroke="#5fe0ef" stroke-opacity=".16"/>
+    <path d="M26 4.6 H74" stroke="#fff" stroke-opacity=".18"/>` +
+      linked('#5fe0ef', 2.58, ' filter="url(#glow)"'),
   ),
   // B: the customer's sheet and your copy, side by side and in step.
   b: svg(
@@ -66,9 +88,11 @@ export const concepts = {
 };
 
 /** The tray glyph: the main shape without the tile, for small sizes. */
-export const trayGlyph = (color = '#fff') =>
-  svg(
-    arrowArc(50, 50, 38, 200, 335, 10).replaceAll('#fff', color) +
-      arrowArc(50, 50, 38, 20, 155, 10).replaceAll('#fff', color) +
-      `<path d="M33 51 L46 64 L68 40" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>`,
-  );
+export const trayGlyph = (color = '#fff', pick = 'a') =>
+  pick === 'd'
+    ? svg(linked(color, 3.7))
+    : svg(
+        arrowArc(50, 50, 38, 200, 335, 10).replaceAll('#fff', color) +
+          arrowArc(50, 50, 38, 20, 155, 10).replaceAll('#fff', color) +
+          `<path d="M33 51 L46 64 L68 40" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>`,
+      );
