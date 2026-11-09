@@ -109,5 +109,9 @@ fs.writeFileSync(
 );
 await browser.close();
 // Keep the written code in the project's format.
-execFileSync('npx', ['oxfmt', 'src/main/iconData.ts', 'src/shared/iconSvg.ts'], { cwd: root });
+execFileSync(
+  'npx',
+  ['oxfmt', 'src/main/iconData.ts', 'src/shared/iconSvg.ts'],
+  { cwd: root },
+);
 console.log('Icons written for concept', pick);
