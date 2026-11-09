@@ -1,7 +1,12 @@
 import { app, BrowserWindow, nativeTheme, session } from 'electron';
 import path from 'node:path';
 import { log } from './log';
-import { chromeOptions, followTheme, glassKind } from './windowChrome';
+import {
+  chromeOptions,
+  followTheme,
+  glassKind,
+  taskbarIcon,
+} from './windowChrome';
 import { koffiLoads } from './everything';
 import {
   addTrayItem,
@@ -70,6 +75,7 @@ const createWindow = (): void => {
     );
   }
   followTheme(mainWindow);
+  taskbarIcon(mainWindow);
 
   attachMainWindow(mainWindow);
   if (!app.isPackaged) {

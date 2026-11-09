@@ -23,6 +23,9 @@ const config: ForgeConfig = {
     // The app icon (.ico on Windows, .icns on macOS); made by
     // build/icon/make-icons.mjs.
     icon: 'build/icon/icon',
+    // Also as a file of its own: the Windows taskbar is pointed at it, so a
+    // cached old icon of the .exe does not show (windowChrome.ts).
+    extraResource: ['build/icon/icon.ico'],
     appBundleId: 'com.worksync.desktop',
     // Code signing and notarization (required to distribute on macOS and to
     // avoid SmartScreen warnings on Windows) will be configured here later

@@ -5,6 +5,8 @@ import {
   type BrowserWindowConstructorOptions,
 } from 'electron';
 import os from 'node:os';
+import path from 'node:path';
+import { app } from 'electron';
 import { TRAY_ICON, TRAY_TEMPLATE, WINDOW_ICON } from './iconData';
 
 /**
@@ -72,6 +74,26 @@ export function chromeOptions(glass: Glass): BrowserWindowConstructorOptions {
       ? { backgroundMaterial: 'acrylic', backgroundColor: '#00000000' }
       : {}),
   };
+}
+
+/**
+ * Windows: the taskbar takes the icon from the app's own .ico file, not only
+ * from the .exe, whose old icon Windows may have cached (for example after a
+ * new version was unzipped over the old one, or when WorkSync is pinned).
+ */
+export function taskbarIcon(win: BrowserWindow): void {
+  if (process.platform !== 'win32' || !app.isPackaged) return;
+  try {
+    win.setAppDetails({
+      appId: 'com.worksync.desktop',
+      appIconPath: path.join(process.resourcesPath, 'icon.ico'),
+      appIconIndex: 0,
+      relaunchCommand: `"${process.execPath}"`,
+      relaunchDisplayName: 'WorkSync',
+    });
+  } catch {
+    // The window icon set at creation still applies.
+  }
 }
 
 /** Keeps the window buttons readable when the theme changes. */
