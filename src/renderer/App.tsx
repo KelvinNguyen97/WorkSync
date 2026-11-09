@@ -47,7 +47,7 @@ import { NotesView } from './notes';
 import { CatalogView } from './catalog';
 import type { CatalogEntry } from '../shared/catalog';
 import type { Note } from '../shared/notes';
-import { tr } from './i18n';
+import { tr, uiLanguage } from './i18n';
 
 type Route =
   | { view: 'focus'; scope: 'all' | string }
@@ -208,6 +208,25 @@ function Shell({
     )
       setRoute({ view: 'focus', scope: route.projectId });
   }, [route, project]);
+
+  // Where you are, in the window title (and so in the title bar).
+  const lang = uiLanguage();
+  useEffect(() => {
+    const place =
+      route.view === 'focus' && route.scope === 'all'
+        ? tr('Focus, all projects')
+        : route.view === 'mine'
+          ? tr(
+              route.page === 'tasks'
+                ? 'My tasks'
+                : route.page === 'notes'
+                  ? 'Notes'
+                  : 'Catalog',
+            )
+          : project(route.view === 'focus' ? route.scope : route.projectId)
+              ?.name;
+    document.title = place ? `${place} — WorkSync` : 'WorkSync';
+  }, [route, project, lang]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

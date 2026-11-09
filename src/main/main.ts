@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeTheme, session } from 'electron';
 import path from 'node:path';
 import { log } from './log';
+import { chromeOptions, followTheme, glassKind } from './windowChrome';
 import { koffiLoads } from './everything';
 import {
   addTrayItem,
@@ -30,6 +31,7 @@ import {
 const CHECK_EVERY_MS = 3 * 60 * 1000;
 
 const createWindow = (): void => {
+  const glass = glassKind();
   const mainWindow = new BrowserWindow({
     width: 1360,
     height: 860,
@@ -39,6 +41,8 @@ const createWindow = (): void => {
     // Matches the window color of the theme, so nothing flashes while it loads.
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#10141b' : '#f6f7f9',
     autoHideMenuBar: true,
+    // WorkSync's own title bar, with glass where the system has it.
+    ...chromeOptions(glass),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       // The renderer is treated as untrusted web content: it gets no Node.js
@@ -53,13 +57,19 @@ const createWindow = (): void => {
     },
   });
 
+  // The page needs to know which glass it is on before it first paints.
+  const query = { glass, platform: process.platform };
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    mainWindow.loadURL(
+      `${MAIN_WINDOW_VITE_DEV_SERVER_URL}?${new URLSearchParams(query)}`,
+    );
   } else {
     mainWindow.loadFile(
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+      { query },
     );
   }
+  followTheme(mainWindow);
 
   attachMainWindow(mainWindow);
   if (!app.isPackaged) {

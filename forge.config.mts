@@ -20,6 +20,9 @@ const config: ForgeConfig = {
       : {}),
     name: 'WorkSync',
     executableName: 'worksync',
+    // The app icon (.ico on Windows, .icns on macOS); made by
+    // build/icon/make-icons.mjs.
+    icon: 'build/icon/icon',
     appBundleId: 'com.worksync.desktop',
     // Code signing and notarization (required to distribute on macOS and to
     // avoid SmartScreen warnings on Windows) will be configured here later
@@ -56,13 +59,14 @@ const config: ForgeConfig = {
       // specTemplate is passed to electron-installer-redhat; Forge's types omit it.
       options: {
         specTemplate: path.resolve('build/rpm.spec.ejs'),
+        icon: 'build/icon/icon.png',
       } as ConstructorParameters<typeof MakerRpm>[0] extends {
         options?: infer O;
       }
         ? O
         : never,
     }),
-    new MakerDeb({}),
+    new MakerDeb({ options: { icon: 'build/icon/icon.png' } }),
   ],
   plugins: [
     new VitePlugin({
