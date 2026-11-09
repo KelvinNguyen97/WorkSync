@@ -16,6 +16,7 @@ import {
 } from '../shared/ownerBatch';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import { fileIcons } from './fileIcons';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import {
@@ -359,6 +360,7 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
   },
   addNoteImage: async (bytes) => needMine().addNoteImage(bytes),
   getNoteImage: async (id) => needMine().getNoteImage(id),
+  getFileIcons: async (paths) => fileIcons(paths),
   saveNoteImage: async (id) => {
     const { mime, data } = needMine().getNoteImage(id);
     const ext = mime.split('/')[1].replace('jpeg', 'jpg');

@@ -2114,6 +2114,15 @@ html.quick #root {
   width: 16px;
   height: 16px;
 }
+/* The app's or file's own icon, on a plain box. */
+.qs-ico.own {
+  background: rgb(var(--hl) / 0.04);
+}
+.qs-ico img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
 .qs-ico.folder {
   background: rgba(242, 181, 43, 0.16);
   color: var(--high-ink);

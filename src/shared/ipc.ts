@@ -294,6 +294,8 @@ export interface WorkSyncApi {
   /** Asks where to save an image from a note, and saves it. False when cancelled. */
   saveNoteImage(id: string): Promise<boolean>;
 
+  /** The system's icon for each path (an app's own icon, a document's app), as an image address; null where there is none. */
+  getFileIcons(paths: string[]): Promise<Record<string, string | null>>;
   /** The Catalog, each entry checked for whether its path is still there. */
   listCatalog(): Promise<CatalogEntry[]>;
   /** Asks for files or folders and adds them; paths already there are skipped. Null when cancelled. */
@@ -354,6 +356,7 @@ export const API_METHODS = [
   'addNoteImage',
   'getNoteImage',
   'saveNoteImage',
+  'getFileIcons',
   'listCatalog',
   'addToCatalog',
   'addFoundToCatalog',

@@ -16,6 +16,7 @@ import {
 import { parseTags } from '../shared/notes';
 import { useApp } from './appState';
 import { Icon } from './Icon';
+import { FileIcon } from './fileIcon';
 import type { HeaderSlot } from './mine';
 import { Modal } from './parts';
 import { tr } from './i18n';
@@ -325,15 +326,15 @@ export function CatalogView({
                 className={`cat-row ${e.missing ? 'missing' : ''}`}
                 onDoubleClick={() => void open(e)}
               >
-                <span
-                  className={`qs-ico ${e.kind === 'folder' ? 'folder' : isApp(e) ? 'app' : 'file'}`}
-                >
-                  <Icon
-                    name={
-                      e.kind === 'folder' ? 'folder' : isApp(e) ? 'app' : 'file'
-                    }
-                  />
-                </span>
+                <FileIcon
+                  path={e.path}
+                  kind={
+                    e.kind === 'folder' ? 'folder' : isApp(e) ? 'app' : 'file'
+                  }
+                  fallback={
+                    e.kind === 'folder' ? 'folder' : isApp(e) ? 'app' : 'file'
+                  }
+                />
                 <span className="cat-main">
                   <span className="cat-name">
                     <b>{e.name}</b>
@@ -436,9 +437,11 @@ export function CatalogView({
             <div className="cat-found-list">
               {found?.results.map((r) => (
                 <div key={r.path} className="cat-found-row">
-                  <span className={`qs-ico ${r.isFolder ? 'folder' : 'found'}`}>
-                    <Icon name={r.isFolder ? 'folder' : 'file'} />
-                  </span>
+                  <FileIcon
+                    path={r.path}
+                    kind={r.isFolder ? 'folder' : 'found'}
+                    fallback={r.isFolder ? 'folder' : 'file'}
+                  />
                   <span className="cat-main">
                     <b>{r.name}</b>
                     <small className="cat-path">{r.folder}</small>

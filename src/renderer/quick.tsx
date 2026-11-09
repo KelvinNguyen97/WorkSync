@@ -7,6 +7,7 @@ import {
   type EverythingAnswer,
 } from '../shared/catalog';
 import { Icon } from './Icon';
+import { FileIcon } from './fileIcon';
 import { setTheme, setUiLanguage, tr } from './i18n';
 
 /** Up to 8 Catalog entries and 8 files from Everything, as in FileManagement. */
@@ -198,23 +199,27 @@ export function QuickSearch() {
               onMouseMove={() => setSel(i)}
               onClick={() => void run(r, false)}
             >
-              <span
-                className={`qs-ico ${r.kind === 'entry' ? (r.entry.kind === 'folder' ? 'folder' : isApp(r.entry) ? 'app' : 'file') : r.isFolder ? 'folder' : 'found'}`}
-              >
-                <Icon
-                  name={
-                    (
-                      r.kind === 'entry'
-                        ? r.entry.kind === 'folder'
-                        : r.isFolder
-                    )
+              <FileIcon
+                path={r.kind === 'entry' ? r.entry.path : r.path}
+                kind={
+                  r.kind === 'entry'
+                    ? r.entry.kind === 'folder'
                       ? 'folder'
-                      : r.kind === 'entry' && isApp(r.entry)
+                      : isApp(r.entry)
                         ? 'app'
                         : 'file'
-                  }
-                />
-              </span>
+                    : r.isFolder
+                      ? 'folder'
+                      : 'found'
+                }
+                fallback={
+                  (r.kind === 'entry' ? r.entry.kind === 'folder' : r.isFolder)
+                    ? 'folder'
+                    : r.kind === 'entry' && isApp(r.entry)
+                      ? 'app'
+                      : 'file'
+                }
+              />
               <span className="qs-text">
                 <b>{r.kind === 'entry' ? r.entry.name : r.name}</b>
                 <small>{r.kind === 'entry' ? r.entry.path : r.folder}</small>
