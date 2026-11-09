@@ -117,9 +117,7 @@ function FocusCard({
       <div className="tc-top">
         <TaskNumber task={task} />
         {showProject && (
-          <span className="tc-proj" title={project.name}>
-            {initials(project.name)}
-          </span>
+          <span className="tc-proj">{initials(project.name)}</span>
         )}
         <span className="sp" />
         {task.pinned && (

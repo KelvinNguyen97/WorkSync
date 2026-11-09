@@ -3074,3 +3074,25 @@ html[data-glass='vibrancy'] .titlebar {
     --glass-k: 6;
   }
 }
+
+/* The full text of something cut short with "…" (overflowHint.tsx). */
+.overflow-hint {
+  z-index: 60;
+  max-width: min(440px, calc(100vw - 16px));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+  line-height: 1.45;
+  animation: hint-in 0.12s ease-out;
+}
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overflow-hint {
+    animation: none;
+  }
+}

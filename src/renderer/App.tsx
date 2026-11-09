@@ -540,7 +540,6 @@ function Shell({
                   <div className="proj" key={p.id}>
                     <button
                       className={`proj-btn ${isActive ? 'active' : ''}`}
-                      title={p.name}
                       aria-expanded={isActive}
                       onClick={() => setActive(isActive ? null : p.id)}
                     >

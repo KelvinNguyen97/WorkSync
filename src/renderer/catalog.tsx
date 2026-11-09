@@ -342,9 +342,7 @@ export function CatalogView({
                       <span className="cat-miss">{tr('Not found')}</span>
                     )}
                   </span>
-                  <small className="cat-path" title={e.path}>
-                    {e.path}
-                  </small>
+                  <small className="cat-path">{e.path}</small>
                 </span>
                 <span className="cat-meta">
                   <span className="cat-tags">
@@ -443,9 +441,7 @@ export function CatalogView({
                   </span>
                   <span className="cat-main">
                     <b>{r.name}</b>
-                    <small className="cat-path" title={r.path}>
-                      {r.folder}
-                    </small>
+                    <small className="cat-path">{r.folder}</small>
                   </span>
                   <span className="cat-acts">
                     <button
