@@ -996,4 +996,14 @@ export const JA: Record<string, string> = {
   '{n} images': '画像 {n} 枚',
   'Write here. It saves as you type. Paste an image to add it. Web addresses open with Ctrl+click.':
     'ここに書きます。入力すると保存されます。画像は貼り付けで追加できます。Web アドレスは Ctrl+クリックで開きます。',
+  'This project has no notes yet.':
+    'このプロジェクトにはまだノートがありません。',
+  '1 project note goes along, with its images.':
+    'プロジェクトのノート 1 件も画像ごと含まれます。',
+  '{n} project notes go along, with their images.':
+    'プロジェクトのノート {n} 件も画像ごと含まれます。',
+  'The project’s 1 note stays here.':
+    'プロジェクトのノート 1 件はここに残ります。',
+  'The project’s {n} notes stay here.':
+    'プロジェクトのノート {n} 件はここに残ります。',
 };

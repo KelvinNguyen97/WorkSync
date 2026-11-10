@@ -2839,3 +2839,9 @@ html[data-glass] .iv {
     animation: none;
   }
 }
+
+.export-notes {
+  display: block;
+  margin: 2px 0 0 24px;
+  color: var(--muted);
+}

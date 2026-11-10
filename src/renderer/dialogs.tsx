@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   BUILT_VIEWS,
   DATE_FORMATS,
@@ -892,6 +892,15 @@ function ExportCopy({ project }: { project: Project }) {
   const { attempt, toast } = useApp();
   const [notes, setNotes] = useState(true);
   const [busy, setBusy] = useState(false);
+  // How many notes belong to the project, to say what goes along.
+  const [noteCount, setNoteCount] = useState<number | null>(null);
+  useEffect(() => {
+    void window.worksync.listNotes().then(
+      (all) =>
+        setNoteCount(all.filter((n) => n.projectId === project.id).length),
+      () => setNoteCount(null),
+    );
+  }, [project.id]);
   const save = async () => {
     setBusy(true);
     const r = await attempt(() =>
@@ -920,6 +929,25 @@ function ExportCopy({ project }: { project: Project }) {
           />{' '}
           {tr('Include my notes, next actions and the project’s notes')}
         </label>
+        {noteCount !== null && (
+          <small className="export-notes">
+            {noteCount === 0
+              ? tr('This project has no notes yet.')
+              : notes
+                ? tr(
+                    noteCount === 1
+                      ? '1 project note goes along, with its images.'
+                      : '{n} project notes go along, with their images.',
+                    { n: noteCount },
+                  )
+                : tr(
+                    noteCount === 1
+                      ? 'The project’s 1 note stays here.'
+                      : 'The project’s {n} notes stay here.',
+                    { n: noteCount },
+                  )}
+          </small>
+        )}
       </span>
       <button
         type="button"
