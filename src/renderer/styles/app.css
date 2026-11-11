@@ -3474,3 +3474,14 @@ html[data-glass] .mg {
     gap: 0;
   }
 }
+
+/* The thing a confirmation is about, quoted as it is. */
+.confirm-detail {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--sunken);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13.5px;
+}

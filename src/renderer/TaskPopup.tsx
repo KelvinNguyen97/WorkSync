@@ -42,6 +42,7 @@ import {
   Titles,
   useTaskLabel,
   priorityClass,
+  confirmDelete,
 } from './parts';
 import { tr, uiLanguage } from './i18n';
 import { historyJa } from '../shared/historyJa';
@@ -439,11 +440,16 @@ function DifficultyRow({
           ·{' '}
           <button
             className="linkbtn"
-            onClick={() => {
+            onClick={async () => {
               if (
-                window.confirm(
-                  `Delete this difficulty?\n\n${d.text}\n\nUse this for one written by mistake. A difficulty that went away should be marked resolved instead, so the history keeps it.`,
-                )
+                await confirmDelete({
+                  title: tr('Delete this difficulty?'),
+                  text: tr(
+                    'Use this for one written by mistake. A difficulty that went away should be marked resolved instead, so the history keeps it.',
+                  ),
+                  detail: d.text,
+                  yes: tr('Delete'),
+                })
               )
                 void run(
                   () => window.worksync.deleteDifficulty(task.id, d.id),
@@ -688,9 +694,21 @@ function Links({ task }: { task: Task }) {
                   aria-label={tr('Remove the link {name}', {
                     name: l.name || l.target,
                   })}
-                  onClick={() =>
-                    void save(task.links.filter((_, j) => j !== i))
-                  }
+                  onClick={async () => {
+                    if (
+                      await confirmDelete({
+                        title: tr('Remove the link “{name}”?', {
+                          name: l.name || l.target,
+                        }),
+                        text: tr(
+                          'Only the link goes; the page or file is not touched.',
+                        ),
+                        detail: l.target,
+                        yes: tr('Remove'),
+                      })
+                    )
+                      void save(task.links.filter((_, j) => j !== i));
+                  }}
                 >
                   <Icon name="x" />
                 </button>

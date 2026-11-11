@@ -38,6 +38,7 @@ import {
   useTaskLabel,
   DeadlineChip,
   priorityClass,
+  confirmDelete,
 } from './parts';
 import { tr, trReason } from './i18n';
 
@@ -607,7 +608,10 @@ function BoardColumnsDialog({
                   ].find((x) => x.toLowerCase() === v.toLowerCase());
                   if (taken) {
                     toast(
-                      `There is already a column called ${taken}. Choose another name.`,
+                      tr(
+                        'There is already a column called {name}. Choose another name.',
+                        { name: taken },
+                      ),
                     );
                     e.target.value = c.name;
                     return;
@@ -626,12 +630,24 @@ function BoardColumnsDialog({
                 }}
               />
               <span className="muted">
-                under {c.status} · {count(c)}
+                {tr('under {status}', { status: tr(c.status) })} · {count(c)}
               </span>
               <button
                 className="icon-btn"
                 aria-label={tr('Delete the column {name}', { name: c.name })}
-                onClick={() => {
+                onClick={async () => {
+                  if (
+                    !(await confirmDelete({
+                      title: tr('Delete the column “{name}”?', {
+                        name: c.name,
+                      }),
+                      text: tr('Its tasks go back to {status}.', {
+                        status: tr(c.status),
+                      }),
+                      yes: tr('Delete'),
+                    }))
+                  )
+                    return;
                   void save({
                     ...b,
                     columns: b.columns.filter((x) => x.id !== c.id),
@@ -639,7 +655,10 @@ function BoardColumnsDialog({
                     (ok) =>
                       ok &&
                       toast(
-                        `Deleted ${c.name}. Its tasks are back in ${c.status}.`,
+                        tr('Deleted {name}. Its tasks are back in {status}.', {
+                          name: c.name,
+                          status: tr(c.status),
+                        }),
                       ),
                   );
                 }}

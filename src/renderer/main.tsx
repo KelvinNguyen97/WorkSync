@@ -7,6 +7,7 @@ import { App } from './App';
 import { QuickSearch } from './quick';
 import { TitleBar } from './titlebar';
 import { OverflowHint } from './overflowHint';
+import { ConfirmHost } from './parts';
 import './styles/base.css';
 import './styles/app.css';
 
@@ -39,5 +40,6 @@ createRoot(container).render(
       </>
     )}
     <OverflowHint />
+    {!quick && <ConfirmHost />}
   </StrictMode>,
 );

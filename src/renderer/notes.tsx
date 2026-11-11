@@ -15,6 +15,7 @@ import {
 } from '../shared/notes';
 import { imageFrom, keepImage, NoteImage } from './noteImages';
 import { useApp } from './appState';
+import { confirmDelete } from './parts';
 import { Icon } from './Icon';
 import type { HeaderSlot } from './mine';
 import { tr } from './i18n';
@@ -128,6 +129,16 @@ export function NotesView({
   };
 
   const remove = async (n: Note) => {
+    if (
+      !(await confirmDelete({
+        title: tr('Delete the note “{title}”?', {
+          title: n.title || tr('Untitled note'),
+        }),
+        text: tr('The note and its images are deleted.'),
+        yes: tr('Delete note'),
+      }))
+    )
+      return;
     const gone = await attempt(() => window.worksync.deleteNote(n.id));
     if (!gone) return;
     setNotes((list) => list.filter((x) => x.id !== n.id));
@@ -532,7 +543,15 @@ function NoteBody({
     update([...now.slice(0, i), t1, img, t2, ...now.slice(i + 1)]);
   };
 
-  const remove = (key: number) => {
+  const remove = async (key: number) => {
+    if (
+      !(await confirmDelete({
+        title: tr('Remove this image from the note?'),
+        text: tr('You can undo this right after.'),
+        yes: tr('Remove'),
+      }))
+    )
+      return;
     const blocks = latest.current;
     const i = blocks.findIndex((x) => x.key === key);
     const before = blocks;
@@ -554,7 +573,11 @@ function NoteBody({
     <div className="note-body" onBlur={onBlur}>
       {blocks.map((b, i) =>
         b.kind === 'image' ? (
-          <NoteImage key={b.key} id={b.id} onRemove={() => remove(b.key)} />
+          <NoteImage
+            key={b.key}
+            id={b.id}
+            onRemove={() => void remove(b.key)}
+          />
         ) : (
           <TextPiece
             key={b.key}

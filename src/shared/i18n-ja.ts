@@ -1206,4 +1206,38 @@ export const JA: Record<string, string> = {
   'Description translation': '説明（訳）',
   translation: '訳',
   summary: '要約',
+  // Asking before deleting
+  'Delete the note “{title}”?': 'ノート「{title}」を削除しますか？',
+  'The note and its images are deleted.': 'ノートとその画像が削除されます。',
+  'Remove this image from the note?': 'この画像をノートから削除しますか？',
+  'You can undo this right after.': '直後なら元に戻せます。',
+  'Delete “{title}”?': '「{title}」を削除しますか？',
+  'The task is deleted, with its reminders.':
+    'タスクはリマインダーごと削除されます。',
+  'Remove “{name}” from the Catalog?': '「{name}」をカタログから外しますか？',
+  'Only the Catalog entry goes; the file or folder itself is not touched.':
+    'カタログの項目だけがなくなります。ファイルやフォルダー自体はそのままです。',
+  'Removed {name} from the Catalog. The folder itself is untouched.':
+    '{name} をカタログから外しました。フォルダー自体はそのままです。',
+  'Delete the term “{term}”?': '用語「{term}」を削除しますか？',
+  'Gemini batches and the glossary marks in task text no longer use it.':
+    'Gemini の一括処理やタスク本文の用語表示で使われなくなります。',
+  '{name} · Gemini batches use these translations exactly':
+    '{name} · Gemini の一括処理はこの訳をそのまま使います',
+  'Delete {name} from the people list?': '{name} を人の一覧から削除しますか？',
+  'Tasks are not changed: names in them stay as they are written.':
+    'タスクは変わりません。タスク内の名前は書かれたまま残ります。',
+  'Delete this difficulty?': 'この課題を削除しますか？',
+  'Use this for one written by mistake. A difficulty that went away should be marked resolved instead, so the history keeps it.':
+    '間違えて書いた課題に使ってください。なくなった課題は「解決済み」にすると履歴に残ります。',
+  'Remove the link “{name}”?': 'リンク「{name}」を削除しますか？',
+  'Only the link goes; the page or file is not touched.':
+    'リンクだけがなくなります。ページやファイル自体はそのままです。',
+  'Delete the column “{name}”?': '列「{name}」を削除しますか？',
+  'Its tasks go back to {status}.': 'この列のタスクは「{status}」に戻ります。',
+  'Deleted {name}. Its tasks are back in {status}.':
+    '{name} を削除しました。タスクは「{status}」に戻りました。',
+  'under {status}': '状態：{status}',
+  'There is already a column called {name}. Choose another name.':
+    '「{name}」という列はすでにあります。別の名前にしてください。',
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   LEVEL_NAME,
   glossSegments,
@@ -316,5 +316,72 @@ export function Toast() {
         </>
       )}
     </div>
+  );
+}
+
+// ------------------------------------------------------------ confirming a deletion
+
+interface ConfirmOptions {
+  title: string;
+  /** What happens, in a sentence. */
+  text?: string;
+  /** The thing being deleted, shown as it is (a difficulty's text…). */
+  detail?: string;
+  /** The button that deletes: Delete, Remove… */
+  yes: string;
+}
+let ask: ((o: ConfirmOptions, done: (ok: boolean) => void) => void) | null =
+  null;
+
+/**
+ * Asks before something is deleted, in the app's own dialog. Resolves true
+ * only when the owner presses the delete button; Cancel, Esc and closing
+ * keep it.
+ */
+export const confirmDelete = (o: ConfirmOptions): Promise<boolean> =>
+  new Promise((done) => (ask ? ask(o, done) : done(false)));
+
+/** Shows the questions confirmDelete asks; mounted once for the window. */
+export function ConfirmHost() {
+  const [req, setReq] = useState<{
+    o: ConfirmOptions;
+    done: (ok: boolean) => void;
+  } | null>(null);
+  useEffect(() => {
+    ask = (o, done) => setReq({ o, done });
+    return () => {
+      ask = null;
+    };
+  }, []);
+  if (!req) return null;
+  const finish = (ok: boolean) => {
+    req.done(ok);
+    setReq(null);
+  };
+  return (
+    <Modal
+      title={req.o.title}
+      subtitle={req.o.text}
+      onClose={() => finish(false)}
+      narrow
+      footer={
+        <>
+          {/* Cancel first: it takes the focus, so Enter never deletes by accident. */}
+          <button className="btn" onClick={() => finish(false)}>
+            {tr('Cancel')}
+          </button>
+          <button className="btn danger" onClick={() => finish(true)}>
+            <Icon name="trash" />
+            {req.o.yes}
+          </button>
+        </>
+      }
+    >
+      {req.o.detail ? (
+        <div className="confirm-detail">{req.o.detail}</div>
+      ) : (
+        <></>
+      )}
+    </Modal>
   );
 }

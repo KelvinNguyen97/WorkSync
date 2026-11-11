@@ -18,7 +18,7 @@ import { useApp } from './appState';
 import { Icon } from './Icon';
 import { FileIcon } from './fileIcon';
 import type { HeaderSlot } from './mine';
-import { Modal } from './parts';
+import { confirmDelete, Modal } from './parts';
 import { tr } from './i18n';
 
 const SORT_KEY = 'worksync.catalog.sort';
@@ -173,11 +173,26 @@ export function CatalogView({
       toast(tr('Path copied.'));
   };
   const remove = async (e: CatalogEntry) => {
+    if (
+      !(await confirmDelete({
+        title: tr('Remove “{name}” from the Catalog?', { name: e.name }),
+        text: tr(
+          'Only the Catalog entry goes; the file or folder itself is not touched.',
+        ),
+        yes: tr('Remove'),
+      }))
+    )
+      return;
     const gone = await attempt(() => window.worksync.removeCatalogEntry(e.id));
     if (!gone) return;
     setEntries((list) => list.filter((x) => x.id !== e.id));
     toast(
-      `Removed ${e.name} from the Catalog. The ${e.kind} itself is untouched.`,
+      tr(
+        e.kind === 'folder'
+          ? 'Removed {name} from the Catalog. The folder itself is untouched.'
+          : 'Removed {name} from the Catalog. The file itself is untouched.',
+        { name: e.name },
+      ),
       {
         label: 'Undo',
         run: () =>

@@ -13,6 +13,7 @@ import {
   type MyTaskInput,
 } from '../shared/myTasks';
 import { useApp } from './appState';
+import { confirmDelete } from './parts';
 import { Icon } from './Icon';
 import { tr } from './i18n';
 
@@ -131,6 +132,15 @@ export function MyTasksView({
   };
 
   const complete = async (t: MyTask, word: 'Completed' | 'Deleted') => {
+    if (
+      word === 'Deleted' &&
+      !(await confirmDelete({
+        title: tr('Delete “{title}”?', { title: t.title }),
+        text: tr('The task is deleted, with its reminders.'),
+        yes: tr('Delete'),
+      }))
+    )
+      return;
     const gone = await attempt(() => window.worksync.completeMyTask(t.id));
     if (!gone) return;
     setTasks((list) => list.filter((x) => x.id !== t.id));

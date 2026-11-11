@@ -11,7 +11,7 @@ import {
 } from '../shared/model';
 import { useApp } from './appState';
 import { Icon } from './Icon';
-import { Modal } from './parts';
+import { confirmDelete, Modal } from './parts';
 import { tr } from './i18n';
 
 /** The batches prepared in this session, kept so Paste from AI can come later. */
@@ -509,13 +509,25 @@ export function GlossaryDialog({
     await reloadGlossary();
   };
   const remove = async (g: GlossaryTerm) => {
+    if (
+      !(await confirmDelete({
+        title: tr('Delete the term “{term}”?', { term: g.term }),
+        text: tr(
+          'Gemini batches and the glossary marks in task text no longer use it.',
+        ),
+        yes: tr('Delete'),
+      }))
+    )
+      return;
     await attempt(() => window.worksync.deleteGlossaryTerm(g.id));
     await load();
   };
   return (
     <Modal
       title={tr('Glossary')}
-      subtitle={`${project.name} · Gemini batches use these translations exactly`}
+      subtitle={tr('{name} · Gemini batches use these translations exactly', {
+        name: project.name,
+      })}
       onClose={onClose}
       footer={
         <button className="btn primary" onClick={onClose}>

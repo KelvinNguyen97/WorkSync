@@ -7,7 +7,7 @@ import {
 } from '../shared/model';
 import { useApp } from './appState';
 import { Icon } from './Icon';
-import { Modal } from './parts';
+import { confirmDelete, Modal } from './parts';
 import { tr } from './i18n';
 
 type Draft = Omit<Person, 'id' | 'projectId'> & { id?: string };
@@ -72,6 +72,18 @@ export function PeopleDialog({
     setSpellings(p.spellings.join(', '));
   };
   const remove = async (p: Person) => {
+    if (
+      !(await confirmDelete({
+        title: tr('Delete {name} from the people list?', {
+          name: p.displayName || p.name,
+        }),
+        text: tr(
+          'Tasks are not changed: names in them stay as they are written.',
+        ),
+        yes: tr('Delete'),
+      }))
+    )
+      return;
     await attempt(() => window.worksync.deletePerson(p.id));
     await reloadPeople();
     if (draft.id === p.id) {
