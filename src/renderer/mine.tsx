@@ -256,7 +256,7 @@ export function MyTasksView({
               >
                 <button
                   className="mt-done"
-                  aria-label={`Complete ${t.title}`}
+                  aria-label={tr('Complete {title}', { title: t.title })}
                   title={tr('Complete (removes the task)')}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -268,7 +268,7 @@ export function MyTasksView({
                 <button
                   className="mt-title"
                   onClick={() => setSel(t.id)}
-                  aria-label={`Edit ${t.title}`}
+                  aria-label={tr('Edit {name}', { name: t.title })}
                 >
                   <b>{t.title}</b>
                   {t.description && <small>{t.description}</small>}
@@ -295,7 +295,7 @@ export function MyTasksView({
                   <button
                     className={`icon-btn ${t.reminders ? 'on' : ''}`}
                     aria-pressed={t.reminders}
-                    aria-label={`Reminders for ${t.title}`}
+                    aria-label={tr('Reminders for {title}', { title: t.title })}
                     title={
                       t.reminders ? tr('Reminders on') : tr('Reminders off')
                     }
@@ -308,7 +308,7 @@ export function MyTasksView({
                   </button>
                   <button
                     className="icon-btn"
-                    aria-label={`Delete ${t.title}`}
+                    aria-label={tr('Delete {name}', { name: t.title })}
                     title={tr('Delete')}
                     onClick={(e) => {
                       e.stopPropagation();

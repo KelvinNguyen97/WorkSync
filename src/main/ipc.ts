@@ -50,6 +50,13 @@ import {
 import { log, logFolder, startLog } from './log';
 import { exportProject, importProject, readExport } from './projectTransfer';
 import {
+  applyMerge,
+  mergeTargets,
+  planMerge,
+  startMerge,
+  type MergeSession,
+} from './projectMerge';
+import {
   DEFAULT_SETTINGS,
   sharedFolderWarning,
   type AppSettings,
@@ -81,6 +88,8 @@ let startup: Startup | null = null;
 let dataFolder = '';
 /** .worksync files the owner picked in this session; only these are imported. */
 const chosenImports = new Set<string>();
+/** Merges being looked at in the merge window, by token. */
+const merges = new Map<string, MergeSession>();
 /** Backup files the owner picked from elsewhere in this session. */
 const chosenBackups = new Set<string>();
 
@@ -601,6 +610,53 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
       exportedAt: x.exportedAt,
       tasks: (x.tables.tasks ?? []).length,
       sameName,
+      mergeTargets: mergeTargets(db!, x),
+      fromName: x.from.name,
+    };
+  },
+  previewMerge: async (file, projectId) => {
+    const st = need();
+    if (!chosenImports.has(file)) throw new Error('Choose the file again.');
+    const x = readExport(fs.readFileSync(file));
+    const m = startMerge(db!, x, projectId);
+    const plan = planMerge(m);
+    const token = randomUUID();
+    merges.clear();
+    merges.set(token, m);
+    return {
+      token,
+      projectName: st.getProject(projectId).name,
+      fromName: x.from.name,
+      exportedAt: x.exportedAt,
+      lastMergedAt: m.baseAt,
+      auto: plan.auto,
+      questions: plan.questions,
+    };
+  },
+  applyMerge: async (token, choices) => {
+    const st = need();
+    const m = merges.get(token);
+    if (!m) throw new Error('Choose the file again.');
+    // A backup first: a merge can be undone by restoring it.
+    backupBefore(db!, backupFolder(), 'manual', 'before a merge');
+    const r = applyMerge(db!, m, choices, {
+      snapshotRoot: path.join(dataFolder, 'snapshots'),
+      now: new Date().toISOString(),
+    });
+    merges.delete(token);
+    // Files that came with the other copy are checked on this PC.
+    const { sources: s, links: l } = needLinks();
+    for (const src of s.list().filter((x) => x.projectId === m.projectId))
+      l.check(src);
+    notifySources();
+    log(
+      'info',
+      `Merged a project copy: ${r.added} tasks added, ${r.changed} changed, ${r.removed} removed`,
+    );
+    return {
+      ...r,
+      projectId: m.projectId,
+      name: st.getProject(m.projectId).name,
     };
   },
   importProject: async (file, replaceProjectId) => {

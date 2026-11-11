@@ -267,7 +267,7 @@ export function TasksView({
       <div
         className="tt"
         role="grid"
-        aria-label={`Tasks in ${p.name}`}
+        aria-label={tr('Tasks in {name}', { name: p.name })}
         aria-rowcount={rows.length + 2}
         aria-multiselectable
         style={{ ['--tt-cols' as string]: template, minWidth }}
@@ -371,7 +371,7 @@ export function TasksView({
                   <input
                     type="checkbox"
                     tabIndex={-1}
-                    aria-label={`Select No. ${t.customerId}`}
+                    aria-label={tr('Select No. {no}', { no: t.customerId })}
                     checked={sel}
                     readOnly
                   />
@@ -482,7 +482,7 @@ function FilterInput({
     return (
       <select
         className={`tt-filter ${value ? 'on' : ''}`}
-        aria-label={`Filter ${c.label}`}
+        aria-label={tr('Filter {name}', { name: tr(c.label) })}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -497,7 +497,7 @@ function FilterInput({
   return (
     <input
       className={`tt-filter ${value ? 'on' : ''}`}
-      aria-label={`Filter ${c.label}`}
+      aria-label={tr('Filter {name}', { name: tr(c.label) })}
       placeholder={c.filter === 'date' ? 'e.g. 2026/11' : tr('Filter')}
       title={
         c.filter === 'date'
@@ -607,7 +607,7 @@ function BulkBar({
   const [label, setLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const n = tasks.length;
-  const rows = `${n} task${n === 1 ? '' : 's'}`;
+  const rows = tr(n === 1 ? '1 task' : '{n} tasks', { n });
   const fromFile = tasks.filter((t) => t.source === 'file').length;
 
   const apply = async (change: BulkChange, done: string) => {

@@ -437,7 +437,9 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                 <button
                   className="btn sm"
                   onClick={() => void askRestore(b)}
-                  aria-label={`Restore the backup from ${when(b.at)}`}
+                  aria-label={tr('Restore the backup from {date}', {
+                    date: when(b.at),
+                  })}
                 >
                   {tr('Restore')}
                 </button>

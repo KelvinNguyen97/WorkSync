@@ -7,7 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { GlossaryTerm, Person, Project, Task } from '../shared/model';
+import {
+  toIsoDate,
+  type GlossaryTerm,
+  type Person,
+  type Project,
+  type Task,
+} from '../shared/model';
 import type { SourceFile } from '../shared/sources';
 import type { AppSettings } from '../shared/settings';
 import { setTheme, setUiLanguage, tr, uiLanguage } from './i18n';
@@ -22,7 +28,10 @@ export interface ToastMessage {
 }
 
 interface AppState {
+  /** Today's date (YYYY-MM-DD), kept current while the app stays open. */
   today: string;
+  /** The time, refreshed every minute, for "5 min ago" and similar. */
+  now: number;
   settings: AppSettings;
   setSettings: (s: AppSettings) => void;
   people: Person[];
@@ -75,6 +84,27 @@ export function AppProvider({
   const [projects, setProjects] = useState(initial.projects);
   const [tasks, setTasks] = useState(initial.tasks);
   const [today, setToday] = useState(initial.today);
+  // The clock moves on while the app stays open (past midnight, or after the
+  // PC sleeps), so deadlines such as "Due in 2 days" and "Overdue" follow it.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const timer = window.setInterval(tick, 60 * 1000);
+    const onShow = () => {
+      if (!document.hidden) tick();
+    };
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', onShow);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', tick);
+      document.removeEventListener('visibilitychange', onShow);
+    };
+  }, []);
+  useEffect(() => {
+    const d = toIsoDate(new Date(now));
+    setToday((t) => (t === d ? t : d));
+  }, [now]);
   const [sources, setSources] = useState(initial.sources);
   const [settings, setSettings] = useState(initial.settings);
   const [people, setPeople] = useState(initial.people);
@@ -106,6 +136,7 @@ export function AppProvider({
   const value = useMemo<AppState>(
     () => ({
       today,
+      now,
       settings,
       setSettings,
       people,
@@ -168,6 +199,7 @@ export function AppProvider({
     }),
     [
       today,
+      now,
       settings,
       people,
       glossary,

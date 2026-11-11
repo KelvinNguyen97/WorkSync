@@ -366,7 +366,9 @@ export function CatalogView({
                   </button>
                   <button
                     className="icon-btn"
-                    aria-label={`Show ${e.name} in its folder`}
+                    aria-label={tr('Show {name} in its folder', {
+                      name: e.name,
+                    })}
                     title={tr('Show in folder')}
                     disabled={e.missing}
                     onClick={() =>
@@ -379,7 +381,7 @@ export function CatalogView({
                   </button>
                   <button
                     className="icon-btn"
-                    aria-label={`Copy the path of ${e.name}`}
+                    aria-label={tr('Copy the path of {name}', { name: e.name })}
                     title={tr('Copy path')}
                     onClick={() => void copy(e.path)}
                   >
@@ -388,7 +390,7 @@ export function CatalogView({
                   <button
                     className={`icon-btn ${e.favorite ? 'on-fav' : ''}`}
                     aria-pressed={e.favorite}
-                    aria-label={`Favorite: ${e.name}`}
+                    aria-label={tr('Favorite: {name}', { name: e.name })}
                     title={
                       e.favorite
                         ? tr('Remove from favorites')
@@ -400,7 +402,7 @@ export function CatalogView({
                   </button>
                   <button
                     className="icon-btn"
-                    aria-label={`Edit ${e.name}`}
+                    aria-label={tr('Edit {name}', { name: e.name })}
                     title={tr('Edit')}
                     onClick={() => setEditing(e)}
                   >
@@ -408,7 +410,9 @@ export function CatalogView({
                   </button>
                   <button
                     className="icon-btn"
-                    aria-label={`Remove ${e.name} from the Catalog`}
+                    aria-label={tr('Remove {name} from the Catalog', {
+                      name: e.name,
+                    })}
                     title={tr('Remove from the Catalog (the file stays)')}
                     onClick={() => void remove(e)}
                   >
@@ -459,7 +463,9 @@ export function CatalogView({
                     </button>
                     <button
                       className="icon-btn"
-                      aria-label={`Show ${r.name} in its folder`}
+                      aria-label={tr('Show {name} in its folder', {
+                        name: r.name,
+                      })}
                       title={tr('Show in folder')}
                       onClick={() =>
                         void attempt(() =>
@@ -471,7 +477,9 @@ export function CatalogView({
                     </button>
                     <button
                       className="icon-btn"
-                      aria-label={`Copy the path of ${r.name}`}
+                      aria-label={tr('Copy the path of {name}', {
+                        name: r.name,
+                      })}
                       title={tr('Copy path')}
                       onClick={() => void copy(r.path)}
                     >
@@ -558,7 +566,7 @@ function EntryEditor({
   };
   return (
     <Modal
-      title={`Edit ${entry.name}`}
+      title={tr('Edit {name}', { name: entry.name })}
       onClose={onClose}
       narrow
       footer={

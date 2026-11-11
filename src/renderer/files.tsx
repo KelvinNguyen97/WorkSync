@@ -235,7 +235,7 @@ export function FilesView({
       )}
       {confirm && (
         <Modal
-          title={`Unlink ${name(confirm.currentFile)}?`}
+          title={tr('Unlink {file}?', { file: name(confirm.currentFile) })}
           subtitle={tr(
             'Its tasks stay, with their history, and are marked Removed from file. The file itself is not touched.',
           )}
@@ -570,7 +570,7 @@ export function ReviewDialog({
                   checked={add.has(r.row)}
                   disabled={!!joins[r.row]}
                   onChange={() => toggle(add, r.row, setAdd)}
-                  aria-label={`Add row ${r.row} as a new task`}
+                  aria-label={tr('Add row {n} as a new task', { n: r.row })}
                 />
                 <div>
                   <span className="tid">
@@ -629,7 +629,9 @@ export function ReviewDialog({
                   type="checkbox"
                   checked={change.has(c.taskId)}
                   onChange={() => toggle(change, c.taskId, setChange)}
-                  aria-label={`Apply changes to No. ${c.customerId}`}
+                  aria-label={tr('Apply changes to No. {no}', {
+                    no: c.customerId,
+                  })}
                 />
                 <div>
                   <span className="tid">

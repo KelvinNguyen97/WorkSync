@@ -71,7 +71,11 @@ export function ProjectDialog({
     );
     if (p) {
       putProject(p);
-      toast(project ? 'Project saved.' : `Created ${p.name}.`);
+      toast(
+        project
+          ? tr('Project saved.')
+          : tr('Created {name}.', { name: p.name }),
+      );
       onSaved(p);
     }
   };
@@ -421,7 +425,7 @@ export function TaskDialog({
     );
     if (t) {
       putTask(t);
-      toast(task ? `Saved ${label(t)}.` : `Added ${label(t)}.`);
+      toast(tr(task ? 'Saved {task}.' : 'Added {task}.', { task: label(t) }));
       onSaved(t);
     }
   };
@@ -806,7 +810,7 @@ export function ViewsDialog({
                 className="switch"
                 role="switch"
                 aria-checked={on}
-                aria-label={`Show ${VIEW_INFO[k].name}`}
+                aria-label={tr('Show {view}', { view: tr(VIEW_INFO[k].name) })}
                 disabled={k === 'focus'}
                 onClick={() => void toggle(k)}
               >
@@ -852,7 +856,7 @@ export function ConfirmDelete({
   };
   return (
     <Modal
-      title={`Delete ${label(task)}?`}
+      title={tr('Delete {task}?', { task: label(task) })}
       subtitle={tr(
         'The task, its situation updates and its history are deleted. This cannot be undone.',
       )}

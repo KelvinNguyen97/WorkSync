@@ -172,7 +172,7 @@ export function PeopleDialog({
             <button
               key={name}
               className="chip-btn"
-              title={`${n} task${n === 1 ? '' : 's'}`}
+              title={tr(n === 1 ? '1 task' : '{n} tasks', { n })}
               onClick={() => {
                 setDraft({ ...EMPTY, name });
                 setSpellings('');
@@ -209,14 +209,14 @@ export function PeopleDialog({
                   <td className="row-actions">
                     <button
                       className="icon-btn"
-                      aria-label={`Edit ${p.name}`}
+                      aria-label={tr('Edit {name}', { name: p.name })}
                       onClick={() => edit(p)}
                     >
                       <Icon name="edit" />
                     </button>
                     <button
                       className="icon-btn"
-                      aria-label={`Delete ${p.name}`}
+                      aria-label={tr('Delete {name}', { name: p.name })}
                       onClick={() => void remove(p)}
                     >
                       <Icon name="trash" />

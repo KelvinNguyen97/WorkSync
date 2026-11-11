@@ -401,7 +401,7 @@ function NoteEditor({
               {t}
               <button
                 className="note-tag-x"
-                aria-label={`Remove the tag ${t}`}
+                aria-label={tr('Remove the tag {tag}', { tag: t })}
                 onClick={() =>
                   void save({ tags: note.tags.filter((x) => x !== t) })
                 }
@@ -442,7 +442,7 @@ function NoteEditor({
             <button
               key={u}
               className="linkbtn"
-              title={`Open ${u} in your browser`}
+              title={tr('Open {url} in your browser', { url: u })}
               onClick={() => openLink(u)}
             >
               <Icon name="globe" />

@@ -43,7 +43,8 @@ import {
   useTaskLabel,
   priorityClass,
 } from './parts';
-import { tr } from './i18n';
+import { tr, uiLanguage } from './i18n';
+import { historyJa } from '../shared/historyJa';
 
 /** Splits text into paragraphs on blank lines, or on single lines when there are none. */
 const paragraphs = (text: string): string[] => {
@@ -684,7 +685,9 @@ function Links({ task }: { task: Task }) {
                 </button>
                 <button
                   className="icon-btn"
-                  aria-label={`Remove the link ${l.name || l.target}`}
+                  aria-label={tr('Remove the link {name}', {
+                    name: l.name || l.target,
+                  })}
                   onClick={() =>
                     void save(task.links.filter((_, j) => j !== i))
                   }
@@ -798,7 +801,12 @@ function HistoryList({
                 {new Date(h.at).toTimeString().slice(0, 5)}
               </span>
               <span className="kind">{tr(h.kind)}</span>
-              <div className="hist-text">{h.text}</div>
+              <div className="hist-text">
+                {/* The app's own wording in the app language; a note stays as written. */}
+                {uiLanguage() === 'ja' && h.kind !== 'Note'
+                  ? historyJa(h.text)
+                  : h.text}
+              </div>
             </li>
           ))}
       </ul>

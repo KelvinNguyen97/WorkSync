@@ -496,7 +496,12 @@ export function OwnerTranslate({
     setAnswer('');
     setRead(null);
     if (at + 1 >= batches.length) {
-      toast(`Saved ${saved + n} translations of ${what}.`);
+      toast(
+        tr('Saved {n} translations of {what}.', {
+          n: saved + n,
+          what: tr(what),
+        }),
+      );
       await onDone();
     } else setAt(at + 1);
   };
@@ -504,8 +509,11 @@ export function OwnerTranslate({
     <div className="owner-tr">
       <div className="owner-tr-head">
         <b>
-          {tr('Translate')} {what} {tr('· request')} {batch.number} of{' '}
-          {batch.of}
+          {tr('Translate {what} · request {n} of {total}', {
+            what: tr(what),
+            n: batch.number,
+            total: batch.of,
+          })}
         </b>
         <button className="btn sm" onClick={() => void onDone()}>
           {tr('Cancel')}

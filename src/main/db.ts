@@ -268,6 +268,32 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // 21: merging copies of a project. Each row keeps one id across all copies
+  // (uid; when empty, the row's own id), and each .worksync file sent or
+  // received is kept as the common starting point for the next merge.
+  `
+  ALTER TABLE projects ADD COLUMN uid TEXT;
+  ALTER TABLE tasks ADD COLUMN uid TEXT;
+  ALTER TABLE situation_updates ADD COLUMN uid TEXT;
+  ALTER TABLE difficulties ADD COLUMN uid TEXT;
+  ALTER TABLE activity ADD COLUMN uid TEXT;
+  ALTER TABLE glossary_terms ADD COLUMN uid TEXT;
+  ALTER TABLE people ADD COLUMN uid TEXT;
+  ALTER TABLE notes ADD COLUMN uid TEXT;
+  ALTER TABLE source_files ADD COLUMN uid TEXT;
+  ALTER TABLE file_versions ADD COLUMN uid TEXT;
+  CREATE TABLE merge_exchanges (
+    id TEXT NOT NULL,               -- the exchange id written in the file
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    peer TEXT NOT NULL,             -- the other WorkSync ('' for a file sent)
+    peer_name TEXT NOT NULL DEFAULT '',
+    direction TEXT NOT NULL,        -- sent or got
+    at TEXT NOT NULL,
+    data TEXT NOT NULL,             -- the project as exchanged, by uid (JSON)
+    PRIMARY KEY (id, project_id, direction)
+  );
+  CREATE INDEX merge_exchanges_project ON merge_exchanges(project_id, at);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

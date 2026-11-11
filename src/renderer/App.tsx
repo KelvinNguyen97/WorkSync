@@ -18,7 +18,7 @@ import {
   viewName,
 } from './dialogs';
 import { Icon } from './Icon';
-import { Modal, Toast } from './parts';
+import { Toast } from './parts';
 import { PriorityMenu, type MenuAnchor } from './PriorityMenu';
 import { TaskPopup } from './TaskPopup';
 import { BoardView, FocusView, initials, type ViewProps } from './views';
@@ -48,6 +48,7 @@ import { CatalogView } from './catalog';
 import type { CatalogEntry } from '../shared/catalog';
 import type { Note } from '../shared/notes';
 import { tr, uiLanguage } from './i18n';
+import { ImportChoice, MergeWizard } from './importMerge';
 
 type Route =
   | { view: 'focus'; scope: 'all' | string }
@@ -91,6 +92,7 @@ type Dialog =
         Awaited<ReturnType<typeof window.worksync.chooseImport>>
       >;
     }
+  | { kind: 'merge'; file: string; projectId: string }
   | { kind: 'report'; projectId: string; taskIds?: string[] };
 
 export function App() {
@@ -304,7 +306,8 @@ function Shell({
   const importCopy = async () => {
     const info = await attempt(() => window.worksync.chooseImport());
     if (!info) return;
-    if (info.sameName.length) setDialog({ kind: 'importClash', info });
+    if (info.sameName.length || info.mergeTargets.length)
+      setDialog({ kind: 'importClash', info });
     else await finishImport(info.file, null);
   };
   const finishImport = async (file: string, replace: string | null) => {
@@ -1051,11 +1054,29 @@ function Shell({
         />
       )}
       {dialog?.kind === 'importClash' && (
-        <ImportClash
+        <ImportChoice
           info={dialog.info}
           onCopy={() => void finishImport(dialog.info.file, null)}
           onReplace={(id) => void finishImport(dialog.info.file, id)}
+          onMerge={(id) =>
+            setDialog({ kind: 'merge', file: dialog.info.file, projectId: id })
+          }
           onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.kind === 'merge' && (
+        <MergeWizard
+          file={dialog.file}
+          projectId={dialog.projectId}
+          onClose={() => setDialog(null)}
+          onDone={(r) => {
+            setDialog(null);
+            void reloadAll().then(() => {
+              setActive(r.projectId);
+              go({ view: 'focus', scope: r.projectId });
+            });
+            toast(tr('Merged into {name}.', { name: r.name }), undefined);
+          }}
         />
       )}
       {dialog?.kind === 'settings' && (
@@ -1140,125 +1161,5 @@ function Welcome({
         </button>
       </div>
     </div>
-  );
-}
-
-/**
- * Importing a project whose name is already used here: make a copy beside
- * it, or replace the existing project with the imported one.
- */
-function ImportClash({
-  info,
-  onCopy,
-  onReplace,
-  onClose,
-}: {
-  info: NonNullable<Awaited<ReturnType<typeof window.worksync.chooseImport>>>;
-  onCopy: () => void;
-  onReplace: (projectId: string) => void;
-  onClose: () => void;
-}) {
-  const { projects } = useApp();
-  const [target, setTarget] = useState(info.sameName[0].id);
-  const [busy, setBusy] = useState(false);
-  const old = info.sameName.find((p) => p.id === target)!;
-  const exported = info.exportedAt
-    ? new Date(info.exportedAt).toLocaleString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '';
-  // The name a copy would get, as Windows names copies.
-  const taken = new Set(projects.map((p) => p.name.trim().toLowerCase()));
-  const root = info.name.replace(/\s*\(\d+\)$/, '');
-  let n = 1;
-  while (taken.has(`${root} (${n})`.toLowerCase())) n++;
-  const copyName = `${root} (${n})`;
-  return (
-    <Modal
-      title={`A project called ${info.name} already exists`}
-      subtitle={tr(
-        'Keep both, or replace yours with the one you are importing.',
-      )}
-      onClose={onClose}
-      narrow
-      footer={
-        <>
-          <button className="btn" onClick={onClose}>
-            {tr('Cancel')}
-          </button>
-          <button
-            className="btn"
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              onCopy();
-            }}
-          >
-            {tr('Import as a copy')}
-          </button>
-          <button
-            className="btn danger"
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              onReplace(old.id);
-            }}
-          >
-            {tr('Replace')} {old.name}
-          </button>
-        </>
-      }
-    >
-      <div className="form">
-        <div className="clash">
-          <div>
-            <small>{tr('Here now')}</small>
-            {info.sameName.length > 1 ? (
-              <select
-                className="inp sm"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                aria-label={tr('Project to replace')}
-              >
-                {info.sameName.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <b>{old.name}</b>
-            )}
-            <span>
-              {old.tasks} task{old.tasks === 1 ? '' : 's'}
-            </span>
-          </div>
-          <div>
-            <small>{tr('In the file')}</small>
-            <b>{info.name}</b>
-            <span>
-              {info.tasks} task{info.tasks === 1 ? '' : 's'}
-              {exported ? ` · exported ${exported}` : ''}
-            </span>
-          </div>
-        </div>
-        <p className="muted step-help">
-          <b>{tr('Import as a copy')}</b> {tr('adds it as')} {copyName}
-          {tr(', and yours stays as it is.')}
-        </p>
-        <p className="muted step-help">
-          <b>
-            {tr('Replace')} {old.name}
-          </b>{' '}
-          {tr(
-            'deletes yours, with its tasks, notes and history, and puts the imported one in its place. WorkSync backs up first, so you can get yours back from Settings.',
-          )}
-        </p>
-      </div>
-    </Modal>
   );
 }

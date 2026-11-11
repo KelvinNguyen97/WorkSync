@@ -426,11 +426,17 @@ export function CalendarView({
         ))}
       </div>
       <div className="seg-ctl" role="group" aria-label={tr('Move')}>
-        <button onClick={() => shift(-1)} aria-label={`Previous ${mode}`}>
+        <button
+          onClick={() => shift(-1)}
+          aria-label={tr(mode === 'month' ? 'Previous month' : 'Previous week')}
+        >
           ‹
         </button>
         <button onClick={() => setAnchor(today)}>{tr('Today')}</button>
-        <button onClick={() => shift(1)} aria-label={`Next ${mode}`}>
+        <button
+          onClick={() => shift(1)}
+          aria-label={tr(mode === 'month' ? 'Next month' : 'Next week')}
+        >
           ›
         </button>
       </div>
@@ -477,15 +483,19 @@ export function CalendarView({
                   const icon = ICON[it.kind];
                   const what =
                     it.kind === 'due'
-                      ? 'Due'
+                      ? tr('Due')
                       : it.kind === 'next'
-                        ? `Next step: ${it.task.situation.nextStep}`
-                        : `Your action: ${it.task.nextAction}`;
+                        ? tr('Next step: {text}', {
+                            text: it.task.situation.nextStep,
+                          })
+                        : tr('Your action: {text}', {
+                            text: it.task.nextAction,
+                          });
                   return (
                     <button
                       key={`${it.task.id}${it.kind}`}
                       className={`cal-pill pri-${shownPriority(it.task)} ${it.kind}`}
-                      title={`${what} · No. ${it.task.customerId} ${title(it.task, false)}${it.task.priorityOverride ? ' · your priority override' : ''}`}
+                      title={`${what} · No. ${it.task.customerId} ${title(it.task, false)}${it.task.priorityOverride ? ` · ${tr('your priority override')}` : ''}`}
                       onClick={() => props.openTask(it.task.id)}
                       onContextMenu={(ev: MouseEvent<HTMLElement>) => {
                         ev.preventDefault();

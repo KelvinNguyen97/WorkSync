@@ -108,7 +108,10 @@ function FocusCard({
       className={`tcard ${priorityClass(task)}`}
       tabIndex={0}
       role="button"
-      aria-label={`Open ${label(task)}, ${task.titleTranslation || task.titleOriginal}`}
+      aria-label={tr('Open {task}, {title}', {
+        task: label(task),
+        title: task.titleTranslation || task.titleOriginal,
+      })}
       onClick={() => props.openTask(task.id)}
       onKeyDown={keyOpen(task.id, props.openTask)}
       onContextMenu={contextMenu(task, props.openMenu)}
@@ -402,7 +405,12 @@ export function BoardView({
               >
                 <div className="col-h">
                   {slot.kind === 'own' ? (
-                    <span className="own-h" title={`Status: ${slot.status}`}>
+                    <span
+                      className="own-h"
+                      title={tr('Status: {status}', {
+                        status: tr(slot.status),
+                      })}
+                    >
                       <b>{slot.name}</b>
                       <StatusChip status={slot.status} />
                     </span>
@@ -418,7 +426,10 @@ export function BoardView({
                     draggable
                     tabIndex={0}
                     role="button"
-                    aria-label={`Open ${label(t)}, ${t.titleTranslation || t.titleOriginal}`}
+                    aria-label={tr('Open {task}, {title}', {
+                      task: label(t),
+                      title: t.titleTranslation || t.titleOriginal,
+                    })}
                     onDragStart={(e) => {
                       e.dataTransfer.setData('text/plain', t.id);
                       setDragging(t.id);
@@ -556,7 +567,7 @@ function BoardColumnsDialog({
                   className="switch"
                   role="switch"
                   aria-checked={shown}
-                  aria-label={`Show ${s}`}
+                  aria-label={tr('Show {name}', { name: tr(s) })}
                   onClick={() =>
                     void save({
                       ...b,
@@ -584,7 +595,7 @@ function BoardColumnsDialog({
               <input
                 className="inp sm"
                 defaultValue={c.name}
-                aria-label={`Name of ${c.name}`}
+                aria-label={tr('Name of {name}', { name: c.name })}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   // The same rule as adding: no status name, no other column's name.
@@ -619,7 +630,7 @@ function BoardColumnsDialog({
               </span>
               <button
                 className="icon-btn"
-                aria-label={`Delete the column ${c.name}`}
+                aria-label={tr('Delete the column {name}', { name: c.name })}
                 onClick={() => {
                   void save({
                     ...b,

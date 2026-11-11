@@ -383,7 +383,9 @@ export function AiDialog({
                         type="checkbox"
                         checked={accept.has(i.taskId)}
                         disabled={!i.title}
-                        aria-label={`Fill in No. ${t.customerId}`}
+                        aria-label={tr('Fill in No. {no}', {
+                          no: t.customerId,
+                        })}
                         onChange={() => {
                           const n = new Set(accept);
                           if (n.has(i.taskId)) n.delete(i.taskId);
@@ -579,7 +581,7 @@ export function GlossaryDialog({
                     <input
                       className="inp"
                       value={g.translation}
-                      aria-label={`Translation of ${g.term}`}
+                      aria-label={tr('Translation of {term}', { term: g.term })}
                       onChange={(e) =>
                         setTerms(
                           terms.map((x, j) =>
@@ -594,7 +596,7 @@ export function GlossaryDialog({
                     <input
                       className="inp"
                       value={g.note}
-                      aria-label={`Note for ${g.term}`}
+                      aria-label={tr('Note for {term}', { term: g.term })}
                       onChange={(e) =>
                         setTerms(
                           terms.map((x, j) =>
@@ -608,7 +610,7 @@ export function GlossaryDialog({
                   <td>
                     <button
                       className="icon-btn"
-                      aria-label={`Delete ${g.term}`}
+                      aria-label={tr('Delete {name}', { name: g.term })}
                       onClick={() => void remove(g)}
                     >
                       <Icon name="trash" />

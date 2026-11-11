@@ -4,6 +4,10 @@
  * or a number; they are matched in the English and put into the Japanese.
  */
 export const ERRORS_JA: [string, string][] = [
+  [
+    'This file is not a copy of that project.',
+    'このファイルはそのプロジェクトのコピーではありません。',
+  ],
   ['This is not an image.', 'これは画像ではありません。'],
   [
     'This image is too large (20 MB at most).',

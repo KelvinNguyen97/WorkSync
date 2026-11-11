@@ -4,7 +4,15 @@ import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { SCHEMA_VERSION } from './db';
-import { imageLine, imageType, noteImageIds } from '../shared/notes';
+import { imageType, noteImageIds } from '../shared/notes';
+import {
+  installId,
+  ownerName,
+  receivedIds,
+  recordExchange,
+  toUidSpace,
+  WITH_ID,
+} from './exchanges';
 
 /**
  * Handing a project to another WorkSync user (a copy, not a sync): one
@@ -128,17 +136,37 @@ export function exportProject(
     if (snap && fs.existsSync(snap))
       files[`snapshots/${String(v.id)}`] = fs.readFileSync(snap);
   }
+  // Each row carries the id it has in every copy, so copies can be merged.
+  for (const t of WITH_ID)
+    for (const r of tables[t] ?? []) r.uid = r.uid || r.id;
+  const exchangeId = randomUUID();
+  const from = { id: installId(db), name: ownerName() };
   files['manifest.json'] = strToU8(
     JSON.stringify({
       format: FORMAT,
-      version: 1,
+      version: 2,
       schema: SCHEMA_VERSION,
       exportedAt,
       name: String(project.name),
+      from,
+      exchangeId,
+      // The files this copy took in: the receiver can merge from those.
+      received: receivedIds(db, projectId),
+      includeNotes: o.includeNotes,
     }),
   );
   files['data.json'] = strToU8(JSON.stringify({ tables }));
-  return zipSync(files, { level: 6 });
+  const zip = zipSync(files, { level: 6 });
+  recordExchange(db, {
+    id: exchangeId,
+    projectId,
+    peer: '',
+    peerName: '',
+    direction: 'sent',
+    at: exportedAt,
+    tables: toUidSpace(tables),
+  });
+  return zip;
 }
 
 /** A project name that no project has yet: Portal, Portal (1), Portal (2)… */
@@ -160,12 +188,21 @@ export interface ImportResult {
 }
 
 /** What a .worksync file says it holds, read without importing it. */
-export function readExport(data: Uint8Array): {
+export interface ExportFile {
   name: string;
   exportedAt: string;
   tables: Record<string, Row[]>;
   files: Record<string, Uint8Array>;
-} {
+  /** The WorkSync it came from: its id and the owner's name ('' in older files). */
+  from: { id: string; name: string };
+  /** This file's id, and the files the sender's copy had taken in. */
+  exchangeId: string;
+  received: string[];
+  /** Whether the owner's notes are in it. */
+  includeNotes: boolean;
+}
+
+export function readExport(data: Uint8Array): ExportFile {
   if (data.length > MAX_BYTES)
     throw new Error('This file is too large to be a WorkSync project.');
   let files: Record<string, Uint8Array>;
@@ -179,6 +216,10 @@ export function readExport(data: Uint8Array): {
     schema?: number;
     name?: string;
     exportedAt?: string;
+    from?: { id?: string; name?: string };
+    exchangeId?: string;
+    received?: string[];
+    includeNotes?: boolean;
   };
   let body: { tables?: Record<string, Row[]> };
   try {
@@ -193,11 +234,26 @@ export function readExport(data: Uint8Array): {
     throw new Error(
       'This project was exported by a newer version of WorkSync. Update WorkSync to import it.',
     );
+  const tables = body.tables;
   return {
-    name: String(manifest.name ?? body.tables.projects[0].name ?? 'Project'),
+    name: String(manifest.name ?? tables.projects[0].name ?? 'Project'),
     exportedAt: String(manifest.exportedAt ?? ''),
-    tables: body.tables,
+    tables,
     files,
+    from: {
+      id: String(manifest.from?.id ?? ''),
+      name: String(manifest.from?.name ?? ''),
+    },
+    exchangeId: String(manifest.exchangeId ?? ''),
+    received: Array.isArray(manifest.received)
+      ? manifest.received.map(String)
+      : [],
+    // Older files do not say: notes, or task notes, being there tells.
+    includeNotes:
+      typeof manifest.includeNotes === 'boolean'
+        ? manifest.includeNotes
+        : (tables.notes ?? []).length > 0 ||
+          (tables.tasks ?? []).some((t) => !!t.notes || !!t.next_action),
   };
 }
 
@@ -207,6 +263,26 @@ export function readExport(data: Uint8Array): {
  * Only columns this version knows are written; missing ones take their
  * defaults.
  */
+/**
+ * Keeps the images a note from a file uses. An image keeps its id in every
+ * copy (the same picture), so the note text stays the same and merges.
+ */
+export function putNoteImages(
+  db: DatabaseSync,
+  body: unknown,
+  files: Record<string, Uint8Array>,
+  now: string,
+): void {
+  for (const id of noteImageIds(String(body ?? ''))) {
+    const bytes = files[`note-images/${id}`];
+    const mime = bytes && imageType(bytes);
+    if (bytes && mime)
+      db.prepare(
+        'INSERT OR IGNORE INTO note_images (id, mime, data, created_at) VALUES (?, ?, ?, ?)',
+      ).run(id, mime, bytes, now);
+  }
+}
+
 export function importProject(
   db: DatabaseSync,
   data: Uint8Array,
@@ -239,8 +315,12 @@ export function importProject(
       const known = columns(t.name);
       for (const raw of rows) {
         const r: Row = { ...raw };
-        // Each row gets a new id, and its links to other rows follow.
-        if ('id' in r) r.id = idOf(t.name, r.id);
+        // Each row gets a new id here, and its links to other rows follow;
+        // its uid stays, so this copy and the original can be merged later.
+        if ('id' in r) {
+          if (known.has('uid')) r.uid = raw.uid || raw.id;
+          r.id = idOf(t.name, r.id);
+        }
         for (const [col, target] of Object.entries(t.refs ?? {}))
           if (r[col] != null) r[col] = idOf(target, r[col]);
         if (t.name === 'projects') {
@@ -259,21 +339,7 @@ export function importProject(
           r.state = 'ok';
           r.state_detail = '';
         }
-        if (t.name === 'notes') {
-          // Each image gets a new id too, so importing twice never clashes.
-          let body = String(r.body ?? '');
-          for (const oldId of noteImageIds(body)) {
-            const bytes = x.files[`note-images/${oldId}`];
-            const mime = bytes && imageType(bytes);
-            if (!bytes || !mime) continue;
-            const id = idOf('note_images', oldId);
-            db.prepare(
-              'INSERT OR IGNORE INTO note_images (id, mime, data, created_at) VALUES (?, ?, ?, ?)',
-            ).run(id, mime, bytes, now);
-            body = body.split(imageLine(oldId)).join(imageLine(id));
-          }
-          r.body = body;
-        }
+        if (t.name === 'notes') putNoteImages(db, r.body, x.files, now);
         if (t.name === 'file_versions') {
           const old = String(raw.id);
           const bytes = x.files[`snapshots/${old}`];
@@ -308,6 +374,16 @@ export function importProject(
     throw error;
   }
   const projectId = idOf('projects', x.tables.projects[0].id);
+  // The file is where this copy starts: the next merge with its sender compares from it.
+  recordExchange(db, {
+    id: x.exchangeId || randomUUID(),
+    projectId,
+    peer: x.from.id,
+    peerName: x.from.name,
+    direction: 'got',
+    at: now,
+    tables: toUidSpace(x.tables),
+  });
   return {
     projectId,
     name,

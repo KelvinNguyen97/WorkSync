@@ -29,6 +29,20 @@ import type { PendingChange, WritePlan, WriteResult } from './writes';
 import type { ReportOptions } from './reports';
 import type { MyTask, MyTaskInput } from './myTasks';
 import type { Note, NoteInput } from './notes';
+import type { AutoItem, MergeChoices, Question } from './merge';
+
+/** What a merge would do, for the merge window. */
+export interface MergePreview {
+  token: string;
+  projectName: string;
+  /** Whose copy it is ('' when the file does not say). */
+  fromName: string;
+  exportedAt: string;
+  /** When the two copies last exchanged a file; null before the first merge. */
+  lastMergedAt: string | null;
+  auto: AutoItem[];
+  questions: Question[];
+}
 import type {
   CatalogEntry,
   CatalogEntryInput,
@@ -123,7 +137,24 @@ export interface WorkSyncApi {
     exportedAt: string;
     tasks: number;
     sameName: { id: string; name: string; tasks: number }[];
+    /** Projects here this file is a copy of: it can be merged into them. */
+    mergeTargets: { id: string; name: string }[];
+    /** Whose copy it is ('' in files from older versions). */
+    fromName: string;
   } | null>;
+  /** What merging the chosen file into a project would do. */
+  previewMerge(file: string, projectId: string): Promise<MergePreview>;
+  /** Merges, with the owner's answers; a backup is taken first. */
+  applyMerge(
+    token: string,
+    choices: MergeChoices,
+  ): Promise<{
+    projectId: string;
+    name: string;
+    added: number;
+    changed: number;
+    removed: number;
+  }>;
   /**
    * Adds the project from the chosen file: as a copy, or in place of a project
    * with the same name (that one is deleted, after a backup).
@@ -384,6 +415,8 @@ export const API_METHODS = [
   'exportProject',
   'chooseImport',
   'importProject',
+  'previewMerge',
+  'applyMerge',
   'relinkSource',
   'addSampleProject',
   'listTasks',

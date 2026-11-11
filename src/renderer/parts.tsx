@@ -38,7 +38,9 @@ export function PriorityTag({ task }: { task: Task }) {
     return (
       <span
         className={`ptag ${level} ovr`}
-        title={`Your priority. The task's own level is ${tr(LEVEL_NAME[task.priority])}.`}
+        title={tr('Your priority. The task’s own level is {level}.', {
+          level: tr(LEVEL_NAME[task.priority]),
+        })}
       >
         <Icon name="user" />
         {tr(LEVEL_NAME[level])}
