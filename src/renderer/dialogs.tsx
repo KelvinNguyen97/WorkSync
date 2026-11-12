@@ -890,7 +890,8 @@ export function ConfirmDelete({
 
 /**
  * Saves a copy of the project for another WorkSync user. They import it as
- * their own project and can change it freely; the two copies are independent.
+ * their own project and can change it freely; later, either copy can be
+ * merged back into the other.
  */
 function ExportCopy({ project }: { project: Project }) {
   const { attempt, toast } = useApp();
@@ -922,7 +923,7 @@ function ExportCopy({ project }: { project: Project }) {
         <b>{tr('Give a copy to someone')}</b>
         <small>
           {tr(
-            'A .worksync file with the tasks, situations, history, glossary, people and Board. Their copy is their own: changes do not come back here.',
+            'A .worksync file with the tasks, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.',
           )}
         </small>
         <label className="check" style={{ marginTop: 6 }}>

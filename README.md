@@ -192,7 +192,12 @@ WorkSync.
   choose **Export a copy**. They choose **Import a project** and get the whole
   project with its history, glossary and people. If they already have a project
   with the same name, they choose whether to import it as a copy or to replace
-  theirs. Each person then edits their own copy, so there are no conflicts.
+  theirs. Each person then edits their own copy.
+- **Bring their changes back: merge.** When they send their copy back, choose
+  **Import a project** and then **Merge**. WorkSync matches tasks, notes, terms
+  and people by their own ids (the customer's file isn't needed), adds what only
+  one of you changed, and asks you, one question at a time, only where you both
+  changed the same thing. A backup is made first.
 
 ## Building from source
 

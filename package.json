@@ -1,7 +1,7 @@
 {
   "name": "worksync",
   "productName": "WorkSync",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Desktop task tracker for project managers whose customers send task lists as Excel files in another language",
   "keywords": [],

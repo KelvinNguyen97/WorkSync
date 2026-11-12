@@ -388,8 +388,8 @@ export const JA: Record<string, string> = {
   'The row stays in the customer’s file. WorkSync remembers that you deleted it, so the next review lists it unticked and it stays deleted unless you tick it.':
     '行はお客様ファイルに残ります。削除したことを覚えているので、次の確認ではチェックなしで表示され、チェックしない限り削除されたままです。',
   'Give a copy to someone': 'コピーを渡す',
-  'A .worksync file with the tasks, situations, history, glossary, people and Board. Their copy is their own: changes do not come back here.':
-    'タスク、状況、履歴、用語集、人、ボードを含む .worksync ファイルです。相手のコピーは相手のもので、変更はこちらに戻りません。',
+  'A .worksync file with the tasks, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.':
+    'タスク、状況、履歴、用語集、人、ボードを含む .worksync ファイルです。相手の変更を戻すには、相手がコピーを書き出し、あなたがそれを取り込んでマージします。',
   'Include my notes, next actions and the project’s notes':
     '自分のメモ、次のアクション、プロジェクトのノートを含める',
   'Saving…': '保存しています…',
