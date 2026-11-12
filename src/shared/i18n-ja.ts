@@ -1484,4 +1484,8 @@ export const JA: Record<string, string> = {
     'バージョン一覧表全体（リリース日ごとに 1 列）',
   'In a sheet name: one sheet per product':
     'シート名に書くと、製品ごとに 1 シート',
+  '1 row repeated a file already in the same release (as when two sheets are put together). It is merged into one file; where the texts differ, both are kept.':
+    '1 行が、同じリリースの既にあるファイルと重複していました（2 つのシートをまとめたときなど）。1 つのファイルにまとめ、内容が違う場合は両方を残します。',
+  '{n} rows repeated a file already in the same release (as when two sheets are put together). Each is merged into one file; where the texts differ, both are kept.':
+    '{n} 行が、同じリリースの既にあるファイルと重複していました（2 つのシートをまとめたときなど）。それぞれ 1 つのファイルにまとめ、内容が違う場合は両方を残します。',
 };

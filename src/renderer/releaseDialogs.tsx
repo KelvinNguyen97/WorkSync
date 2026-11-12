@@ -326,6 +326,19 @@ export function ReleaseImportDialog({
                 </div>
               </div>
 
+              {plan.merged > 0 && (
+                <div className="rl-merged">
+                  <Icon name="swap" />
+                  <span>
+                    {tr(
+                      plan.merged === 1
+                        ? '1 row repeated a file already in the same release (as when two sheets are put together). It is merged into one file; where the texts differ, both are kept.'
+                        : '{n} rows repeated a file already in the same release (as when two sheets are put together). Each is merged into one file; where the texts differ, both are kept.',
+                      { n: plan.merged },
+                    )}
+                  </span>
+                </div>
+              )}
               {(matched.length > 0 || count > 0) && (
                 <div className="rl-helprow">
                   <span>{tr('Releases already in the project:')}</span>

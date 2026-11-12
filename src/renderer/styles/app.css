@@ -4315,3 +4315,18 @@ html[data-glass] .mg {
   overflow-wrap: anywhere;
   min-width: 200px;
 }
+.rl-merged {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid rgb(var(--acc) / 0.35);
+  font-size: 13px;
+}
+.rl-merged .ic {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+}

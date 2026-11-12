@@ -169,6 +169,7 @@ export async function readReleaseImport(
   const problems: ReleaseImportPlan['problems'] = [];
   const groups = new Map<string, ReleaseImportRelease>();
   let rows = 0;
+  let merged = 0;
   const last = Math.min(sheet.rowCount, headerRow + MAX_ROWS);
   for (let r = headerRow + 1; r <= last; r++) {
     const row = sheet.getRow(r);
@@ -257,11 +258,21 @@ export async function readReleaseImport(
     if (!g.target) g.target = text(row, 'edition');
     if (!g.summary) g.summary = text(row, 'summary');
     if (status === 'planned') g.status = 'planned';
-    if (hasFile)
-      g.files.push({ ...file, type: file.type || text(row, 'edition') });
-    else
-      for (const k of ['changes', 'purpose', 'verification'] as const)
-        if (!g[k] && file[k]) g[k] = file[k];
+    const texts = ['changes', 'purpose', 'verification'] as const;
+    if (hasFile) {
+      const f = { ...file, type: file.type || text(row, 'edition') };
+      // The same file twice in a release (from two sheets put together) is one file.
+      const same = g.files.find((x) => fileKey(x) === fileKey(f));
+      if (same) {
+        merged++;
+        for (const k of texts) same[k] = joinText(same[k], f[k]);
+        for (const [k, v] of Object.entries(f.extra))
+          same.extra[k] = joinText(same.extra[k] ?? '', v);
+      } else g.files.push(f);
+    } else {
+      if (texts.some((k) => g[k]) && texts.some((k) => file[k])) merged++;
+      for (const k of texts) g[k] = joinText(g[k], file[k]);
+    }
   }
   if (sheet.rowCount > last)
     problems.push({ row: last + 1, code: 'tooMany', value: String(MAX_ROWS) });
@@ -273,6 +284,7 @@ export async function readReleaseImport(
     sheet: sheet.name,
     rows,
     ownExport,
+    merged,
     columns,
     unknown: unknown.map(({ name, key, known }) => ({ name, key, known })),
     releases: [...groups.values()].sort(
@@ -285,6 +297,28 @@ export async function readReleaseImport(
 }
 
 export type ImportMode = 'skip' | 'update' | 'replace';
+
+/** A file in a release: its name, place, environment and version. */
+const fileKey = (f: ReleaseImportFile) =>
+  [
+    moduleName(f),
+    f.fileName,
+    f.destination,
+    f.category,
+    f.environment,
+    f.version,
+  ]
+    .map((x) => x.trim().toLowerCase())
+    .join('\u0000');
+
+/** Two texts for the same thing: both, once each, the first one first. */
+export function joinText(a: string, b: string): string {
+  const x = a.trim();
+  const y = b.trim();
+  if (!y || x.includes(y)) return a;
+  if (!x || y.includes(x)) return b;
+  return `${x}\n${y}`;
+}
 
 const sameFile = (a: ReleaseImportFile, b: Release['modules'][number]) =>
   moduleName(a).toLowerCase() === moduleName(b).toLowerCase() &&

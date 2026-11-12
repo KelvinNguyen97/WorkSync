@@ -49,6 +49,8 @@ export interface ReleaseImportPlan {
   rows: number;
   /** The file is the app's own release export. */
   ownExport: boolean;
+  /** Rows that repeated a file (or a release's text) already read, put together with it. */
+  merged: number;
   /** The known columns found, in the sheet's order. */
   columns: ImportColumn[];
   /** Columns the format does not know: candidates for the project's own fields. */

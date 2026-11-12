@@ -214,6 +214,66 @@ describe('release import', () => {
     ]);
   });
 
+  it('merges a file repeated in the same release, keeping both texts', async () => {
+    const data = await book([
+      [
+        'リリース日',
+        '製品',
+        'リリースバージョン',
+        'ファイル名',
+        '環境',
+        'ファイルバージョン',
+        '内容',
+        '目的',
+      ],
+      [
+        '2021/07/15',
+        'EMVCon',
+        '1.0.13',
+        'A.dll',
+        'Prod',
+        '1.0',
+        'JCN text',
+        'Same',
+      ],
+      [
+        '2021/07/15',
+        'EMVCon',
+        '1.0.13',
+        'A.dll',
+        'Prod',
+        '1.0',
+        '出光 text',
+        'Same',
+      ],
+      ['2021/07/15', 'EMVCon', '1.0.13', 'A.dll', 'Stg', '1.0', '', ''],
+      [
+        '2021/07/15',
+        'EMVCon',
+        '1.0.13',
+        'a.DLL',
+        'Prod',
+        '1.0',
+        'JCN text',
+        '',
+      ],
+    ]);
+    const plan = await readReleaseImport(
+      data,
+      'x.xlsx',
+      [],
+      rel.getLists(projectId),
+    );
+    expect(plan.merged).toBe(2);
+    expect(plan.releases).toHaveLength(1);
+    const files = plan.releases[0].files;
+    expect(files.map((f) => f.environment)).toEqual(['Prod', 'Stg']);
+    expect(files[0]).toMatchObject({
+      changes: 'JCN text\n出光 text',
+      purpose: 'Same',
+    });
+  });
+
   it('skips or replaces what the project has', async () => {
     rel.save(projectId, release({ version: '1.0.0' }));
     rel.save(
