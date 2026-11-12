@@ -49,6 +49,7 @@ import type { CatalogEntry } from '../shared/catalog';
 import type { Note } from '../shared/notes';
 import { tr, uiLanguage } from './i18n';
 import { ImportChoice, MergeWizard } from './importMerge';
+import { ReleasesView } from './releases';
 
 type Route =
   | { view: 'focus'; scope: 'all' | string }
@@ -62,7 +63,8 @@ type Route =
         | 'timeline'
         | 'calendar'
         | 'dashboard'
-        | 'published';
+        | 'published'
+        | 'releases';
       projectId: string;
     };
 
@@ -435,6 +437,8 @@ function Shell({
           setDialog({ kind: 'publish', projectId: route.projectId })
         }
       />
+    ) : route.view === 'releases' ? (
+      <ReleasesView projectId={route.projectId} props={props} />
     ) : route.view === 'files' ? (
       <FilesView
         projectId={route.projectId}

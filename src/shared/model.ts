@@ -50,6 +50,7 @@ export const VIEW_KEYS = [
   'dashboard',
   'published',
   'files',
+  'releases',
 ] as const;
 export type ViewKey = (typeof VIEW_KEYS)[number];
 export const BUILT_VIEWS: ViewKey[] = [
@@ -61,6 +62,7 @@ export const BUILT_VIEWS: ViewKey[] = [
   'dashboard',
   'published',
   'files',
+  'releases',
 ];
 export const DEFAULT_VIEWS: Record<ViewKey, boolean> = {
   focus: true,
@@ -71,6 +73,7 @@ export const DEFAULT_VIEWS: Record<ViewKey, boolean> = {
   dashboard: true,
   published: false,
   files: true,
+  releases: false,
 };
 
 export interface Project {

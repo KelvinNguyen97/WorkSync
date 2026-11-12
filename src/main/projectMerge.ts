@@ -87,6 +87,8 @@ const ORDER = [
   'glossary_terms',
   'people',
   'notes',
+  'releases',
+  'release_modules',
 ];
 /** Rows a merge adds but never removes. */
 const NEVER_REMOVED = new Set(['source_files', 'file_versions', 'activity']);

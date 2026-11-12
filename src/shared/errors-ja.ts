@@ -5,6 +5,21 @@
  */
 export const ERRORS_JA: [string, string][] = [
   [
+    'Choose the product the release is of.',
+    'リリースする製品を選んでください。',
+  ],
+  ['Write the release version.', 'リリースバージョンを入力してください。'],
+  ['The release date is not a date.', 'リリース日が日付になっていません。'],
+  [
+    'A released version needs its release date.',
+    'リリース済みにするにはリリース日が必要です。',
+  ],
+  [
+    'Give each module a name or a file name.',
+    '各モジュールに名前かファイル名を付けてください。',
+  ],
+  ['This release no longer exists.', 'このリリースはもうありません。'],
+  [
     'This file is not a copy of that project.',
     'このファイルはそのプロジェクトのコピーではありません。',
   ],

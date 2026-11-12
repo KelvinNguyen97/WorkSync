@@ -37,7 +37,7 @@ export interface MergeChoices {
 
 /** Where a question or item is: a task, the project, a note… */
 export interface Where {
-  kind: 'project' | 'task' | 'term' | 'person' | 'note';
+  kind: 'project' | 'task' | 'term' | 'person' | 'note' | 'release';
   /** The task number, if any. */
   no: string;
   name: string;
@@ -55,6 +55,7 @@ export interface AutoItem {
     | 'Glossary'
     | 'Person'
     | 'Note'
+    | 'Release'
     | 'Project';
   where: Where;
   /** The fields that change, as English labels. */
@@ -150,6 +151,8 @@ export function shown(field: string, v: unknown): string {
       .map((l) => l.name || l.target || '')
       .join('\n');
   if (field === 'open') return s === '1' ? 'Open' : 'Resolved';
+  if (s === 'released') return 'Released';
+  if (s === 'planned') return 'Planned';
   if (field === 'pinned' || field === 'show_numbers')
     return s === '1' ? 'Yes' : 'No';
   return s;
@@ -203,6 +206,18 @@ const LABELS: Record<string, string> = {
   doing_now: 'Doing now',
   next_step: 'Next step',
   next_date: 'Next step date',
+  product: 'Product',
+  target: 'Edition',
+  released_on: 'Release date',
+  version: 'Version',
+  purpose: 'Purpose',
+  changes: 'Changes',
+  verification: 'Verification',
+  destination: 'Destination',
+  type: 'Type',
+  module: 'Module',
+  file_name: 'File name',
+  environment: 'Environment',
 };
 export const fieldLabel = (f: string) => LABELS[f] ?? f;
 
@@ -571,7 +586,7 @@ export function mergeProject(
         t: pt,
         b: pb,
         asked: PROJECT_ASKED,
-        quiet: ['board'],
+        quiet: ['board', 'release_lists'],
         where: { kind: 'project', no: '', name: text(pm.name) },
         mineAt: null,
         theirsAt: null,
@@ -776,6 +791,72 @@ export function mergeProject(
       count: 0,
     }),
   });
+
+  // Releases and the modules each delivers.
+  const releaseWhere = (r: Row): Where => ({
+    kind: 'release',
+    no: '',
+    name: `${text(r.product)} ${text(r.version)}`.trim(),
+  });
+  out.releases = mergeTable({
+    table: 'releases',
+    asked: [
+      'product',
+      'target',
+      'released_on',
+      'version',
+      'status',
+      'summary',
+      'purpose',
+      'changes',
+      'verification',
+    ],
+    quiet: [],
+    where: releaseWhere,
+    at: (r) => text(r.updated_at) || null,
+    added: (r) => ({
+      id: `add:releases:${text(r.id)}`,
+      tag: 'Release',
+      where: releaseWhere(r),
+      fields: [],
+      detail: '',
+      count: 0,
+    }),
+  });
+  const releaseIds = new Set(out.releases.map((r) => text(r.id)));
+  const mineReleases = M('releases');
+  const releaseOf = (r: Row) =>
+    out.releases.find((x) => text(x.id) === text(r.release_id)) ??
+    T('releases').get(text(r.release_id));
+  out.release_modules = mergeTable({
+    table: 'release_modules',
+    asked: [
+      'destination',
+      'category',
+      'type',
+      'module',
+      'file_name',
+      'environment',
+      'version',
+    ],
+    quiet: ['position'],
+    where: (r) => {
+      const rel = releaseOf(r);
+      return rel ? releaseWhere(rel) : { kind: 'release', no: '', name: '' };
+    },
+    keep: (r) => releaseIds.has(text(r.release_id)),
+    added: (r) =>
+      mineReleases.has(text(r.release_id))
+        ? {
+            id: `add:release_modules:${text(r.id)}`,
+            tag: 'Release',
+            where: releaseWhere(releaseOf(r)!),
+            fields: [],
+            detail: text(r.module) || text(r.file_name),
+            count: 0,
+          }
+        : null,
+  }).filter((r) => releaseIds.has(text(r.release_id)));
 
   // Notes: the text merges line by line.
   if (input.theirsHasNotes) {

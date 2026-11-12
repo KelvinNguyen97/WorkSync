@@ -1240,4 +1240,77 @@ export const JA: Record<string, string> = {
   'under {status}': '状態：{status}',
   'There is already a column called {name}. Choose another name.':
     '「{name}」という列はすでにあります。別の名前にしてください。',
+  // Releases
+  '{who} added the module {text}': '{who} がモジュール {text} を追加',
+  '{who} added this release': '{who} がこのリリースを追加',
+  Releases: 'リリース',
+  '{name} · what was released, when, and which version of each module':
+    '{name} · いつ何をリリースしたか、各モジュールのバージョン',
+  Lists: '一覧の項目',
+  'Export to Excel': 'Excel に書き出す',
+  'New release': '新しいリリース',
+  Product: '製品',
+  'All products': 'すべての製品',
+  'Loading…': '読み込んでいます…',
+  'No releases yet': 'リリースはまだありません',
+  'Add each release with its date, version and what changed, and the modules it delivers. The Excel export then gives the module version list and the release history in the usual layout.':
+    'リリースごとに日付・バージョン・変更内容と、含まれるモジュールを登録してください。Excel に書き出すと、モジュールバージョン一覧とリリース履歴をいつもの形式で作れます。',
+  'Add the first release': '最初のリリースを追加',
+  Destination: '仕向け先',
+  Module: 'モジュール',
+  Environment: '環境',
+  'Released on this date': 'この日にリリース',
+  'Each cell is the version in use on that date. Highlighted: released that day; the others carry on from before.':
+    '各セルはその日に使われているバージョンです。強調表示はその日にリリースしたもの、それ以外は前のバージョンが続いています。',
+  'No released modules yet: add modules to a release with a date.':
+    'リリース済みのモジュールはまだありません。日付のあるリリースにモジュールを追加してください。',
+  'Module / file name': 'モジュール／ファイル名',
+  'Release date': 'リリース日',
+  Version: 'バージョン',
+  'Delete the release {name}?': 'リリース {name} を削除しますか？',
+  'The release and its modules are deleted.':
+    'リリースとそのモジュールが削除されます。',
+  'Deleted {name}.': '{name} を削除しました。',
+  'Edit the release': 'リリースを編集',
+  'Pick from the lists or type a new name; new names join the lists.':
+    '一覧から選ぶか、新しい名前を入力してください。新しい名前は一覧に加わります。',
+  Edition: '対象版',
+  'Modules in this release': 'このリリースのモジュール',
+  'Only the modules this release delivers; the others keep their version.':
+    'このリリースで出すモジュールだけを入れてください。ほかは前のバージョンのままです。',
+  'Copy the modules of {name}': '{name} のモジュールをコピー',
+  'Add a module': 'モジュールを追加',
+  'File name': 'ファイル名',
+  'Release lists': 'リリースの一覧項目',
+  'What you pick from in a release, in the order the views and the Excel sheets use. Removing a name does not change releases that use it.':
+    'リリースで選ぶ項目です。表示と Excel シートはこの順に並びます。名前を外しても、それを使っているリリースは変わりません。',
+  'Move {name} earlier': '{name} を前へ',
+  Earlier: '前へ',
+  'Remove {name}': '{name} を外す',
+  'Remove {name} from the list?': '{name} を一覧から外しますか？',
+  'Releases that use it keep it.': 'それを使っているリリースはそのままです。',
+  'Add…': '追加…',
+  'Add to {list}': '{list}に追加',
+  'Saved {file}.': '{file} を保存しました。',
+  'Export the releases to Excel': 'リリースを Excel に書き出す',
+  'One workbook: the module version list (a column per release date), the newest version of each module, and a release history per product, oldest first.':
+    '一つのブックに、モジュールバージョン一覧（リリース日ごとの列）、各モジュールの最新バージョン、製品ごとのリリース履歴（旧→新）を書き出します。',
+  'Headings in': '見出しの言語',
+  'Your text is written as you typed it; only the sheet names and headings change.':
+    '入力した文章はそのまま書き出されます。変わるのはシート名と見出しだけです。',
+  '1 module': 'モジュール 1 件',
+  '{n} modules': 'モジュール {n} 件',
+  Products: '製品',
+  'Editions and types': '対象版・種別',
+  Destinations: '仕向け先',
+  Categories: 'カテゴリ',
+  Environments: '環境',
+  Versions: 'バージョン',
+  Modules: 'モジュール',
+  Purpose: '目的',
+  Verification: '検証',
+  'Changes (improvements, changes)': '内容（改善点／変更点等）',
+  Released: 'リリース済み',
+  'Software releases and module versions, with an Excel export.':
+    'ソフトウェアのリリースとモジュールのバージョン。Excel に書き出せます。',
 };

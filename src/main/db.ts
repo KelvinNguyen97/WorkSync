@@ -294,6 +294,41 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX merge_exchanges_project ON merge_exchanges(project_id, at);
   `,
+  // 22: software releases per project, with the modules each delivers
+  `
+  ALTER TABLE projects ADD COLUMN release_lists TEXT;
+  CREATE TABLE releases (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    product TEXT NOT NULL DEFAULT '',
+    target TEXT NOT NULL DEFAULT '',
+    released_on TEXT,
+    version TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'released',
+    summary TEXT NOT NULL DEFAULT '',
+    purpose TEXT NOT NULL DEFAULT '',
+    changes TEXT NOT NULL DEFAULT '',
+    verification TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX releases_project ON releases(project_id, released_on);
+  CREATE TABLE release_modules (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    release_id TEXT NOT NULL REFERENCES releases(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL DEFAULT 0,
+    destination TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT '',
+    type TEXT NOT NULL DEFAULT '',
+    module TEXT NOT NULL DEFAULT '',
+    file_name TEXT NOT NULL DEFAULT '',
+    environment TEXT NOT NULL DEFAULT '',
+    version TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX release_modules_release ON release_modules(release_id, position);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

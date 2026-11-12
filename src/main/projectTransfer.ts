@@ -82,6 +82,16 @@ const TABLES: {
     refs: { task_id: 'tasks' },
   },
   {
+    name: 'releases',
+    where: 'project_id = :p',
+    refs: { project_id: 'projects' },
+  },
+  {
+    name: 'release_modules',
+    where: 'release_id IN (SELECT id FROM releases WHERE project_id = :p)',
+    refs: { release_id: 'releases' },
+  },
+  {
     name: 'notes',
     where: 'project_id = :p',
     refs: { project_id: 'projects' },

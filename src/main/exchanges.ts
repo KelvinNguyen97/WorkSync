@@ -24,6 +24,8 @@ export const REFS: Record<string, Record<string, string>> = {
   people: { project_id: 'projects' },
   owner_translations: { task_id: 'tasks' },
   notes: { project_id: 'projects' },
+  releases: { project_id: 'projects' },
+  release_modules: { release_id: 'releases' },
   deleted_rows: { source_id: 'source_files' },
 };
 /** Tables whose rows have their own id (and so a uid). */
@@ -38,6 +40,8 @@ export const WITH_ID = [
   'glossary_terms',
   'people',
   'notes',
+  'releases',
+  'release_modules',
 ];
 
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
@@ -131,6 +135,10 @@ export function projectRows(db: DatabaseSync, projectId: string): Tables {
       'SELECT * FROM owner_translations WHERE task_id IN (SELECT id FROM tasks WHERE project_id = :p)',
     ),
     notes: q('SELECT * FROM notes WHERE project_id = :p'),
+    releases: q('SELECT * FROM releases WHERE project_id = :p'),
+    release_modules: q(
+      'SELECT * FROM release_modules WHERE release_id IN (SELECT id FROM releases WHERE project_id = :p)',
+    ),
     deleted_rows: q(
       'SELECT * FROM deleted_rows WHERE source_id IN (SELECT id FROM source_files WHERE project_id = :p)',
     ),

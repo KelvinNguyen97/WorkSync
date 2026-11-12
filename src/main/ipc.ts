@@ -17,6 +17,8 @@ import {
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
+import { Releases } from './releases';
+import { releaseWorkbook } from './releaseExcel';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import {
@@ -160,6 +162,7 @@ function open(): Startup {
     store = new Store(db);
     sources = new Sources(db, store);
     mine = new Mine(db);
+    releases = new Releases(db);
     try {
       mine.dropUnusedNoteImages();
     } catch (error) {
@@ -206,6 +209,12 @@ const need = (): Store => {
   return store;
 };
 
+let releases: Releases | null = null;
+const needReleases = (): Releases => {
+  if (!releases)
+    throw new Error('The data could not be opened. Restart WorkSync.');
+  return releases;
+};
 const needMine = (): Mine => {
   if (!mine) throw new Error('The data could not be opened. Restart WorkSync.');
   return mine;
@@ -370,6 +379,57 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
   addNoteImage: async (bytes) => needMine().addNoteImage(bytes),
   getNoteImage: async (id) => needMine().getNoteImage(id),
   getFileIcons: async (paths) => fileIcons(paths),
+  listReleases: async (projectId) => needReleases().list(projectId),
+  saveRelease: async (projectId, input, id) =>
+    needReleases().save(projectId, input, id),
+  deleteRelease: async (id) => needReleases().delete(id),
+  getReleaseLists: async (projectId) => needReleases().getLists(projectId),
+  saveReleaseLists: async (projectId, lists) =>
+    needReleases().saveLists(projectId, lists),
+  exportReleases: async (projectId, language) => {
+    const p = need().getProject(projectId);
+    const r = needReleases();
+    const data = await releaseWorkbook({
+      project: p.name,
+      customer: p.customer,
+      releases: r.list(projectId),
+      lists: r.getLists(projectId),
+      language,
+    });
+    const safe = p.name
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const name = `${safe || 'Project'} ${language === 'ja' ? 'リリース一覧' : 'releases'} ${today()}.xlsx`;
+    let file: string | null = process.env.WORKSYNC_TEST_REPORT_FOLDER
+      ? path.join(process.env.WORKSYNC_TEST_REPORT_FOLDER, name)
+      : null;
+    if (!file) {
+      const folder = path.join(app.getPath('documents'), 'WorkSync', 'Reports');
+      fs.mkdirSync(folder, { recursive: true });
+      const win =
+        BrowserWindow.getFocusedWindow() ??
+        getMainWindow() ??
+        BrowserWindow.getAllWindows()[0];
+      const res = await dialog.showSaveDialog(win, {
+        title: 'Save the releases',
+        defaultPath: path.join(folder, name),
+        filters: [{ name: 'Excel workbook', extensions: ['xlsx'] }],
+      });
+      file = res.canceled ? null : (res.filePath ?? null);
+    }
+    if (!file) return null;
+    // Never beside a customer file, where the customer could see it.
+    const problem = writeTargetProblem(
+      path.dirname(file),
+      needLinks().sources.list(),
+      'another folder',
+    );
+    if (problem) throw new Error(problem);
+    fs.writeFileSync(file, data);
+    log('info', 'Exported the releases to Excel');
+    return { file };
+  },
   saveNoteImage: async (id) => {
     const { mime, data } = needMine().getNoteImage(id);
     const ext = mime.split('/')[1].replace('jpeg', 'jpg');

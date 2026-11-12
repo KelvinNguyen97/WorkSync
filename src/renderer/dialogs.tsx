@@ -748,6 +748,11 @@ const VIEW_INFO: Record<
     icon: 'file',
     desc: 'Linked Excel files and their state.',
   },
+  releases: {
+    name: 'Releases',
+    icon: 'package',
+    desc: 'Software releases and module versions, with an Excel export.',
+  },
 };
 export const viewName = (k: ViewKey) => tr(VIEW_INFO[k].name);
 export const viewIcon = (k: ViewKey) => VIEW_INFO[k].icon;

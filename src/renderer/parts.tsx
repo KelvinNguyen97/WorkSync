@@ -228,6 +228,7 @@ export function Modal({
   children,
   footer,
   narrow,
+  wide,
 }: {
   title: string;
   subtitle?: string;
@@ -235,6 +236,8 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   narrow?: boolean;
+  /** For a form with a table, such as a release and its modules. */
+  wide?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -263,7 +266,7 @@ export function Modal({
     >
       <div
         ref={ref}
-        className={`modal ${narrow ? 'narrow' : ''}`}
+        className={`modal ${narrow ? 'narrow' : ''} ${wide ? 'wide' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="mTitle"

@@ -354,6 +354,10 @@ export function MergeWizard({
         return tr('{who} added the term → {text}', { who, text: a.detail });
       case 'Person':
         return tr('{who} added this person', { who });
+      case 'Release':
+        return a.detail
+          ? tr('{who} added the module {text}', { who, text: a.detail })
+          : tr('{who} added this release', { who });
       case 'Note':
         return a.fields.length
           ? tr('{who} changed: {fields}', { who, fields })

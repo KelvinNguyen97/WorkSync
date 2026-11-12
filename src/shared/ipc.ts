@@ -30,6 +30,7 @@ import type { ReportOptions } from './reports';
 import type { MyTask, MyTaskInput } from './myTasks';
 import type { Note, NoteInput } from './notes';
 import type { AutoItem, MergeChoices, Question } from './merge';
+import type { Release, ReleaseInput, ReleaseLists } from './releases';
 
 /** What a merge would do, for the merge window. */
 export interface MergePreview {
@@ -327,6 +328,26 @@ export interface WorkSyncApi {
 
   /** The system's icon for each path (an app's own icon, a document's app), as an image address; null where there is none. */
   getFileIcons(paths: string[]): Promise<Record<string, string | null>>;
+  /** Software releases of a project, with their modules. */
+  listReleases(projectId: string): Promise<Release[]>;
+  /** Adds a release, or changes the one with this id. */
+  saveRelease(
+    projectId: string,
+    input: ReleaseInput,
+    id?: string,
+  ): Promise<Release>;
+  deleteRelease(id: string): Promise<Release>;
+  /** The products, editions, destinations, categories and environments to pick from. */
+  getReleaseLists(projectId: string): Promise<ReleaseLists>;
+  saveReleaseLists(
+    projectId: string,
+    lists: ReleaseLists,
+  ): Promise<ReleaseLists>;
+  /** Saves the releases as an Excel workbook, after asking where; null when cancelled. */
+  exportReleases(
+    projectId: string,
+    language: 'ja' | 'en',
+  ): Promise<{ file: string } | null>;
   /** The Catalog, each entry checked for whether its path is still there. */
   listCatalog(): Promise<CatalogEntry[]>;
   /** Asks for files or folders and adds them; paths already there are skipped. Null when cancelled. */
@@ -388,6 +409,12 @@ export const API_METHODS = [
   'getNoteImage',
   'saveNoteImage',
   'getFileIcons',
+  'listReleases',
+  'saveRelease',
+  'deleteRelease',
+  'getReleaseLists',
+  'saveReleaseLists',
+  'exportReleases',
   'listCatalog',
   'addToCatalog',
   'addFoundToCatalog',
