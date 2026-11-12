@@ -69,6 +69,11 @@ server and no account. Your data stays on your PC.
   colleagues who don't use WorkSync.
 - Export a whole project as a `.worksync` file for another WorkSync user to
   import.
+- **Releases** (turn it on in Choose views): the software a project delivers,
+  as a timeline of release days. Each file opens to its change log, purpose
+  and verification. Import releases from an Excel sheet, and export the module
+  version list, the latest versions and a change log per product to Excel
+  (the built-in layout or your own template), or as one HTML page to send.
 
 **Your own things, next to the projects**
 
