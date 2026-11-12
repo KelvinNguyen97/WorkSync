@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   byDate,
   EMPTY_MODULE,
+  fieldKey,
+  fileInfo,
   latestModules,
+  moduleName,
+  previousVersion,
   productsOf,
   sheetDate,
   versionMatrix,
@@ -11,15 +15,21 @@ import {
   type ReleaseLists,
   type ReleaseModule,
 } from '../shared/releases';
+import {
+  colName,
+  ReleaseExportDialog,
+  ReleaseImportDialog,
+} from './releaseDialogs';
 import { useApp } from './appState';
 import { Icon } from './Icon';
 import { confirmDelete, Modal } from './parts';
 import type { ViewProps } from './views';
 import { tr } from './i18n';
 
-type Tab = 'history' | 'versions' | 'modules';
+type Tab = 'timeline' | 'versions' | 'modules';
+type NameList = Exclude<keyof ReleaseLists, 'fields'>;
 
-const LIST_NAMES: Record<keyof ReleaseLists, string> = {
+const LIST_NAMES: Record<NameList, string> = {
   products: 'Products',
   editions: 'Editions and types',
   destinations: 'Destinations',
@@ -43,11 +53,12 @@ export function ReleasesView({
   const p = project(projectId)!;
   const [list, setList] = useState<Release[] | null>(null);
   const [lists, setLists] = useState<ReleaseLists | null>(null);
-  const [tab, setTab] = useState<Tab>('history');
+  const [tab, setTab] = useState<Tab>('timeline');
   const [product, setProduct] = useState('');
   const [editing, setEditing] = useState<Release | 'new' | null>(null);
   const [listsOpen, setListsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = async () => {
     const [r, l] = await Promise.all([
@@ -82,7 +93,15 @@ export function ReleasesView({
               r.purpose,
               r.changes,
               r.verification,
-              ...r.modules.flatMap((m) => [m.module, m.fileName, m.version]),
+              ...r.modules.flatMap((m) => [
+                m.module,
+                m.fileName,
+                m.version,
+                m.changes,
+                m.purpose,
+                m.verification,
+                ...Object.values(m.extra),
+              ]),
             ]
               .join('\n')
               .toLowerCase()
@@ -109,13 +128,17 @@ export function ReleasesView({
             <Icon name="sliders" />
             <span className="lbl">{tr('Lists')}</span>
           </button>
+          <button className="btn" onClick={() => setImportOpen(true)}>
+            <Icon name="upload" />
+            <span className="lbl">{tr('Import from Excel')}</span>
+          </button>
           <button
             className="btn"
             disabled={!all.length}
             onClick={() => setExportOpen(true)}
           >
             <Icon name="download" />
-            <span className="lbl">{tr('Export to Excel')}</span>
+            <span className="lbl">{tr('Export')}</span>
           </button>
           <button className="btn primary" onClick={() => setEditing('new')}>
             <Icon name="plus" />
@@ -128,7 +151,7 @@ export function ReleasesView({
           <div className="seg-ctl" role="group" aria-label={tr('Releases')}>
             {(
               [
-                ['history', 'History'],
+                ['timeline', 'Timeline'],
                 ['versions', 'Versions'],
                 ['modules', 'Modules'],
               ] as [Tab, string][]
@@ -170,75 +193,35 @@ export function ReleasesView({
             <h2>{tr('No releases yet')}</h2>
             <p className="muted">
               {tr(
-                'Add each release with its date, version and what changed, and the modules it delivers. The Excel export then gives the module version list and the release history in the usual layout.',
+                'Add each release with its date, version and the files it delivers, or import them from an Excel sheet. The export then gives the module version list and the release history in the usual layout, or a page to send.',
               )}
             </p>
-            <button className="btn primary" onClick={() => setEditing('new')}>
-              <Icon name="plus" />
-              {tr('Add the first release')}
-            </button>
-          </div>
-        ) : tab === 'history' ? (
-          <div className="rl-list" role="list">
-            {newestFirst.map((r) => (
-              <button
-                key={r.id}
-                role="listitem"
-                className={`rl-item ${r.status}`}
-                onClick={() => setEditing(r)}
-              >
-                <span className="rl-ver">
-                  <b className="mono">{r.version}</b>
-                  {r.status === 'planned' ? (
-                    <span className="rl-pill planned">{tr('Planned')}</span>
-                  ) : (
-                    <span className="muted mono">
-                      {sheetDate(r.releasedOn)}
-                    </span>
-                  )}
-                </span>
-                <span className="rl-main">
-                  <span className="rl-tags">
-                    <span className="rl-pill">{r.product}</span>
-                    {r.target && (
-                      <span className="rl-pill soft">{r.target}</span>
-                    )}
-                    {r.modules.length > 0 && (
-                      <span className="muted">
-                        {tr(
-                          r.modules.length === 1 ? '1 module' : '{n} modules',
-                          { n: r.modules.length },
-                        )}
-                      </span>
-                    )}
-                  </span>
-                  {r.summary && <b className="rl-summary">{r.summary}</b>}
-                  {(
-                    [
-                      ['Purpose', r.purpose],
-                      ['Changes', r.changes],
-                      ['Verification', r.verification],
-                    ] as [string, string][]
-                  )
-                    .filter(([, v]) => v)
-                    .map(([k, v]) => (
-                      <span key={k} className="rl-line">
-                        <span className="k">{tr(k)}</span>
-                        <span className="v">{v}</span>
-                      </span>
-                    ))}
-                </span>
+            <div className="rl-empty-btns">
+              <button className="btn primary" onClick={() => setEditing('new')}>
+                <Icon name="plus" />
+                {tr('Add the first release')}
               </button>
-            ))}
+              <button className="btn" onClick={() => setImportOpen(true)}>
+                <Icon name="upload" />
+                {tr('Import from Excel')}
+              </button>
+            </div>
           </div>
+        ) : tab === 'timeline' ? (
+          <Timeline
+            list={newestFirst}
+            all={all}
+            lists={lists}
+            onEdit={setEditing}
+          />
         ) : tab === 'versions' ? (
           matrix && matrix.rows.length ? (
             <div className="rl-scroll">
               <table className="rl-table matrix">
                 <thead>
                   <tr>
-                    <th>{tr('Destination')}</th>
-                    <th>{tr('Category')}</th>
+                    <th>{colName('destination')}</th>
+                    <th>{colName('category')}</th>
                     <th>{tr('Module')}</th>
                     <th>{tr('Environment')}</th>
                     {matrix.dates.map((d) => (
@@ -356,20 +339,235 @@ export function ReleasesView({
           onClose={() => setListsOpen(false)}
         />
       )}
-      {exportOpen && (
-        <ExportDialog
+      {exportOpen && lists && (
+        <ReleaseExportDialog
           projectId={projectId}
+          projectName={p.name}
+          customer={p.customer}
+          lists={lists}
           japanese={(p.originalLanguages[0] ?? 'ja') === 'ja'}
           onClose={() => setExportOpen(false)}
+        />
+      )}
+      {importOpen && lists && (
+        <ReleaseImportDialog
+          projectId={projectId}
+          count={all.length}
+          lists={lists}
+          japanese={(p.originalLanguages[0] ?? 'ja') === 'ja'}
+          onClose={() => setImportOpen(false)}
+          onImported={() => {
+            setImportOpen(false);
+            void load();
+          }}
         />
       )}
     </>
   );
 }
 
+/** The releases as milestones, newest first; a file opens to what changed. */
+function Timeline({
+  list,
+  all,
+  lists,
+  onEdit,
+}: {
+  list: Release[];
+  all: Release[];
+  lists: ReleaseLists | null;
+  onEdit: (r: Release) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const { today } = useApp();
+  const ago = (d: string) => {
+    const days = Math.round((Date.parse(today) - Date.parse(d)) / 86400000);
+    if (days === 0) return tr('Today');
+    if (days < 0) return tr('In {n} days', { n: -days });
+    if (days < 14)
+      return tr(days === 1 ? '1 day ago' : '{n} days ago', { n: days });
+    if (days < 70) return tr('{n} weeks ago', { n: Math.round(days / 7) });
+    if (days < 730) return tr('{n} months ago', { n: Math.round(days / 30.4) });
+    return tr('{n} years ago', { n: Math.round(days / 365) });
+  };
+  const box = (label: string, text: string, fromRelease: boolean) => (
+    <div className="rl-box">
+      <span className="k">
+        {tr(label)}
+        {text && fromRelease && <i>{tr('(from the release)')}</i>}
+      </span>
+      <span className={text ? 'v' : 'v none'}>{text || tr('No info')}</span>
+    </div>
+  );
+  if (!list.length)
+    return <p className="muted rl-empty">{tr('No release matches.')}</p>;
+  return (
+    <ol className="rl-tl">
+      {list.map((r) => {
+        const planned = r.status === 'planned';
+        const ownText = !!(r.purpose || r.changes || r.verification);
+        return (
+          <li key={r.id} className={`rl-ms ${planned ? 'planned' : ''}`}>
+            <div className="rl-when">
+              <b className={planned ? 'p' : 'mono'}>
+                {planned ? tr('Planned') : sheetDate(r.releasedOn)}
+              </b>
+              {!planned && r.releasedOn && (
+                <span className="muted">{ago(r.releasedOn)}</span>
+              )}
+            </div>
+            <div className="rl-rail" aria-hidden="true">
+              <span className="dot" />
+            </div>
+            <section className="rl-card">
+              <div className="rl-card-head">
+                <span className="rl-pill">{r.product}</span>
+                <h2 className="mono">{r.version}</h2>
+                {r.target && <span className="muted">{r.target}</span>}
+                <span className="rl-date-sm mono muted">
+                  {planned ? tr('Planned') : sheetDate(r.releasedOn)}
+                </span>
+                {planned && (
+                  <span className="rl-pill planned">{tr('Planned')}</span>
+                )}
+                <span style={{ flex: 1 }} />
+                {r.modules.length > 0 && (
+                  <span className="muted">
+                    {tr(r.modules.length === 1 ? '1 file' : '{n} files', {
+                      n: r.modules.length,
+                    })}
+                  </span>
+                )}
+                <button
+                  className="icon-btn"
+                  aria-label={tr('Edit {name}', {
+                    name: `${r.product} ${r.version}`,
+                  })}
+                  title={tr('Edit the release')}
+                  onClick={() => onEdit(r)}
+                >
+                  <Icon name="edit" />
+                </button>
+              </div>
+              {r.summary && <p className="rl-card-sum">{r.summary}</p>}
+              {!r.modules.length &&
+                (ownText ? (
+                  <div className="rl-boxes pad">
+                    {box('Change log', r.changes, false)}
+                    {box('Purpose', r.purpose, false)}
+                    {box('Verification', r.verification, false)}
+                  </div>
+                ) : (
+                  <p className="muted rl-card-sum">
+                    {tr('No files in this release.')}
+                  </p>
+                ))}
+              {r.modules.length > 0 && (
+                <ul className="rl-files">
+                  {r.modules.map((m) => {
+                    const isOpen = open === m.id;
+                    const info = fileInfo(r, m);
+                    const prev = previousVersion(all, r, m);
+                    const none =
+                      !info.changes && !info.purpose && !info.verification;
+                    const extra = (lists?.fields ?? []).filter(
+                      (f) => m.extra[f.key],
+                    );
+                    return (
+                      <li key={m.id} className={isOpen ? 'open' : ''}>
+                        <button
+                          className="rl-file"
+                          aria-expanded={isOpen}
+                          onClick={() => setOpen(isOpen ? null : m.id)}
+                        >
+                          <Icon name="file" />
+                          <span className="n mono">
+                            {m.fileName || moduleName(m)}
+                          </span>
+                          {m.fileName && m.module && (
+                            <span className="muted">{m.module}</span>
+                          )}
+                          <span style={{ flex: 1 }} />
+                          {m.environment && (
+                            <span className="rl-env">{m.environment}</span>
+                          )}
+                          <span className="rl-v mono">{m.version}</span>
+                          <Icon name="chev" />
+                        </button>
+                        {isOpen && (
+                          <div className="rl-detail">
+                            <div className="rl-meta">
+                              {m.destination && (
+                                <span>
+                                  {colName('destination')}{' '}
+                                  <b>{m.destination}</b>
+                                </span>
+                              )}
+                              {m.category && (
+                                <span>
+                                  {colName('category')} <b>{m.category}</b>
+                                </span>
+                              )}
+                              {m.type && (
+                                <span>
+                                  {tr('Type')} <b>{m.type}</b>
+                                </span>
+                              )}
+                              <span>
+                                {tr('Version')}{' '}
+                                <b className="mono">
+                                  {prev || tr('first')} → {m.version || '—'}
+                                </b>
+                              </span>
+                              {extra.map((f) => (
+                                <span key={f.key}>
+                                  {f.name} <b>{m.extra[f.key]}</b>
+                                </span>
+                              ))}
+                            </div>
+                            {none ? (
+                              <div className="rl-noinfo">{tr('No info')}</div>
+                            ) : (
+                              <div className="rl-boxes">
+                                {box(
+                                  'Change log',
+                                  info.changes,
+                                  info.fromRelease.changes,
+                                )}
+                                {box(
+                                  'Purpose',
+                                  info.purpose,
+                                  info.fromRelease.purpose,
+                                )}
+                                {box(
+                                  'Verification',
+                                  info.verification,
+                                  info.fromRelease.verification,
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 type Draft = Omit<ReleaseInput, 'modules'> & {
-  modules: (Omit<ReleaseModule, 'id'> & { key: number })[];
+  modules: (Omit<ReleaseModule, 'id'> & { id?: string; key: number })[];
 };
+type TextKey = Exclude<
+  keyof ReleaseModule,
+  'id' | 'extra' | 'changes' | 'purpose' | 'verification'
+>;
 let nextKey = 1;
 
 /** A release: its fields, and the modules it delivers, in one form. */
@@ -417,6 +615,14 @@ function ReleaseEditor({
         },
   );
   const [busy, setBusy] = useState(false);
+  const [details, setDetails] = useState<Set<number>>(new Set());
+  const toggle = (key: number) =>
+    setDetails((x) => {
+      const n = new Set(x);
+      if (n.has(key)) n.delete(key);
+      else n.add(key);
+      return n;
+    });
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setD((x) => ({ ...x, [k]: v }));
   const setModule = (key: number, patch: Partial<ReleaseModule>) =>
@@ -586,7 +792,7 @@ function ReleaseEditor({
           </label>
         </div>
         <label className="field">
-          <span className="k">{tr('Summary')}</span>
+          <span className="k">{colName('summary')}</span>
           <input
             className="inp"
             value={d.summary}
@@ -605,7 +811,7 @@ function ReleaseEditor({
               <span className="k">{tr(label)}</span>
               <textarea
                 className="inp"
-                rows={4}
+                rows={3}
                 value={d[k]}
                 onChange={(e) => set(k, e.target.value)}
               />
@@ -617,7 +823,7 @@ function ReleaseEditor({
           <b>{tr('Modules in this release')}</b>
           <span className="muted">
             {tr(
-              'Only the modules this release delivers; the others keep their version.',
+              'Only the files this release delivers; the others keep their version. Details: what changed in each file.',
             )}
           </span>
           <span style={{ flex: 1 }} />
@@ -628,8 +834,13 @@ function ReleaseEditor({
               onClick={() =>
                 set(
                   'modules',
+                  // The files, without what the earlier release said about them.
                   previous.modules.map(({ id: _id, ...m }) => ({
                     ...m,
+                    changes: '',
+                    purpose: '',
+                    verification: '',
+                    extra: {},
                     key: nextKey++,
                   })),
                 )
@@ -671,60 +882,137 @@ function ReleaseEditor({
             <table className="rl-table edit">
               <thead>
                 <tr>
-                  <th>{tr('Destination')}</th>
-                  <th>{tr('Category')}</th>
+                  <th>{colName('destination')}</th>
+                  <th>{colName('category')}</th>
                   <th>{tr('Type')}</th>
                   <th>{tr('Module')}</th>
                   <th>{tr('File name')}</th>
                   <th>{tr('Environment')}</th>
                   <th>{tr('Version')}</th>
+                  <th aria-label={tr('Details')} />
                   <th aria-label={tr('Remove')} />
                 </tr>
               </thead>
               <tbody>
-                {d.modules.map((m) => (
-                  <tr key={m.key}>
-                    {(
-                      [
-                        ['destination', 'rl-destinations'],
-                        ['category', 'rl-categories'],
-                        ['type', 'rl-editions'],
-                        ['module', 'rl-modules'],
-                        ['fileName', 'rl-files'],
-                        ['environment', 'rl-environments'],
-                        ['version', ''],
-                      ] as [Exclude<keyof ReleaseModule, 'id'>, string][]
-                    ).map(([k, listId]) => (
-                      <td key={k}>
-                        <input
-                          className={`inp sm ${k === 'version' ? 'mono' : ''}`}
-                          list={listId || undefined}
-                          aria-label={tr(LABEL_OF[k])}
-                          value={m[k]}
-                          onChange={(e) =>
-                            setModule(m.key, { [k]: e.target.value })
-                          }
-                        />
-                      </td>
-                    ))}
-                    <td>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        aria-label={tr('Remove')}
-                        title={tr('Remove')}
-                        onClick={() =>
-                          set(
-                            'modules',
-                            d.modules.filter((x) => x.key !== m.key),
-                          )
-                        }
-                      >
-                        <Icon name="x" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {d.modules.map((m) => {
+                  const hasText = !!(
+                    m.changes ||
+                    m.purpose ||
+                    m.verification ||
+                    Object.values(m.extra).some(Boolean)
+                  );
+                  const isOpen = details.has(m.key);
+                  return (
+                    <Fragment key={m.key}>
+                      <tr className={isOpen ? 'has-detail' : ''}>
+                        {(
+                          [
+                            ['destination', 'rl-destinations'],
+                            ['category', 'rl-categories'],
+                            ['type', 'rl-editions'],
+                            ['module', 'rl-modules'],
+                            ['fileName', 'rl-files'],
+                            ['environment', 'rl-environments'],
+                            ['version', ''],
+                          ] as [TextKey, string][]
+                        ).map(([k, listId]) => (
+                          <td key={k}>
+                            <input
+                              className={`inp sm ${k === 'version' ? 'mono' : ''}`}
+                              list={listId || undefined}
+                              aria-label={tr(LABEL_OF[k])}
+                              value={m[k]}
+                              onChange={(e) =>
+                                setModule(m.key, { [k]: e.target.value })
+                              }
+                            />
+                          </td>
+                        ))}
+                        <td>
+                          <button
+                            type="button"
+                            className={`btn sm rl-det-btn ${hasText ? 'on' : ''}`}
+                            aria-expanded={isOpen}
+                            title={tr(
+                              'What changed in this file, why, and how it was checked',
+                            )}
+                            onClick={() => toggle(m.key)}
+                          >
+                            {tr('Details')}
+                            {hasText && <span className="rl-dot" />}
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={tr('Remove')}
+                            title={tr('Remove')}
+                            onClick={() =>
+                              set(
+                                'modules',
+                                d.modules.filter((x) => x.key !== m.key),
+                              )
+                            }
+                          >
+                            <Icon name="x" />
+                          </button>
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="rl-det-row">
+                          <td colSpan={9}>
+                            <div className="rl-grid three">
+                              {(
+                                [
+                                  ['changes', 'Change log'],
+                                  ['purpose', 'Purpose'],
+                                  ['verification', 'Verification'],
+                                ] as const
+                              ).map(([k, label]) => (
+                                <label key={k} className="field">
+                                  <span className="k">{tr(label)}</span>
+                                  <textarea
+                                    className="inp"
+                                    rows={3}
+                                    placeholder={tr(
+                                      'Empty: the release’s text is shown',
+                                    )}
+                                    value={m[k]}
+                                    onChange={(e) =>
+                                      setModule(m.key, { [k]: e.target.value })
+                                    }
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                            {lists.fields.length > 0 && (
+                              <div className="rl-grid">
+                                {lists.fields.map((f) => (
+                                  <label key={f.key} className="field">
+                                    <span className="k">{f.name}</span>
+                                    <input
+                                      className="inp sm"
+                                      value={m.extra[f.key] ?? ''}
+                                      onChange={(e) =>
+                                        setModule(m.key, {
+                                          extra: {
+                                            ...m.extra,
+                                            [f.key]: e.target.value,
+                                          },
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -734,8 +1022,8 @@ function ReleaseEditor({
   );
 }
 
-const LABEL_OF: Record<keyof ReleaseModule, string> = {
-  id: 'ID',
+// Shown with colName where the sheets have their own word.
+const LABEL_OF: Record<TextKey, string> = {
   destination: 'Destination',
   category: 'Category',
   type: 'Type',
@@ -769,7 +1057,13 @@ function ListsDialog({
       onSaved(r);
     }
   };
-  const add = (k: keyof ReleaseLists) => {
+  const addField = () => {
+    const v = (adding.fields ?? '').trim();
+    if (!v) return;
+    setAdding((a) => ({ ...a, fields: '' }));
+    void save({ ...l, fields: [...l.fields, { key: fieldKey(v), name: v }] });
+  };
+  const add = (k: NameList) => {
     const v = (adding[k] ?? '').trim();
     if (!v) return;
     setAdding((a) => ({ ...a, [k]: '' }));
@@ -789,7 +1083,7 @@ function ListsDialog({
       }
     >
       <div className="form rl-lists">
-        {(Object.keys(LIST_NAMES) as (keyof ReleaseLists)[]).map((k) => (
+        {(Object.keys(LIST_NAMES) as NameList[]).map((k) => (
           <section key={k} className="field">
             <span className="k">{tr(LIST_NAMES[k])}</span>
             <div className="rl-chips">
@@ -849,78 +1143,77 @@ function ListsDialog({
             </div>
           </section>
         ))}
-      </div>
-    </Modal>
-  );
-}
-
-/** Saving the releases as an Excel workbook, in Japanese or English. */
-function ExportDialog({
-  projectId,
-  japanese,
-  onClose,
-}: {
-  projectId: string;
-  japanese: boolean;
-  onClose: () => void;
-}) {
-  const { attempt, toast } = useApp();
-  const [lang, setLang] = useState<'ja' | 'en'>(japanese ? 'ja' : 'en');
-  const [busy, setBusy] = useState(false);
-  const go = async () => {
-    setBusy(true);
-    const r = await attempt(() =>
-      window.worksync.exportReleases(projectId, lang),
-    );
-    setBusy(false);
-    if (r) {
-      toast(
-        tr('Saved {file}.', { file: r.file.split(/[\\/]/).pop() ?? r.file }),
-      );
-      onClose();
-    }
-  };
-  return (
-    <Modal
-      title={tr('Export the releases to Excel')}
-      subtitle={tr(
-        'One workbook: the module version list (a column per release date), the newest version of each module, and a release history per product, oldest first.',
-      )}
-      onClose={onClose}
-      narrow
-      footer={
-        <>
-          <button className="btn" onClick={onClose}>
-            {tr('Cancel')}
-          </button>
-          <button
-            className="btn primary"
-            disabled={busy}
-            onClick={() => void go()}
-          >
-            <Icon name="download" />
-            {busy ? tr('Saving…') : tr('Save…')}
-          </button>
-        </>
-      }
-    >
-      <div className="form">
-        <div className="field">
-          <span className="k">{tr('Headings in')}</span>
-          <div className="seg-ctl" role="group">
-            <button aria-pressed={lang === 'ja'} onClick={() => setLang('ja')}>
-              日本語
-            </button>
-            <button aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
-              English
-            </button>
+        <section className="field">
+          <span className="k">{tr('File fields')}</span>
+          <span className="muted step-help">
+            {tr(
+              'Your own fields on each released file, such as a ticket number. Templates write them as {marker}.',
+              { marker: '{{file.ticket_no}}' },
+            )}
+          </span>
+          <div className="rl-chips">
+            {l.fields.map((f, i) => (
+              <span
+                key={f.key}
+                className="note-tag"
+                title={`{{file.${f.key}}}`}
+              >
+                {i > 0 && (
+                  <button
+                    className="note-tag-x"
+                    aria-label={tr('Move {name} earlier', { name: f.name })}
+                    title={tr('Earlier')}
+                    onClick={() => {
+                      const next = [...l.fields];
+                      [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                      void save({ ...l, fields: next });
+                    }}
+                  >
+                    ‹
+                  </button>
+                )}
+                {f.name}
+                <button
+                  className="note-tag-x"
+                  aria-label={tr('Remove {name}', { name: f.name })}
+                  onClick={async () => {
+                    if (
+                      await confirmDelete({
+                        title: tr('Remove the field {name}?', { name: f.name }),
+                        text: tr(
+                          'It is no longer shown or exported. What files have in it is kept, and comes back if you add the field again.',
+                        ),
+                        yes: tr('Remove'),
+                      })
+                    )
+                      void save({
+                        ...l,
+                        fields: l.fields.filter((x) => x.key !== f.key),
+                      });
+                  }}
+                >
+                  <Icon name="x" />
+                </button>
+              </span>
+            ))}
+            <input
+              className="inp sm rl-add"
+              placeholder={tr('Add…')}
+              aria-label={tr('Add to {list}', { list: tr('File fields') })}
+              value={adding.fields ?? ''}
+              onChange={(e) =>
+                setAdding((a) => ({ ...a, fields: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addField();
+                }
+              }}
+              onBlur={() => addField()}
+            />
           </div>
-        </div>
-        <p className="muted step-help">
-          {tr(
-            'Your text is written as you typed it; only the sheet names and headings change.',
-          )}
-        </p>
+        </section>
       </div>
     </Modal>
   );

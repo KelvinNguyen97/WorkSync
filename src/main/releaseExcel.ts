@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { DATA_SHEET, IMPORT_COLUMNS } from '../shared/releaseFormat';
 import {
   byDate,
   latestModules,
@@ -84,7 +85,7 @@ const thin = { style: 'thin' as const, color: { argb: 'FF808080' } };
 const BOX = { top: thin, left: thin, bottom: thin, right: thin };
 
 /** A sheet name Excel accepts: at most 31 characters, none of []:*?/\, unique. */
-function sheetName(name: string, used: Set<string>): string {
+export function sheetName(name: string, used: Set<string>): string {
   const base = name.replace(/[[\]:*?/\\]/g, '_').slice(0, 31) || 'Sheet';
   let n = base;
   for (let i = 2; used.has(n.toLowerCase()); i++)
@@ -150,6 +151,10 @@ export async function releaseWorkbook(o: {
   releases: Release[];
   lists: ReleaseLists;
   language: ReleaseSheetLanguage;
+  /** Planned releases in the history sheets too. */
+  includePlanned?: boolean;
+  /** In the version list, only the versions released that day. */
+  onlyChanged?: boolean;
 }): Promise<Uint8Array> {
   const w = WORDS[o.language];
   const wb = new ExcelJS.Workbook();
@@ -177,7 +182,9 @@ export async function releaseWorkbook(o: {
     body(m.getCell(row, 2), r.category, { bold: true });
     body(m.getCell(row, 3), r.module);
     body(m.getCell(row, 4), r.environment);
-    r.versions.forEach((v, i) => body(m.getCell(row, 5 + i), v));
+    r.versions.forEach((v, i) =>
+      body(m.getCell(row, 5 + i), o.onlyChanged && !r.changed[i] ? '' : v),
+    );
   });
   // Rows of the same destination, and of the same category in it, share one cell.
   const group = (col: number, same: (a: number, b: number) => boolean) => {
@@ -228,7 +235,9 @@ export async function releaseWorkbook(o: {
     // What was delivered: planned releases are not in the history yet.
     const list = byDate(
       o.releases.filter(
-        (r) => r.product === product && r.status === 'released',
+        (r) =>
+          r.product === product &&
+          (o.includePlanned || r.status === 'released'),
       ),
     );
     if (!list.length) continue;
@@ -248,7 +257,14 @@ export async function releaseWorkbook(o: {
       const row = 4 + k;
       body(h.getCell(row, 2), k + 1);
       body(h.getCell(row, 3), r.target);
-      body(h.getCell(row, 4), sheetDate(r.releasedOn));
+      body(
+        h.getCell(row, 4),
+        r.status === 'planned'
+          ? o.language === 'ja'
+            ? '予定'
+            : 'Planned'
+          : sheetDate(r.releasedOn),
+      );
       body(h.getCell(row, 5), r.version);
       body(h.getCell(row, 6), r.summary);
       body(h.getCell(row, 7), r.purpose);
@@ -261,5 +277,70 @@ export async function releaseWorkbook(o: {
     h.views = [{ state: 'frozen', ySplit: 3 }];
     print(h);
   }
+  dataSheet(wb, o.releases, o.lists, o.language, used);
   return new Uint8Array(await wb.xlsx.writeBuffer());
+}
+
+/**
+ * The releases in the import format, on a hidden sheet, so the app can read
+ * its own workbook back: a row for a release's own text, then a row per file.
+ */
+export function dataSheet(
+  wb: ExcelJS.Workbook,
+  releases: Release[],
+  lists: ReleaseLists,
+  language: ReleaseSheetLanguage,
+  used = new Set<string>(),
+) {
+  const ws = wb.addWorksheet(sheetName(DATA_SHEET[language], used), {
+    state: 'hidden',
+  });
+  ws.addRow([
+    ...IMPORT_COLUMNS.map((c) => (language === 'ja' ? c.ja : c.en)),
+    ...lists.fields.map((f) => f.name),
+  ]);
+  ws.getRow(1).font = { bold: true };
+  for (const r of byDate(releases)) {
+    const base = {
+      date: sheetDate(r.releasedOn),
+      product: r.product,
+      edition: r.target,
+      version: r.version,
+      status: r.status === 'planned' ? 'Planned' : 'Released',
+      summary: r.summary,
+    } as Record<string, string>;
+    const line = (
+      more: Record<string, string>,
+      extra: Record<string, string>,
+    ) =>
+      ws.addRow([
+        ...IMPORT_COLUMNS.map((c) => ({ ...base, ...more })[c.key] ?? ''),
+        ...lists.fields.map((f) => extra[f.key] ?? ''),
+      ]);
+    if (r.purpose || r.changes || r.verification || !r.modules.length)
+      line(
+        {
+          changes: r.changes,
+          purpose: r.purpose,
+          verification: r.verification,
+        },
+        {},
+      );
+    for (const m of r.modules)
+      line(
+        {
+          fileName: m.fileName,
+          module: m.module,
+          type: m.type,
+          destination: m.destination,
+          category: m.category,
+          environment: m.environment,
+          fileVersion: m.version,
+          changes: m.changes,
+          purpose: m.purpose,
+          verification: m.verification,
+        },
+        m.extra,
+      );
+  }
 }

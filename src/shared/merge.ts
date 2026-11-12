@@ -218,6 +218,7 @@ const LABELS: Record<string, string> = {
   module: 'Module',
   file_name: 'File name',
   environment: 'Environment',
+  extra: 'Other fields',
 };
 export const fieldLabel = (f: string) => LABELS[f] ?? f;
 
@@ -838,6 +839,10 @@ export function mergeProject(
       'file_name',
       'environment',
       'version',
+      'changes',
+      'purpose',
+      'verification',
+      'extra',
     ],
     quiet: ['position'],
     where: (r) => {

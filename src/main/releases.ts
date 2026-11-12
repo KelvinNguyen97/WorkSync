@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import {
   DEFAULT_RELEASE_LISTS,
+  fieldKey,
   type Release,
+  type ReleaseField,
   type ReleaseInput,
   type ReleaseLists,
   type ReleaseModule,
@@ -21,6 +23,30 @@ const uniq = (list: unknown): string[] => {
     if (t && !out.some((x) => x.toLowerCase() === t.toLowerCase())) out.push(t);
   }
   return out;
+};
+
+/** Fields without blanks or repeated keys, in the order given. */
+const uniqFields = (list: unknown): ReleaseField[] => {
+  const out: ReleaseField[] = [];
+  for (const f of Array.isArray(list) ? list : []) {
+    const name = clean((f as ReleaseField)?.name);
+    if (!name) continue;
+    const key = clean((f as ReleaseField)?.key) || fieldKey(name);
+    if (!out.some((x) => x.key === key)) out.push({ key, name });
+  }
+  return out;
+};
+
+const parseExtra = (v: unknown): Record<string, string> => {
+  try {
+    const o = JSON.parse(str(v) || '{}') as Record<string, unknown>;
+    const out: Record<string, string> = {};
+    for (const [k, x] of Object.entries(o ?? {}))
+      if (clean(x)) out[k] = str(x).trim();
+    return out;
+  } catch {
+    return {};
+  }
 };
 
 /** Software releases of a project, and the lists they pick from. */
@@ -56,6 +82,7 @@ export class Releases {
       environments: uniq(
         saved.environments ?? DEFAULT_RELEASE_LISTS.environments,
       ),
+      fields: uniqFields(saved.fields ?? DEFAULT_RELEASE_LISTS.fields),
     };
   }
 
@@ -67,6 +94,7 @@ export class Releases {
       destinations: uniq(lists.destinations),
       categories: uniq(lists.categories),
       environments: uniq(lists.environments),
+      fields: uniqFields(lists.fields),
     };
     this.db
       .prepare('UPDATE projects SET release_lists = ? WHERE id = ?')
@@ -90,6 +118,10 @@ export class Releases {
       fileName: str(m.file_name),
       environment: str(m.environment),
       version: str(m.version),
+      changes: str(m.changes),
+      purpose: str(m.purpose),
+      verification: str(m.verification),
+      extra: parseExtra(m.extra),
     }));
     return {
       id: str(r.id),
@@ -128,7 +160,13 @@ export class Releases {
   }
 
   /** Adds a release, or changes the one with this id (its modules are replaced). */
-  save(projectId: string, input: ReleaseInput, id?: string): Release {
+  save(
+    projectId: string,
+    input: ReleaseInput,
+    id?: string,
+    /** False when the caller holds the transaction (an import). */
+    own = true,
+  ): Release {
     this.project(projectId);
     const v = {
       product: clean(input.product),
@@ -149,6 +187,7 @@ export class Releases {
       throw new Error('A released version needs its release date.');
     const modules = (input.modules ?? [])
       .map((m) => ({
+        id: m.id ? clean(m.id) : '',
         destination: clean(m.destination),
         category: clean(m.category),
         type: clean(m.type),
@@ -156,13 +195,25 @@ export class Releases {
         fileName: clean(m.fileName),
         environment: clean(m.environment),
         version: clean(m.version),
+        changes: str(m.changes).trim(),
+        purpose: str(m.purpose).trim(),
+        verification: str(m.verification).trim(),
+        extra: parseExtra(JSON.stringify(m.extra ?? {})),
       }))
-      .filter((m) => m.module || m.fileName || m.version);
+      .filter(
+        (m) =>
+          m.module ||
+          m.fileName ||
+          m.version ||
+          m.changes ||
+          m.purpose ||
+          m.verification,
+      );
     if (modules.some((m) => !m.module && !m.fileName))
       throw new Error('Give each module a name or a file name.');
     const now = this.now();
     const releaseId = id ?? randomUUID();
-    this.db.exec('BEGIN');
+    if (own) this.db.exec('BEGIN');
     try {
       if (id) {
         this.get(id);
@@ -183,9 +234,6 @@ export class Releases {
             now,
             id,
           );
-        this.db
-          .prepare('DELETE FROM release_modules WHERE release_id = ?')
-          .run(id);
       } else
         this.db
           .prepare(
@@ -206,14 +254,23 @@ export class Releases {
             now,
             now,
           );
-      const add = this.db.prepare(
-        'INSERT INTO release_modules (id, release_id, position, destination, category, type, module, file_name, environment, version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      // Modules keep their ids, so a change merges as a change, not a new row.
+      const had = new Set(
+        (
+          this.db
+            .prepare('SELECT id FROM release_modules WHERE release_id = ?')
+            .all(releaseId) as Row[]
+        ).map((r) => str(r.id)),
       );
-      modules.forEach((m, i) =>
-        add.run(
-          randomUUID(),
-          releaseId,
-          i,
+      const kept = new Set<string>();
+      const update = this.db.prepare(
+        'UPDATE release_modules SET position = ?, destination = ?, category = ?, type = ?, module = ?, file_name = ?, environment = ?, version = ?, changes = ?, purpose = ?, verification = ?, extra = ? WHERE id = ?',
+      );
+      const add = this.db.prepare(
+        'INSERT INTO release_modules (id, release_id, position, destination, category, type, module, file_name, environment, version, changes, purpose, verification, extra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      );
+      modules.forEach((m, i) => {
+        const values = [
           m.destination,
           m.category,
           m.type,
@@ -221,11 +278,24 @@ export class Releases {
           m.fileName,
           m.environment,
           m.version,
-        ),
-      );
+          m.changes,
+          m.purpose,
+          m.verification,
+          JSON.stringify(m.extra),
+        ] as const;
+        if (m.id && had.has(m.id) && !kept.has(m.id)) {
+          kept.add(m.id);
+          update.run(i, ...values, m.id);
+        } else add.run(randomUUID(), releaseId, i, ...values);
+      });
+      const drop = this.db.prepare('DELETE FROM release_modules WHERE id = ?');
+      for (const id of had) if (!kept.has(id)) drop.run(id);
       // New names join the project's lists, so they can be picked next time.
       const lists = this.getLists(projectId);
-      const join = (key: keyof ReleaseLists, values: string[]) => {
+      const join = (
+        key: Exclude<keyof ReleaseLists, 'fields'>,
+        values: string[],
+      ) => {
         for (const x of values)
           if (x && !lists[key].some((y) => y.toLowerCase() === x.toLowerCase()))
             lists[key].push(x);
@@ -245,12 +315,65 @@ export class Releases {
         modules.map((m) => m.environment),
       );
       this.saveLists(projectId, lists);
+      if (own) this.db.exec('COMMIT');
+    } catch (error) {
+      if (own) this.db.exec('ROLLBACK');
+      throw error;
+    }
+    return this.get(releaseId);
+  }
+
+  /** Runs `fn` in one transaction: all of it is saved, or none. */
+  inOne<T>(fn: () => T): T {
+    this.db.exec('BEGIN');
+    try {
+      const out = fn();
       this.db.exec('COMMIT');
+      return out;
     } catch (error) {
       this.db.exec('ROLLBACK');
       throw error;
     }
-    return this.get(releaseId);
+  }
+
+  /** Removes every release of the project (an import that starts again). */
+  deleteAll(projectId: string): number {
+    return Number(
+      this.db
+        .prepare('DELETE FROM releases WHERE project_id = ?')
+        .run(projectId).changes,
+    );
+  }
+
+  /** The project's Excel template for the release export, if it has one. */
+  getTemplate(
+    projectId: string,
+  ): { name: string; chosenAt: string; data: Uint8Array } | null {
+    const r = this.db
+      .prepare('SELECT * FROM release_templates WHERE project_id = ?')
+      .get(projectId) as Row | undefined;
+    return r
+      ? {
+          name: str(r.name),
+          chosenAt: str(r.chosen_at),
+          data: new Uint8Array(r.data as Uint8Array),
+        }
+      : null;
+  }
+
+  setTemplate(projectId: string, name: string, data: Uint8Array): void {
+    this.project(projectId);
+    this.db
+      .prepare(
+        'INSERT INTO release_templates (project_id, name, data, chosen_at) VALUES (?, ?, ?, ?) ON CONFLICT(project_id) DO UPDATE SET name = excluded.name, data = excluded.data, chosen_at = excluded.chosen_at',
+      )
+      .run(projectId, name, data, this.now());
+  }
+
+  clearTemplate(projectId: string): void {
+    this.db
+      .prepare('DELETE FROM release_templates WHERE project_id = ?')
+      .run(projectId);
   }
 
   delete(id: string): Release {

@@ -31,6 +31,28 @@ import type { MyTask, MyTaskInput } from './myTasks';
 import type { Note, NoteInput } from './notes';
 import type { AutoItem, MergeChoices, Question } from './merge';
 import type { Release, ReleaseInput, ReleaseLists } from './releases';
+import type { ReleaseImportPlan } from './releaseImportTypes';
+
+/** How the releases are exported. */
+export interface ReleaseExportOptions {
+  excel: boolean;
+  html: boolean;
+  language: 'ja' | 'en';
+  /** The built-in layout, or the project's template. */
+  template: 'builtin' | 'project';
+  includePlanned: boolean;
+  onlyChanged: boolean;
+  theme: 'light' | 'dark' | 'auto';
+}
+
+/** The project's Excel template for the release export. */
+export interface ReleaseTemplateInfo {
+  name: string;
+  chosenAt: string;
+  sheets: number;
+  /** The project's own file fields it uses. */
+  fields: string[];
+}
 
 /** What a merge would do, for the merge window. */
 export interface MergePreview {
@@ -343,9 +365,29 @@ export interface WorkSyncApi {
     projectId: string,
     lists: ReleaseLists,
   ): Promise<ReleaseLists>;
-  /** Saves the releases as an Excel workbook, after asking where; null when cancelled. */
+  /** Saves the releases as Excel and or HTML, after asking where; null when cancelled. */
   exportReleases(
     projectId: string,
+    options: ReleaseExportOptions,
+  ): Promise<{ files: string[]; unknown: string[] } | null>;
+  getReleaseTemplate(projectId: string): Promise<ReleaseTemplateInfo | null>;
+  /** Asks for an Excel template, checks it and keeps it with the project; null when cancelled. */
+  chooseReleaseTemplate(projectId: string): Promise<ReleaseTemplateInfo | null>;
+  clearReleaseTemplate(projectId: string): Promise<void>;
+  /** Saves the built-in layout as a template to edit; null when cancelled. */
+  saveDefaultReleaseTemplate(
+    projectId: string,
+    language: 'ja' | 'en',
+  ): Promise<{ file: string } | null>;
+  /** Asks for an Excel file and reads what importing it would do; nothing is saved. Null when cancelled. */
+  previewReleaseImport(projectId: string): Promise<ReleaseImportPlan | null>;
+  /** Imports the file last previewed for this project. */
+  applyReleaseImport(
+    projectId: string,
+    o: { mode: 'skip' | 'update' | 'replace'; fields: string[] },
+  ): Promise<{ added: number; updated: number; skipped: number }>;
+  /** Saves an empty sheet in the import format; null when cancelled. */
+  saveReleaseImportSheet(
     language: 'ja' | 'en',
   ): Promise<{ file: string } | null>;
   /** The Catalog, each entry checked for whether its path is still there. */
@@ -415,6 +457,13 @@ export const API_METHODS = [
   'getReleaseLists',
   'saveReleaseLists',
   'exportReleases',
+  'getReleaseTemplate',
+  'chooseReleaseTemplate',
+  'clearReleaseTemplate',
+  'saveDefaultReleaseTemplate',
+  'previewReleaseImport',
+  'applyReleaseImport',
+  'saveReleaseImportSheet',
   'listCatalog',
   'addToCatalog',
   'addFoundToCatalog',

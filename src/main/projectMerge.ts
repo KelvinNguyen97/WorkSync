@@ -18,7 +18,11 @@ import {
   toUidSpace,
   WITH_ID,
 } from './exchanges';
-import { putNoteImages, type ExportFile } from './projectTransfer';
+import {
+  putNoteImages,
+  putReleaseTemplate,
+  type ExportFile,
+} from './projectTransfer';
 
 /**
  * Merging a .worksync file into the project it is a copy of: the plan (what
@@ -238,6 +242,8 @@ export function applyMerge(
         'INSERT OR IGNORE INTO deleted_rows (source_id, customer_id, title, at) VALUES (?, ?, ?, ?)',
       ).run(s(row.source_id), s(row.customer_id), s(row.title), s(row.at));
     }
+    // A template the other copy has, when this one has none.
+    putReleaseTemplate(db, m.projectId, m.x.releaseTemplate, o.now, false);
     // The file is the new starting point for merging with its sender.
     recordExchange(db, {
       id: m.x.exchangeId || randomUUID(),

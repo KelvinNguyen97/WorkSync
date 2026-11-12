@@ -141,6 +141,16 @@ export function exportProject(
       const r = image.get(id) as Row | undefined;
       if (r) files[`note-images/${id}`] = new Uint8Array(r.data as Uint8Array);
     }
+  // The project's Excel template for the release export goes along.
+  const template = db
+    .prepare(
+      'SELECT name, data, chosen_at FROM release_templates WHERE project_id = ?',
+    )
+    .get(projectId) as Row | undefined;
+  if (template)
+    files['release-template.xlsx'] = new Uint8Array(
+      template.data as Uint8Array,
+    );
   for (const v of tables.file_versions) {
     const snap = String(v.snapshot ?? '');
     if (snap && fs.existsSync(snap))
@@ -163,6 +173,9 @@ export function exportProject(
       // The files this copy took in: the receiver can merge from those.
       received: receivedIds(db, projectId),
       includeNotes: o.includeNotes,
+      releaseTemplate: template
+        ? { name: String(template.name), chosenAt: String(template.chosen_at) }
+        : undefined,
     }),
   );
   files['data.json'] = strToU8(JSON.stringify({ tables }));
@@ -210,6 +223,8 @@ export interface ExportFile {
   received: string[];
   /** Whether the owner's notes are in it. */
   includeNotes: boolean;
+  /** The project's Excel template for the release export, if it has one. */
+  releaseTemplate: { name: string; chosenAt: string; data: Uint8Array } | null;
 }
 
 export function readExport(data: Uint8Array): ExportFile {
@@ -230,6 +245,7 @@ export function readExport(data: Uint8Array): ExportFile {
     exchangeId?: string;
     received?: string[];
     includeNotes?: boolean;
+    releaseTemplate?: { name?: string; chosenAt?: string };
   };
   let body: { tables?: Record<string, Row[]> };
   try {
@@ -264,6 +280,14 @@ export function readExport(data: Uint8Array): ExportFile {
         ? manifest.includeNotes
         : (tables.notes ?? []).length > 0 ||
           (tables.tasks ?? []).some((t) => !!t.notes || !!t.next_action),
+    releaseTemplate:
+      manifest.releaseTemplate && files['release-template.xlsx']
+        ? {
+            name: String(manifest.releaseTemplate.name ?? 'template.xlsx'),
+            chosenAt: String(manifest.releaseTemplate.chosenAt ?? ''),
+            data: files['release-template.xlsx'],
+          }
+        : null,
   };
 }
 
@@ -291,6 +315,20 @@ export function putNoteImages(
         'INSERT OR IGNORE INTO note_images (id, mime, data, created_at) VALUES (?, ?, ?, ?)',
       ).run(id, mime, bytes, now);
   }
+}
+
+/** Keeps the release template a file brings; `replace` false keeps the project's own. */
+export function putReleaseTemplate(
+  db: DatabaseSync,
+  projectId: string,
+  t: ExportFile['releaseTemplate'],
+  now: string,
+  replace: boolean,
+): void {
+  if (!t) return;
+  db.prepare(
+    `INSERT INTO release_templates (project_id, name, data, chosen_at) VALUES (?, ?, ?, ?) ON CONFLICT(project_id) DO ${replace ? 'UPDATE SET name = excluded.name, data = excluded.data, chosen_at = excluded.chosen_at' : 'NOTHING'}`,
+  ).run(projectId, t.name, t.data, t.chosenAt || now);
 }
 
 export function importProject(
@@ -377,6 +415,13 @@ export function importProject(
         );
       }
     }
+    putReleaseTemplate(
+      db,
+      idOf('projects', x.tables.projects[0].id),
+      x.releaseTemplate,
+      now,
+      true,
+    );
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');

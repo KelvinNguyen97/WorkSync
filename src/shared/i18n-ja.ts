@@ -1313,4 +1313,175 @@ export const JA: Record<string, string> = {
   Released: 'リリース済み',
   'Software releases and module versions, with an Excel export.':
     'ソフトウェアのリリースとモジュールのバージョン。Excel に書き出せます。',
+  'Change log': '内容',
+  Update: '更新',
+  Skip: 'スキップ',
+  'Follows the viewer': '見る人の設定に合わせる',
+  'Release version': 'リリースバージョン',
+  'File version': 'ファイルバージョン',
+  'Other fields': 'その他の項目',
+  Release: 'リリース',
+  'The instructions could not be copied.': '指示文をコピーできませんでした。',
+  'Replace all {n} releases?': '{n} 件のリリースをすべて置き換えますか？',
+  'The releases now in this project are removed, then the file is imported. A backup is made first.':
+    'このプロジェクトの今のリリースを削除してから、ファイルを取り込みます。先にバックアップを作ります。',
+  'Replace all': 'すべて置き換え',
+  'Imported the releases: {a} added, {u} updated, {s} skipped.':
+    'リリースを取り込みました：追加 {a} 件、更新 {u} 件、スキップ {s} 件。',
+  'Import releases from Excel': 'Excel からリリースを取り込む',
+  'One row per released file. Nothing is saved until you import.':
+    'リリースしたファイルごとに 1 行。取り込むまで何も保存されません。',
+  'New products, destinations and environments join the project lists. A backup is made before importing.':
+    '新しい製品・仕向け先・環境はプロジェクトの一覧に加わります。取り込む前にバックアップを作ります。',
+  'Importing…': '取り込み中…',
+  '1 · The file': '1 · ファイル',
+  'An .xlsx file with the headings of the import format, or a release workbook WorkSync exported.':
+    '取込形式の見出しがある .xlsx ファイル、または WorkSync が書き出したリリースのブック。',
+  'Choose another file…': '別のファイルを選ぶ…',
+  'Choose a file…': 'ファイルを選ぶ…',
+  'Converting a customer sheet?': '顧客のシートを変換しますか？',
+  'Copied: paste it into the AI with the sheet':
+    'コピーしました。シートと一緒に AI に貼り付けてください',
+  'Copy instructions for AI': 'AI 用の指示文をコピー',
+  'Save an empty import sheet': '空の取込シートを保存',
+  '2 · Columns found': '2 · 見つかった列',
+  'Column {name} fills the file field {field}.':
+    '列 {name} はファイル項目 {field} に入ります。',
+  'Unknown column': '不明な列',
+  'Add as a file field': 'ファイル項目として追加',
+  Ignore: '無視',
+  '3 · Preview: nothing is saved yet':
+    '3 · プレビュー（まだ何も保存されていません）',
+  'Already in the project': 'プロジェクトに既にある',
+  'Skipped rows': '飛ばす行',
+  'See the problems below': '下の問題を見てください',
+  'Every row can be read': 'すべての行を読めます',
+  'Releases already in the project:': 'プロジェクトに既にあるリリース：',
+  'All {n} releases now in this project are removed first, then the file is imported. A backup is made before importing.':
+    'このプロジェクトの今の {n} 件のリリースを先に削除し、ファイルを取り込みます。取り込む前にバックアップを作ります。',
+  Result: '結果',
+  'Change log · Purpose · Verification': '内容 · 目的 · 検証',
+  'No info': '情報なし',
+  'The file has no release to import.':
+    'このファイルには取り込むリリースがありません。',
+  'Problems: these rows are left out': '問題：これらの行は取り込みません',
+  'Fix them in the file and choose it again, or import now without them.':
+    'ファイルを直してもう一度選ぶか、これらの行を除いて今取り込んでください。',
+  'Template kept. It uses fields the project does not have: {list}.':
+    'テンプレートを保存しました。プロジェクトにない項目を使っています：{list}。',
+  'Template kept with the project: {name}.':
+    'テンプレートをプロジェクトに保存しました：{name}。',
+  'Remove the template {name}?': 'テンプレート {name} を外しますか？',
+  'The export goes back to the built-in layout. The file you chose is not touched.':
+    '書き出しは標準のレイアウトに戻ります。選んだファイルはそのままです。',
+  'Saved {file}. Edit it in Excel, then choose it here.':
+    '{file} を保存しました。Excel で編集してから、ここで選んでください。',
+  'The template has markers WorkSync does not know, left empty: {list}.':
+    'テンプレートに WorkSync が知らないマーカーがあり、空欄にしました：{list}。',
+  'Export the releases': 'リリースを書き出す',
+  'Export both': '両方を書き出す',
+  'Export…': '書き出す…',
+  'Files to make': '作るファイル',
+  'Excel workbook': 'Excel ブック',
+  'For the customer: version table, module list, history per product':
+    '顧客向け：バージョン一覧、モジュール一覧、製品ごとの履歴',
+  'HTML page': 'HTML ページ',
+  'The timeline in one file you can send or open anywhere':
+    'タイムラインを 1 つのファイルに。送ることも、どこでも開くこともできます',
+  Headings: '見出し',
+  'Your text is written as you typed it; only headings change.':
+    '入力した文章はそのまま書き出されます。変わるのは見出しだけです。',
+  'What to include': '含めるもの',
+  'Include planned releases': '予定のリリースも含める',
+  'In the version table, only versions released that day':
+    'バージョン一覧には、その日にリリースしたバージョンだけを書く',
+  'Excel layout': 'Excel のレイアウト',
+  'Built-in layout': '標準のレイアウト',
+  'Module versions · Release modules · Release history per product':
+    'モジュールバージョン一覧 · リリースモジュール一覧 · 製品ごとのリリース履歴',
+  'This project’s template: {name}': 'このプロジェクトのテンプレート：{name}',
+  'This project’s template': 'このプロジェクトのテンプレート',
+  'Chosen {date} · {n} sheets': '{date} に選択 · {n} シート',
+  'None yet: save the default template, edit it in Excel, then choose it.':
+    'まだありません。標準テンプレートを保存し、Excel で編集してから選んでください。',
+  'Save the default template…': '標準テンプレートを保存…',
+  'Choose another template…': '別のテンプレートを選ぶ…',
+  'Choose a template…': 'テンプレートを選ぶ…',
+  'Remove the template': 'テンプレートを外す',
+  'Hide the markers': 'マーカーを隠す',
+  'Show the markers': 'マーカーを表示',
+  'Write in a cell': 'セルに書く',
+  'The export puts there': '書き出しで入るもの',
+  'The file field {name}': 'ファイル項目 {name}',
+  Look: '見た目',
+  'One file that opens in Edge or Chrome, offline and read-only. It has Expand all and Collapse all; printing shows every file opened, on white.':
+    'Edge や Chrome で開ける 1 つのファイル。オフラインで、見るだけです。「すべて開く」「すべて閉じる」があり、印刷するとすべてのファイルを開いた状態で白地に出ます。',
+  'Choose Excel, HTML or both.': 'Excel、HTML、または両方を選んでください。',
+  'Import 1 release': '1 件のリリースを取り込む',
+  'Import {n} releases': '{n} 件のリリースを取り込む',
+  'Sheet “{sheet}” · {n} rows · WorkSync’s own export':
+    'シート「{sheet}」 · {n} 行 · WorkSync の書き出し',
+  'Sheet “{sheet}” · {n} rows · import format found':
+    'シート「{sheet}」 · {n} 行 · 取込形式を確認',
+  '1 release': 'リリース 1 件',
+  '{n} releases': 'リリース {n} 件',
+  '1 row': '1 行',
+  '{n} rows': '{n} 行',
+  'Import from Excel': 'Excel から取り込む',
+  Export: '書き出す',
+  'Add each release with its date, version and the files it delivers, or import them from an Excel sheet. The export then gives the module version list and the release history in the usual layout, or a page to send.':
+    'リリースごとに日付・バージョン・リリースしたファイルを追加するか、Excel のシートから取り込みます。書き出すと、いつものレイアウトのモジュールバージョン一覧とリリース履歴、または送れるページができます。',
+  'In {n} days': '{n} 日後',
+  '{n} weeks ago': '{n} 週間前',
+  '{n} months ago': '{n} か月前',
+  '{n} years ago': '{n} 年前',
+  '1 day ago': '1 日前',
+  '{n} days ago': '{n} 日前',
+  '(from the release)': '（リリースの記載）',
+  'No release matches.': '該当するリリースはありません。',
+  'No files in this release.': 'このリリースにはファイルがありません。',
+  first: '初回',
+  'Only the files this release delivers; the others keep their version. Details: what changed in each file.':
+    'このリリースで出すファイルだけを書きます。ほかはそのままのバージョンです。「詳細」には各ファイルの変更内容を書きます。',
+  Details: '詳細',
+  'What changed in this file, why, and how it was checked':
+    'このファイルで何を・なぜ変え、どう検証したか',
+  'Empty: the release’s text is shown': '空欄ならリリースの記載を表示',
+  'File fields': 'ファイル項目',
+  'Your own fields on each released file, such as a ticket number. Templates write them as {marker}.':
+    'リリースする各ファイルの独自項目（チケット番号など）。テンプレートでは {marker} と書きます。',
+  'Remove the field {name}?': '項目 {name} を外しますか？',
+  'It is no longer shown or exported. What files have in it is kept, and comes back if you add the field again.':
+    '表示も書き出しもされなくなります。ファイルに入っている値は残り、項目を追加し直すと戻ります。',
+  '1 file': '1 ファイル',
+  '{n} files': '{n} ファイル',
+  'Row {row}: “{value}” is not a date.':
+    '{row} 行目：「{value}」は日付ではありません。',
+  'Row {row}: no product.': '{row} 行目：製品がありません。',
+  'Row {row}: no release version.':
+    '{row} 行目：リリースバージョンがありません。',
+  'Row {row}: a released version needs its release date.':
+    '{row} 行目：リリース済みのバージョンにはリリース日が必要です。',
+  'Row {row}: no file name or module.':
+    '{row} 行目：ファイル名もモジュールもありません。',
+  'Only the first {value} rows are read.': '最初の {value} 行だけを読みます。',
+  'Keep what the project has; the file’s rows for them are left out.':
+    'プロジェクトの内容を残し、ファイルのその行は取り込みません。',
+  'Same product, version and date: filled in and changed from the file.':
+    '製品・バージョン・日付が同じもの：ファイルの内容で補い、変更します。',
+  'Start again from the file.': 'ファイルの内容で作り直します。',
+  'The customer, the project, today': '顧客、プロジェクト、今日の日付',
+  'Repeats the row once per release, oldest first, keeping its style':
+    'その行をリリースごとに繰り返す（旧→新、書式はそのまま）',
+  'Repeats the row once per file; inside a release block, that release’s files':
+    'その行をファイルごとに繰り返す。リリースの中ではそのリリースのファイル',
+  'Each module’s newest version': '各モジュールの最新バージョン',
+  'Release fields (also product, edition, purpose, changes, verification, no)':
+    'リリースの項目（product・edition・purpose・changes・verification・no も）',
+  'File fields (also module, environment, destination, category, purpose, verification)':
+    'ファイルの項目（module・environment・destination・category・purpose・verification も）',
+  'The whole version table, with one column per release date':
+    'バージョン一覧表全体（リリース日ごとに 1 列）',
+  'In a sheet name: one sheet per product':
+    'シート名に書くと、製品ごとに 1 シート',
 };

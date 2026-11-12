@@ -22,6 +22,14 @@ export interface ReleaseModule {
   /** 環境: Dev, Stg, Prod… */
   environment: string;
   version: string;
+  /** What changed in this file; empty: the release's text stands for it. */
+  changes: string;
+  /** Why this file changed. */
+  purpose: string;
+  /** How this file was checked. */
+  verification: string;
+  /** The project's own file fields (Ticket No.…), by field key. */
+  extra: Record<string, string>;
 }
 
 export type ReleaseStatus = 'planned' | 'released';
@@ -53,7 +61,18 @@ export interface Release {
 export type ReleaseInput = Omit<
   Release,
   'id' | 'projectId' | 'createdAt' | 'updatedAt' | 'modules'
-> & { modules: Omit<ReleaseModule, 'id'>[] };
+> & {
+  /** A module with its id keeps it (and so its place in merges). */
+  modules: (Omit<ReleaseModule, 'id'> & { id?: string })[];
+};
+
+/** A field the project adds to each released file. */
+export interface ReleaseField {
+  /** How it is written in templates and kept: ticket_no. */
+  key: string;
+  /** How it is shown: Ticket No. */
+  name: string;
+}
 
 /** The project's lists to pick from, in the order they are shown and exported. */
 export interface ReleaseLists {
@@ -63,6 +82,8 @@ export interface ReleaseLists {
   destinations: string[];
   categories: string[];
   environments: string[];
+  /** The project's own fields on each file. */
+  fields: ReleaseField[];
 }
 
 export const DEFAULT_RELEASE_LISTS: ReleaseLists = {
@@ -71,7 +92,45 @@ export const DEFAULT_RELEASE_LISTS: ReleaseLists = {
   destinations: [],
   categories: [],
   environments: ['Dev', 'Stg', 'Prod'],
+  fields: [],
 };
+
+/** The key a field name is kept under: `Ticket No.` → `ticket_no`. */
+export function fieldKey(name: string): string {
+  const k = name
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '_')
+    .replace(/^_+|_+$/g, '');
+  return k || 'field';
+}
+
+/** The text a file shows for what changed, why and how it was checked. */
+export interface FileInfo {
+  changes: string;
+  purpose: string;
+  verification: string;
+  /** True where the text is the release's, the file having none of its own. */
+  fromRelease: { changes: boolean; purpose: boolean; verification: boolean };
+}
+
+export function fileInfo(r: Release, m: ReleaseModule): FileInfo {
+  const pick = (k: 'changes' | 'purpose' | 'verification') =>
+    m[k].trim() ? [m[k], false] : [r[k], !!r[k].trim()];
+  const [changes, c] = pick('changes');
+  const [purpose, p] = pick('purpose');
+  const [verification, v] = pick('verification');
+  return {
+    changes: changes as string,
+    purpose: purpose as string,
+    verification: verification as string,
+    fromRelease: {
+      changes: c as boolean,
+      purpose: p as boolean,
+      verification: v as boolean,
+    },
+  };
+}
 
 export const EMPTY_MODULE: Omit<ReleaseModule, 'id'> = {
   destination: '',
@@ -81,6 +140,10 @@ export const EMPTY_MODULE: Omit<ReleaseModule, 'id'> = {
   fileName: '',
   environment: '',
   version: '',
+  changes: '',
+  purpose: '',
+  verification: '',
+  extra: {},
 };
 
 /** Released ones, oldest first; planned ones (no date yet) after, by when they were added. */
@@ -138,13 +201,11 @@ export function versionMatrix(
     r.modules.some((m) => moduleName(m)),
   );
   const dates = [...new Set(rel.map((r) => r.releasedOn!))];
-  const key = (m: ReleaseModule) =>
-    [m.destination, m.category, moduleName(m), m.environment].join('\u0000');
   const rows = new Map<string, MatrixRow>();
   for (const r of rel)
     for (const m of r.modules) {
       if (!moduleName(m)) continue;
-      const k = key(m);
+      const k = moduleKey(m);
       if (!rows.has(k))
         rows.set(k, {
           destination: m.destination,
@@ -227,3 +288,28 @@ export function productsOf(list: Release[], lists: ReleaseLists): string[] {
 /** `2026-11-12` → `2026/11/12`, as the release sheets write dates. */
 export const sheetDate = (d: string | null) =>
   d ? d.replaceAll('-', '/') : '';
+
+/** The same module in the same place: destination, category, name and environment. */
+export const moduleKey = (m: ReleaseModule) =>
+  [m.destination, m.category, moduleName(m), m.environment].join('\u0000');
+
+/**
+ * The version of this module before this release: from the newest earlier
+ * released release that delivered it ('' when this is its first).
+ */
+export function previousVersion(
+  list: Release[],
+  r: Release,
+  m: ReleaseModule,
+): string {
+  const k = moduleKey(m);
+  const sorted = byDate(list);
+  const at = sorted.findIndex((x) => x.id === r.id);
+  for (let i = (at < 0 ? sorted.length : at) - 1; i >= 0; i--) {
+    const x = sorted[i];
+    if (x.status !== 'released' || !x.releasedOn) continue;
+    const hit = x.modules.find((y) => moduleKey(y) === k);
+    if (hit) return hit.version;
+  }
+  return '';
+}

@@ -369,6 +369,47 @@ export const ERRORS_JA: [string, string][] = [
     '上書きを外しました。{0} は再び「{1}」です。',
   ],
   ['{0} entries of {1} saved.', '{1} の {0} 件を保存しました。'],
+  ['Choose Excel, HTML or both.', 'Excel、HTML、または両方を選んでください。'],
+  [
+    'This project has no Excel template now.',
+    'このプロジェクトには今 Excel テンプレートがありません。',
+  ],
+  [
+    'This template is too large (over 20 MB).',
+    'このテンプレートは大きすぎます（20 MB 超）。',
+  ],
+  [
+    'This file is too large to import (over 50 MB).',
+    'このファイルは大きすぎて取り込めません（50 MB 超）。',
+  ],
+  [
+    'Choose the file to import again.',
+    '取り込むファイルをもう一度選んでください。',
+  ],
+  [
+    'This file is not an Excel workbook (.xlsx), or it is damaged.',
+    'このファイルは Excel ブック（.xlsx）ではないか、壊れています。',
+  ],
+  [
+    'No release table was found: the first rows need the headings Product and Release version, and Release date or File name.',
+    'リリースの表が見つかりません。最初の行に「製品」「リリースバージョン」と、「リリース日」または「ファイル名」の見出しが必要です。',
+  ],
+  [
+    'The template\'s sheet "{0}" closes {{/{1}}} without opening it.',
+    'テンプレートのシート「{0}」で、開いていない {{/{1}}} を閉じています。',
+  ],
+  [
+    'The template\'s sheet "{0}" opens {{#{1}}} without closing it.',
+    'テンプレートのシート「{0}」で、{{#{1}}} が閉じられていません。',
+  ],
+  [
+    'The template has no sheet to fill.',
+    'テンプレートに埋めるシートがありません。',
+  ],
+  [
+    'This workbook has no markers like {{release.version}}, so the export would not fill anything. Start from "Save the default template".',
+    'このブックには {{release.version}} のようなマーカーがないため、書き出しで何も埋まりません。「標準テンプレートを保存」から始めてください。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

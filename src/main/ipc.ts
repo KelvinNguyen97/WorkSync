@@ -19,6 +19,18 @@ import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
 import { Releases } from './releases';
 import { releaseWorkbook } from './releaseExcel';
+import { releaseHtml } from './releaseHtml';
+import {
+  applyReleaseImport,
+  importSheet,
+  readReleaseImport,
+} from './releaseImport';
+import {
+  defaultTemplate,
+  describeTemplate,
+  fillTemplate,
+} from './releaseTemplate';
+import type { ReleaseImportPlan } from '../shared/releaseImportTypes';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import {
@@ -210,6 +222,52 @@ const need = (): Store => {
 };
 
 let releases: Releases | null = null;
+/** The release file last previewed, until it is imported. */
+let lastReleaseImport: { projectId: string; plan: ReleaseImportPlan } | null =
+  null;
+
+/** A file name made of a project name. */
+const safeName = (name: string) =>
+  name
+    .replace(/[\\/:*?"<>|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || 'Project';
+
+/**
+ * Asks where to save (in Documents/WorkSync/Reports at first), or uses the
+ * test folder; never beside a customer file. Null when cancelled.
+ */
+async function saveAs(
+  name: string,
+  title: string,
+  filter: { name: string; extensions: string[] },
+): Promise<string | null> {
+  let file: string | null = process.env.WORKSYNC_TEST_REPORT_FOLDER
+    ? path.join(process.env.WORKSYNC_TEST_REPORT_FOLDER, name)
+    : null;
+  if (!file) {
+    const folder = path.join(app.getPath('documents'), 'WorkSync', 'Reports');
+    fs.mkdirSync(folder, { recursive: true });
+    const win =
+      BrowserWindow.getFocusedWindow() ??
+      getMainWindow() ??
+      BrowserWindow.getAllWindows()[0];
+    const res = await dialog.showSaveDialog(win, {
+      title,
+      defaultPath: path.join(folder, name),
+      filters: [filter],
+    });
+    file = res.canceled ? null : (res.filePath ?? null);
+  }
+  if (!file) return null;
+  const problem = writeTargetProblem(
+    path.dirname(file),
+    needLinks().sources.list(),
+    'another folder',
+  );
+  if (problem) throw new Error(problem);
+  return file;
+}
 const needReleases = (): Releases => {
   if (!releases)
     throw new Error('The data could not be opened. Restart WorkSync.');
@@ -386,48 +444,179 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
   getReleaseLists: async (projectId) => needReleases().getLists(projectId),
   saveReleaseLists: async (projectId, lists) =>
     needReleases().saveLists(projectId, lists),
-  exportReleases: async (projectId, language) => {
+  exportReleases: async (projectId, o) => {
+    if (!o.excel && !o.html) throw new Error('Choose Excel, HTML or both.');
     const p = need().getProject(projectId);
     const r = needReleases();
-    const data = await releaseWorkbook({
-      project: p.name,
-      customer: p.customer,
-      releases: r.list(projectId),
-      lists: r.getLists(projectId),
-      language,
-    });
-    const safe = p.name
-      .replace(/[\\/:*?"<>|]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    const name = `${safe || 'Project'} ${language === 'ja' ? 'リリース一覧' : 'releases'} ${today()}.xlsx`;
-    let file: string | null = process.env.WORKSYNC_TEST_REPORT_FOLDER
-      ? path.join(process.env.WORKSYNC_TEST_REPORT_FOLDER, name)
-      : null;
-    if (!file) {
-      const folder = path.join(app.getPath('documents'), 'WorkSync', 'Reports');
-      fs.mkdirSync(folder, { recursive: true });
-      const win =
-        BrowserWindow.getFocusedWindow() ??
-        getMainWindow() ??
-        BrowserWindow.getAllWindows()[0];
-      const res = await dialog.showSaveDialog(win, {
-        title: 'Save the releases',
-        defaultPath: path.join(folder, name),
-        filters: [{ name: 'Excel workbook', extensions: ['xlsx'] }],
-      });
-      file = res.canceled ? null : (res.filePath ?? null);
+    const releases = r.list(projectId);
+    const lists = r.getLists(projectId);
+    let xlsx: Uint8Array | null = null;
+    let unknown: string[] = [];
+    if (o.excel) {
+      const template =
+        o.template === 'project' ? r.getTemplate(projectId) : null;
+      if (o.template === 'project' && !template)
+        throw new Error('This project has no Excel template now.');
+      if (template) {
+        const out = await fillTemplate(template.data, {
+          project: p.name,
+          customer: p.customer,
+          today: today().replaceAll('-', '/'),
+          releases,
+          lists,
+          language: o.language,
+          includePlanned: o.includePlanned,
+          onlyChanged: o.onlyChanged,
+        });
+        xlsx = out.data;
+        unknown = out.unknown;
+      } else
+        xlsx = await releaseWorkbook({
+          project: p.name,
+          customer: p.customer,
+          releases,
+          lists,
+          language: o.language,
+          includePlanned: o.includePlanned,
+          onlyChanged: o.onlyChanged,
+        });
     }
-    if (!file) return null;
-    // Never beside a customer file, where the customer could see it.
-    const problem = writeTargetProblem(
-      path.dirname(file),
-      needLinks().sources.list(),
-      'another folder',
+    const html = o.html
+      ? releaseHtml({
+          project: p.name,
+          customer: p.customer,
+          today: today().replaceAll('-', '/'),
+          releases,
+          lists,
+          language: o.language,
+          theme: o.theme,
+          includePlanned: o.includePlanned,
+        })
+      : null;
+    const base = `${safeName(p.name)} ${o.language === 'ja' ? 'リリース一覧' : 'releases'} ${today()}`;
+    const ext = xlsx ? 'xlsx' : 'html';
+    const file = await saveAs(
+      `${base}.${ext}`,
+      'Save the releases',
+      xlsx
+        ? { name: 'Excel workbook', extensions: ['xlsx'] }
+        : { name: 'Web page', extensions: ['html'] },
     );
-    if (problem) throw new Error(problem);
+    if (!file) return null;
+    const files: string[] = [];
+    if (xlsx) {
+      fs.writeFileSync(file, xlsx);
+      files.push(file);
+    }
+    if (html) {
+      const h = xlsx ? file.replace(/\.xlsx$/i, '') + '.html' : file;
+      fs.writeFileSync(h, html, 'utf8');
+      files.push(h);
+    }
+    log('info', `Exported the releases (${files.length} files)`);
+    return { files, unknown };
+  },
+  getReleaseTemplate: async (projectId) => {
+    const t = needReleases().getTemplate(projectId);
+    if (!t) return null;
+    const d = await describeTemplate(t.data).catch(() => ({
+      sheets: 0,
+      fields: [] as string[],
+    }));
+    return {
+      name: t.name,
+      chosenAt: t.chosenAt,
+      sheets: d.sheets,
+      fields: d.fields,
+    };
+  },
+  chooseReleaseTemplate: async (projectId) => {
+    let file = process.env.WORKSYNC_TEST_RELEASE_TEMPLATE ?? '';
+    if (!file) {
+      const win = getMainWindow() ?? BrowserWindow.getAllWindows()[0];
+      const res = await dialog.showOpenDialog(win, {
+        title: 'Choose the Excel template',
+        filters: [{ name: 'Excel workbook', extensions: ['xlsx'] }],
+        properties: ['openFile'],
+      });
+      if (res.canceled || !res.filePaths[0]) return null;
+      file = res.filePaths[0];
+    }
+    const data = new Uint8Array(fs.readFileSync(file));
+    if (data.length > 20 * 1024 * 1024)
+      throw new Error('This template is too large (over 20 MB).');
+    const d = await describeTemplate(data);
+    const name = path.basename(file);
+    needReleases().setTemplate(projectId, name, data);
+    const t = needReleases().getTemplate(projectId)!;
+    log('info', 'Chose a release template');
+    return { name, chosenAt: t.chosenAt, sheets: d.sheets, fields: d.fields };
+  },
+  clearReleaseTemplate: async (projectId) =>
+    needReleases().clearTemplate(projectId),
+  saveDefaultReleaseTemplate: async (projectId, language) => {
+    const p = need().getProject(projectId);
+    const data = await defaultTemplate(
+      language,
+      needReleases().getLists(projectId),
+    );
+    const file = await saveAs(
+      `${safeName(p.name)} ${language === 'ja' ? 'リリーステンプレート' : 'release template'}.xlsx`,
+      'Save the template',
+      { name: 'Excel workbook', extensions: ['xlsx'] },
+    );
+    if (!file) return null;
     fs.writeFileSync(file, data);
-    log('info', 'Exported the releases to Excel');
+    return { file };
+  },
+  previewReleaseImport: async (projectId) => {
+    let file = process.env.WORKSYNC_TEST_RELEASE_IMPORT ?? '';
+    if (!file) {
+      const win = getMainWindow() ?? BrowserWindow.getAllWindows()[0];
+      const res = await dialog.showOpenDialog(win, {
+        title: 'Import releases from Excel',
+        filters: [{ name: 'Excel workbook', extensions: ['xlsx'] }],
+        properties: ['openFile'],
+      });
+      if (res.canceled || !res.filePaths[0]) return null;
+      file = res.filePaths[0];
+    }
+    const data = new Uint8Array(fs.readFileSync(file));
+    if (data.length > 50 * 1024 * 1024)
+      throw new Error('This file is too large to import (over 50 MB).');
+    const r = needReleases();
+    const plan = await readReleaseImport(
+      data,
+      path.basename(file),
+      r.list(projectId),
+      r.getLists(projectId),
+    );
+    lastReleaseImport = { projectId, plan };
+    return plan;
+  },
+  applyReleaseImport: async (projectId, o) => {
+    const last = lastReleaseImport;
+    if (!last || last.projectId !== projectId)
+      throw new Error('Choose the file to import again.');
+    backupBefore(db!, backupFolder(), 'manual', 'before a release import');
+    const out = applyReleaseImport(needReleases(), projectId, last.plan, o);
+    lastReleaseImport = null;
+    log(
+      'info',
+      `Imported releases: ${out.added} added, ${out.updated} updated`,
+    );
+    return out;
+  },
+  saveReleaseImportSheet: async (language) => {
+    const file = await saveAs(
+      language === 'ja'
+        ? 'リリース取込シート.xlsx'
+        : 'Release import sheet.xlsx',
+      'Save the import sheet',
+      { name: 'Excel workbook', extensions: ['xlsx'] },
+    );
+    if (!file) return null;
+    fs.writeFileSync(file, await importSheet(language));
     return { file };
   },
   saveNoteImage: async (id) => {

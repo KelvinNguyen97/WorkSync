@@ -329,6 +329,20 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX release_modules_release ON release_modules(release_id, position);
   `,
+  // 23: what each released file changed, the project's own file fields, and
+  // the project's Excel template for the release export
+  `
+  ALTER TABLE release_modules ADD COLUMN changes TEXT NOT NULL DEFAULT '';
+  ALTER TABLE release_modules ADD COLUMN purpose TEXT NOT NULL DEFAULT '';
+  ALTER TABLE release_modules ADD COLUMN verification TEXT NOT NULL DEFAULT '';
+  ALTER TABLE release_modules ADD COLUMN extra TEXT NOT NULL DEFAULT '{}';
+  CREATE TABLE release_templates (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    data BLOB NOT NULL,
+    chosen_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

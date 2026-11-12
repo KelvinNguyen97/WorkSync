@@ -208,6 +208,8 @@ describe('releases', () => {
       // In the order of the project's product list.
       'リリース履歴一覧(OCX_DLL)',
       'リリース履歴一覧(EMVCon)',
+      // Hidden: the releases in the import format, to read the file back.
+      '取込用データ',
     ]);
     const m = wb.worksheets[0];
     expect(m.getCell('A1').value).toBe(
