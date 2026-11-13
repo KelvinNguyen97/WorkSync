@@ -423,7 +423,7 @@ export function ReleaseImportDialog({
                                     .slice(0, 4)
                                     .map(
                                       (f) =>
-                                        `${f.fileName || f.module}  ${f.version}`,
+                                        `${f.fileName || f.module || tr('No info')}  ${f.version}`,
                                     )
                                     .join('\n') +
                                   (r.files.length > 4

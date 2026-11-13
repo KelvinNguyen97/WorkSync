@@ -189,11 +189,16 @@ describe('release import', () => {
     ).toEqual([
       ['5.4.2', 1, true],
       ['5.5.0', 2, false],
+      // No file name or module: still a file, shown as No info.
+      ['5.7.0', 1, false],
     ]);
-    expect(plan.problems.map((p) => [p.row, p.code])).toEqual([
-      [6, 'date'],
-      [7, 'noFile'],
-    ]);
+    expect(plan.releases[2].files[0]).toMatchObject({
+      fileName: '',
+      module: '',
+      environment: 'Prod',
+      version: '1',
+    });
+    expect(plan.problems.map((p) => [p.row, p.code])).toEqual([[6, 'date']]);
     expect(plan.unknown).toEqual([
       { name: 'Ticket No.', key: 'ticket_no', known: false },
     ]);
@@ -202,7 +207,7 @@ describe('release import', () => {
       mode: 'update',
       fields: ['ticket_no'],
     });
-    expect(out).toEqual({ added: 1, updated: 1, skipped: 0 });
+    expect(out).toEqual({ added: 2, updated: 1, skipped: 0 });
     const list = rel.list(projectId);
     const old = list.find((r) => r.version === '5.4.2')!;
     expect(old.modules).toHaveLength(1);
@@ -373,6 +378,32 @@ describe('release import', () => {
     );
     // The example sheet is found and read.
     expect(plan.releases.map((r) => r.version)).toEqual(['5.5.0', '6.0.0']);
+  });
+});
+
+describe('files without a name', () => {
+  it('show as No info in the version table and the latest list', async () => {
+    rel.save(
+      projectId,
+      release({
+        modules: [mod({ destination: 'D', environment: 'Prod', version: '1' })],
+      }),
+    );
+    const data = await releaseWorkbook({
+      project: 'POS',
+      customer: '',
+      releases: rel.list(projectId),
+      lists: rel.getLists(projectId),
+      language: 'ja',
+    });
+    const wb = await load(data);
+    const m = wb.worksheets[0];
+    expect([
+      m.getCell('A5').text,
+      m.getCell('C5').text,
+      m.getCell('E5').text,
+    ]).toEqual(['D', '情報なし', '1']);
+    expect(wb.worksheets[1].getCell('D4').text).toBe('情報なし');
   });
 });
 

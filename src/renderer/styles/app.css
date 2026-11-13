@@ -4330,3 +4330,8 @@ html[data-glass] .mg {
   margin-top: 2px;
   color: var(--accent);
 }
+.rl-file .n.none {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--muted);
+}

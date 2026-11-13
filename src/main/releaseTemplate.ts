@@ -143,6 +143,10 @@ function parse(ws: ExcelJS.Worksheet): Node[] {
 
 // ------------------------------------------------------------ what fills it
 
+/** What a file without a name is called. */
+const noInfo = (d: TemplateData) =>
+  d.language === 'ja' ? '情報なし' : 'No info';
+
 function releaseItems(d: TemplateData, product: string | null): Item[] {
   const list = byDate(
     d.releases.filter(
@@ -183,7 +187,7 @@ function fileItems(d: TemplateData, releaseIds: string[]): Item[] {
       const info = fileInfo(r, m);
       const item: Item = {
         'file.no': out.length + 1,
-        'file.name': m.fileName || moduleName(m),
+        'file.name': m.fileName || moduleName(m) || noInfo(d),
         'file.file_name': m.fileName,
         'file.module': m.module,
         'file.type': m.type,
@@ -212,7 +216,7 @@ function latestItems(d: TemplateData, product: string | null): Item[] {
   );
   return latestModules(list, d.lists).map((m, i) => ({
     'file.no': i + 1,
-    'file.name': m.module,
+    'file.name': m.module || noInfo(d),
     'file.module': m.module,
     'file.type': m.type,
     'file.environment': m.environment,
@@ -342,7 +346,7 @@ class Writer {
       const values = [
         m.destination,
         m.category,
-        m.module,
+        m.module || noInfo(this.d),
         m.environment,
         ...m.versions.map((v, i) =>
           this.d.onlyChanged && !m.changed[i] ? '' : v,

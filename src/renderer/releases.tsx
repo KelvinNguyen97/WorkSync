@@ -244,7 +244,9 @@ export function ReleasesView({
                           <b>{sameDest ? '' : r.destination}</b>
                         </td>
                         <td>{sameCat ? '' : r.category}</td>
-                        <td>{r.module}</td>
+                        <td>
+                          {r.module || <i className="muted">{tr('No info')}</i>}
+                        </td>
                         <td>{r.environment}</td>
                         {r.versions.map((v, k) => (
                           <td
@@ -296,7 +298,9 @@ export function ReleasesView({
                   <tr key={i}>
                     <td className="mono">{i + 1}</td>
                     <td>{m.type}</td>
-                    <td>{m.module}</td>
+                    <td>
+                      {m.module || <i className="muted">{tr('No info')}</i>}
+                    </td>
                     <td className="mono">{sheetDate(m.releasedOn)}</td>
                     <td className="mono">
                       <b>{m.version}</b>
@@ -481,9 +485,13 @@ function Timeline({
                           onClick={() => setOpen(isOpen ? null : m.id)}
                         >
                           <Icon name="file" />
-                          <span className="n mono">
-                            {m.fileName || moduleName(m)}
-                          </span>
+                          {m.fileName || moduleName(m) ? (
+                            <span className="n mono">
+                              {m.fileName || moduleName(m)}
+                            </span>
+                          ) : (
+                            <span className="n none">{tr('No info')}</span>
+                          )}
                           {m.fileName && m.module && (
                             <span className="muted">{m.module}</span>
                           )}

@@ -49,6 +49,7 @@ const WORDS = {
     changes: '内容（改善点／変更点等）',
     verification: '検証',
     none: 'リリースはまだありません。',
+    noInfo: '情報なし',
   },
   en: {
     matrix: 'Module versions',
@@ -75,6 +76,7 @@ const WORDS = {
     changes: 'Changes (improvements, changes)',
     verification: 'Verification',
     none: 'No releases yet.',
+    noInfo: 'No info',
   },
 };
 
@@ -180,7 +182,7 @@ export async function releaseWorkbook(o: {
     const row = 5 + k;
     body(m.getCell(row, 1), r.destination, { bold: true });
     body(m.getCell(row, 2), r.category, { bold: true });
-    body(m.getCell(row, 3), r.module);
+    body(m.getCell(row, 3), r.module || w.noInfo);
     body(m.getCell(row, 4), r.environment);
     r.versions.forEach((v, i) =>
       body(m.getCell(row, 5 + i), o.onlyChanged && !r.changed[i] ? '' : v),
@@ -219,7 +221,7 @@ export async function releaseWorkbook(o: {
     const row = 4 + k;
     body(l.getCell(row, 2), k + 1);
     body(l.getCell(row, 3), x.type);
-    body(l.getCell(row, 4), x.module);
+    body(l.getCell(row, 4), x.module || w.noInfo);
     body(l.getCell(row, 5), sheetDate(x.releasedOn));
     body(l.getCell(row, 6), x.version);
     body(l.getCell(row, 7), x.environment);

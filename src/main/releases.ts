@@ -200,17 +200,20 @@ export class Releases {
         verification: str(m.verification).trim(),
         extra: parseExtra(JSON.stringify(m.extra ?? {})),
       }))
+      // A file may have no name ("No info" where it is shown), but not nothing at all.
       .filter(
         (m) =>
           m.module ||
           m.fileName ||
           m.version ||
+          m.destination ||
+          m.category ||
+          m.environment ||
           m.changes ||
           m.purpose ||
-          m.verification,
+          m.verification ||
+          Object.keys(m.extra).length,
       );
-    if (modules.some((m) => !m.module && !m.fileName))
-      throw new Error('Give each module a name or a file name.');
     const now = this.now();
     const releaseId = id ?? randomUUID();
     if (own) this.db.exec('BEGIN');

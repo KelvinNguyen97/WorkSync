@@ -238,7 +238,7 @@ if(r.summary)card.appendChild(el('div','sum',r.summary));
 var ul=el('ul');
 r.files.forEach(function(f){
 var it=el('li','f');var row=el('button','row');row.type='button';row.setAttribute('aria-expanded','false');
-row.appendChild(el('span','n mono',f.name));if(f.module)row.appendChild(el('span','muted',f.module));
+row.appendChild(f.name?el('span','n mono',f.name):el('span','n none',W.none));if(f.module)row.appendChild(el('span','muted',f.module));
 row.appendChild(el('span','sp'));if(f.environment)row.appendChild(el('span','env',f.environment));
 row.appendChild(el('span','ver mono',f.version));row.appendChild(chev());
 row.onclick=function(){var o=!it.classList.contains('open');it.classList.toggle('open',o);row.setAttribute('aria-expanded',String(o))};

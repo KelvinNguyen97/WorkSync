@@ -97,9 +97,11 @@ describe('releases', () => {
       rel.save(projectId, release({ releasedOn: null, status: 'planned' }))
         .status,
     ).toBe('planned');
-    expect(() =>
-      rel.save(projectId, release({ modules: [mod({ version: '1' })] })),
-    ).toThrow(/name/);
+    // A file without a name is kept ("No info" where it is shown).
+    expect(
+      rel.save(projectId, release({ modules: [mod({ version: '1' })] }))
+        .modules,
+    ).toHaveLength(1);
   });
 
   it('shows the version in use on every release date, carried forward', () => {

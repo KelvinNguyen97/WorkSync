@@ -221,11 +221,8 @@ export async function readReleaseImport(
       file.environment ||
       file.version ||
       Object.keys(extra).length;
-    const hasFile = !!(file.fileName || file.module);
-    if (!hasFile && fileOnly) {
-      problems.push({ row: r, code: 'noFile', value: '' });
-      continue;
-    }
+    // A file without a name or module is still a file ("No info" where shown).
+    const hasFile = !!(file.fileName || file.module || fileOnly);
     const key = [
       product.toLowerCase(),
       version.toLowerCase(),

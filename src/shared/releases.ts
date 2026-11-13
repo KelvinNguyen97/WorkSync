@@ -196,15 +196,13 @@ export function versionMatrix(
   list: Release[],
   lists: ReleaseLists,
 ): { dates: string[]; rows: MatrixRow[] } {
-  // Only releases that deliver modules make a column.
-  const rel = released(list).filter((r) =>
-    r.modules.some((m) => moduleName(m)),
-  );
+  // Only releases that deliver files make a column; a file without a
+  // name has a row of its own ("No info" where it is shown).
+  const rel = released(list).filter((r) => r.modules.length > 0);
   const dates = [...new Set(rel.map((r) => r.releasedOn!))];
   const rows = new Map<string, MatrixRow>();
   for (const r of rel)
     for (const m of r.modules) {
-      if (!moduleName(m)) continue;
       const k = moduleKey(m);
       if (!rows.has(k))
         rows.set(k, {
@@ -256,9 +254,11 @@ export function latestModules(
   const fileOf = new Map<string, string>();
   for (const r of released(list))
     for (const m of r.modules) {
+      // A file without a name is kept, by where it went ("No info" where shown).
       const name = moduleName(m);
-      if (!name) continue;
-      const k = [m.type, name, m.environment].join('\u0000');
+      const k = [m.type, name, m.environment, name ? '' : moduleKey(m)].join(
+        '\u0000',
+      );
       if (m.fileName.trim()) fileOf.set(k, m.fileName.trim());
       latest.set(k, {
         type: m.type,
