@@ -1,0 +1,123 @@
+name: Release
+
+# Publishes a GitHub release with the Windows, macOS and Linux builds.
+#
+# It runs when the version in package.json has release notes in
+# .github/release-notes/v<version>.md and no tag v<version> exists yet: bump
+# the version, add the notes, and push. It also runs for a pushed v* tag.
+# The release creates the tag on the commit it was built from.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.plan.outputs.tag }}
+      release: ${{ steps.plan.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            tag="$GITHUB_REF_NAME"; release=true
+          elif [ -f ".github/release-notes/$tag.md" ] && [ -z "$(git ls-remote --tags origin "refs/tags/$tag")" ]; then
+            release=true
+          else
+            release=false
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "Version $tag, release: $release"
+
+  check:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  make:
+    needs: [plan, check]
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+          - os: macos-latest
+            name: macos
+          - os: ubuntu-latest
+            name: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux packaging tools
+        if: matrix.name == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot dpkg
+      # npm sometimes fails for a moment, so install is tried up to three times.
+      - name: Install
+        shell: bash
+        run: for i in 1 2 3; do npm ci && exit 0; echo "Install failed, try $i"; sleep $((i * 20)); done; exit 1
+      # Keep the checked Electron zip between runs.
+      - uses: actions/cache@v4
+        with:
+          path: electron-zips
+          key: electron-zip-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+      - name: Get Electron
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/get-electron.sh
+      - name: Build
+        run: npm run make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WorkSync-${{ matrix.name }}
+          path: out/make/**/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: [plan, make]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: List the builds
+        run: find dist -type f
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.plan.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: WorkSync ${{ needs.plan.outputs.tag }}
+          body_path: .github/release-notes/${{ needs.plan.outputs.tag }}.md
+          make_latest: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/**/*.zip
+            dist/**/*.deb
+            dist/**/*.rpm

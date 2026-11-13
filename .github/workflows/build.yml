@@ -1,0 +1,74 @@
+name: Build
+
+# Checks every change, and builds the app on Windows, macOS and Linux.
+# Each run has three downloads: WorkSync-windows, WorkSync-macos and
+# WorkSync-linux. Unzip one and run the app inside, nothing to install.
+
+on:
+  push:
+    # Tags are built by the Release workflow.
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  make:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+          - os: macos-latest
+            name: macos
+          - os: ubuntu-latest
+            name: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux packaging tools
+        if: matrix.name == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot dpkg
+      # npm sometimes fails for a moment, so install is tried up to three times.
+      - name: Install
+        shell: bash
+        run: for i in 1 2 3; do npm ci && exit 0; echo "Install failed, try $i"; sleep $((i * 20)); done; exit 1
+      # Keep the checked Electron zip between runs.
+      - uses: actions/cache@v4
+        with:
+          path: electron-zips
+          key: electron-zip-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+      - name: Get Electron
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/get-electron.sh
+      - name: Build
+        run: npm run make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WorkSync-${{ matrix.name }}
+          path: out/make/**/*
+          if-no-files-found: error
+          retention-days: 30

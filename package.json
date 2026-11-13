@@ -1,0 +1,59 @@
+{
+  "name": "worksync",
+  "productName": "WorkSync",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Desktop task tracker for project managers whose customers send task lists as Excel files in another language",
+  "keywords": [],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/KelvinNguyen97/WorkSync",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KelvinNguyen97/WorkSync.git"
+  },
+  "bugs": "https://github.com/KelvinNguyen97/WorkSync/issues",
+  "author": "Hoang-Kelvin",
+  "main": ".vite/build/main.cjs",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "release": "electron-forge release",
+    "lint": "oxlint && oxfmt --check",
+    "lint:fix": "oxlint --fix && oxfmt --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-deb": "^8.0.1",
+    "@electron-forge/maker-rpm": "^8.0.1",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^8.0.1",
+    "@electron-forge/plugin-fuses": "^8.0.1",
+    "@electron-forge/plugin-vite": "^8.0.1",
+    "@electron/fuses": "^2.1.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "electron": "45.2.1",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "docx": "^9.15.2",
+    "exceljs": "^4.4.0",
+    "fflate": "^0.8.3",
+    "koffi": "^3.3.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}
