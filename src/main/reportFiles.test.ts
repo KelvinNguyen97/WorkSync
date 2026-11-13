@@ -189,6 +189,51 @@ describe('report files', () => {
     });
   });
 
+  it('leaves out the parts the owner unticks, in Word and Excel', async () => {
+    const parts = ['doingNow', 'next'] as ReportOptions['parts'];
+    const text = docText(
+      await buildReport(project, tasks, opts({ parts }), '2026-11-03'),
+    );
+    expect(text).toContain('現状 Doing now');
+    expect(text).toContain('今後の予定 Next step');
+    expect(text).toContain('Tasks (現状・今後の予定)');
+    for (const s of [
+      '課題 Difficulties',
+      'No access to staging logs',
+      'What it is',
+      'Sessions expire after 5 minutes.',
+      'Overview of the period',
+    ])
+      expect(text).not.toContain(s);
+    const briefs = docText(
+      await buildReport(
+        project,
+        tasks,
+        opts({ kind: 'briefs', parts: ['what'] }),
+        '2026-11-03',
+      ),
+    );
+    expect(briefs).toContain('Sessions expire after 5 minutes.');
+    expect(briefs).not.toContain('現状 Doing now');
+    const book = await buildReport(
+      project,
+      tasks,
+      opts({ format: 'xlsx', parts }),
+      '2026-11-03',
+    );
+    const ws = await sheet(book, 'Tasks');
+    const header = (ws.getRow(headRow(ws)).values as string[]).slice(1);
+    expect(header).toEqual([
+      'No.',
+      'Title',
+      'Priority',
+      'Status',
+      '現状 (Doing now)',
+      '今後の予定 (Next step)',
+    ]);
+    expect(await sheet(book, 'Overview')).toBeUndefined();
+  });
+
   it('makes the task list with the chosen columns, and notes only when chosen', async () => {
     const ws = await sheet(
       await buildReport(

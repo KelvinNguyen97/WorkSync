@@ -30,6 +30,7 @@ import {
   DEFAULT_COLUMNS,
   REPORTS,
   briefParts,
+  hasPart,
   statusText,
   dateIn,
   heading,
@@ -236,56 +237,91 @@ async function xlsxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
     );
   } else if (o.kind === 'progress') {
     const ov = periodOverview(tasks, h.project, o, h.today);
-    const s = wb.addWorksheet('Overview');
-    xlsxHead(s, h, title);
-    s.getColumn(1).width = 26;
-    s.getColumn(2).width = 60;
-    const lines: [string, number][] = [
-      ['Open tasks', ov.open],
-      ['Finished in the period', ov.finished],
-      ['Started in the period', ov.started],
-      ['Overdue', ov.overdue],
-      ['Open difficulties', ov.difficulties],
-      ...ov.byStatus.map((x) => [x.status, x.count] as [string, number]),
-    ];
-    for (const [k, v] of lines) {
-      const r = s.addRow([k, v]);
-      r.font = { name: FONT };
-      r.getCell(2).alignment = { horizontal: 'left' };
+    if (hasPart(o, 'overview')) {
+      const s = wb.addWorksheet('Overview');
+      xlsxHead(s, h, title);
+      s.getColumn(1).width = 26;
+      s.getColumn(2).width = 60;
+      const lines: [string, number][] = [
+        ['Open tasks', ov.open],
+        ['Finished in the period', ov.finished],
+        ['Started in the period', ov.started],
+        ['Overdue', ov.overdue],
+        ...(hasPart(o, 'difficulties')
+          ? [['Open difficulties', ov.difficulties] as [string, number]]
+          : []),
+        ...ov.byStatus.map((x) => [x.status, x.count] as [string, number]),
+      ];
+      for (const [k, v] of lines) {
+        const r = s.addRow([k, v]);
+        r.font = { name: FONT };
+        r.getCell(2).alignment = { horizontal: 'left' };
+      }
+      printSetup(s);
     }
-    printSetup(s);
     const t = wb.addWorksheet('Tasks');
     const start = xlsxHead(t, h, title);
-    const cols = [
-      { label: 'No.', width: 8 },
+    type Col = {
+      label: string;
+      width: number;
+      part?: Parameters<typeof hasPart>[1];
+      value: (x: Task, b: ReturnType<typeof briefParts>) => string;
+    };
+    const all: Col[] = [
+      { label: 'No.', width: 8, value: (x) => x.customerId },
       {
         label: heading({ label: 'Title', ja: '件名' }, o.language, ja),
         width: 40,
+        value: (x) => reportTitle(x, o.language),
       },
       {
         label: heading({ label: 'Priority', ja: '優先度' }, o.language, ja),
         width: 10,
+        value: (x) => levelName(h, x),
       },
       {
         label: heading({ label: 'Status', ja: '状態' }, o.language, ja),
         width: 12,
+        value: (x) => statusText(x, o),
       },
       {
         label: heading({ label: 'Due', ja: '期限' }, o.language, ja),
         width: 14,
+        part: 'dates',
+        value: (_x, b) => b.due,
       },
       {
         label: heading({ label: 'What it is', ja: '概要' }, o.language, ja),
         width: 40,
+        part: 'what',
+        value: (_x, b) => b.what,
       },
-      { label: '現状 (Doing now)', width: 36 },
-      { label: '課題 (Open difficulties)', width: 34 },
-      { label: '今後の予定 (Next step)', width: 34 },
+      {
+        label: '現状 (Doing now)',
+        width: 36,
+        part: 'doingNow',
+        value: (_x, b) => b.doingNow,
+      },
+      {
+        label: '課題 (Open difficulties)',
+        width: 34,
+        part: 'difficulties',
+        value: (_x, b) => b.difficulties.join('\n'),
+      },
+      {
+        label: '今後の予定 (Next step)',
+        width: 34,
+        part: 'next',
+        value: (_x, b) => b.next,
+      },
       {
         label: heading({ label: 'As of', ja: '更新日' }, o.language, ja),
         width: 12,
+        part: 'dates',
+        value: (_x, b) => b.asOf,
       },
     ];
+    const cols = all.filter((c) => !c.part || hasPart(o, c.part));
     xlsxTable(
       t,
       start,
@@ -293,18 +329,7 @@ async function xlsxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
       tasks.map((x) => {
         const b = briefParts(x, o, h.today, h.project.dueSoonDays);
         return {
-          values: [
-            x.customerId,
-            reportTitle(x, o.language),
-            levelName(h, x),
-            statusText(x, o),
-            b.due,
-            b.what,
-            b.doingNow,
-            b.difficulties.join('\n'),
-            b.next,
-            b.asOf,
-          ],
+          values: cols.map((c) => c.value(x, b)),
           level: shownPriority(x),
           closed: isClosed(x),
         };
@@ -588,10 +613,11 @@ function briefBlock(t: Task, h: ReportHead): Paragraph[] {
         ),
       ],
     });
+  const dates = hasPart(o, 'dates');
   const meta = [
     statusText(t, o),
-    b.due,
-    b.asOf && tr(h, `as of ${b.asOf}`, `${b.asOf}時点`),
+    dates && b.due,
+    dates && b.asOf && tr(h, `as of ${b.asOf}`, `${b.asOf}時点`),
   ]
     .filter(Boolean)
     .join(' · ');
@@ -602,21 +628,29 @@ function briefBlock(t: Task, h: ReportHead): Paragraph[] {
       spacing: { after: 60 },
       children: [new TextRun({ text: meta, color: '6B7280', size: 18 })],
     }),
-    line(tr(h, 'What it is', '概要'), b.what),
-    line(tr(h, '現状 Doing now', '現状'), b.doingNow),
-    line(tr(h, '課題 Difficulties', '課題'), b.difficulties),
-    new Paragraph({
-      indent: { left: 240 },
-      spacing: { after: 60 },
-      children: [
-        new TextRun({
-          text: `${tr(h, '今後の予定 Next step', '今後の予定')}  `,
-          bold: true,
-          color: '3D4450',
-        }),
-        ...run(b.next || '—'),
-      ],
-    }),
+    ...(hasPart(o, 'what') ? [line(tr(h, 'What it is', '概要'), b.what)] : []),
+    ...(hasPart(o, 'doingNow')
+      ? [line(tr(h, '現状 Doing now', '現状'), b.doingNow)]
+      : []),
+    ...(hasPart(o, 'difficulties')
+      ? [line(tr(h, '課題 Difficulties', '課題'), b.difficulties)]
+      : []),
+    ...(hasPart(o, 'next')
+      ? [
+          new Paragraph({
+            indent: { left: 240 },
+            spacing: { after: 60 },
+            children: [
+              new TextRun({
+                text: `${tr(h, '今後の予定 Next step', '今後の予定')}  `,
+                bold: true,
+                color: '3D4450',
+              }),
+              ...run(b.next || '—'),
+            ],
+          }),
+        ]
+      : []),
     ...(o.includeNotes && t.notes
       ? [
           new Paragraph({
@@ -701,24 +735,38 @@ async function docxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
   let landscape = false;
   if (o.kind === 'progress') {
     const ov = periodOverview(tasks, h.project, o, h.today);
-    children.push(
-      para('Overview of the period', { heading: HeadingLevel.HEADING_2 }),
-    );
-    const facts = [
-      `${ov.open} open task${ov.open === 1 ? '' : 's'}, ${ov.finished} finished and ${ov.started} started in the period.`,
-      `${ov.overdue} overdue, and ${ov.difficulties} open difficult${ov.difficulties === 1 ? 'y' : 'ies'}.`,
-      `By status: ${ov.byStatus.map((x) => `${x.status} ${x.count}`).join(', ') || 'no tasks'}.`,
-    ];
-    for (const f of facts)
+    if (hasPart(o, 'overview')) {
       children.push(
-        new Paragraph({
-          bullet: { level: 0 },
-          spacing: { after: 40 },
-          children: run(f),
-        }),
+        para('Overview of the period', { heading: HeadingLevel.HEADING_2 }),
       );
+      const facts = [
+        `${ov.open} open task${ov.open === 1 ? '' : 's'}, ${ov.finished} finished and ${ov.started} started in the period.`,
+        hasPart(o, 'difficulties')
+          ? `${ov.overdue} overdue, and ${ov.difficulties} open difficult${ov.difficulties === 1 ? 'y' : 'ies'}.`
+          : `${ov.overdue} overdue.`,
+        `By status: ${ov.byStatus.map((x) => `${x.status} ${x.count}`).join(', ') || 'no tasks'}.`,
+      ];
+      for (const f of facts)
+        children.push(
+          new Paragraph({
+            bullet: { level: 0 },
+            spacing: { after: 40 },
+            children: run(f),
+          }),
+        );
+    }
+    // The heading names the parts the briefs have.
+    const named = (
+      [
+        ['doingNow', '現状'],
+        ['difficulties', '課題'],
+        ['next', '今後の予定'],
+      ] as const
+    )
+      .filter(([k]) => hasPart(o, k))
+      .map(([, n]) => n);
     children.push(
-      para(ja ? 'Tasks (現状・課題・今後の予定)' : 'Tasks', {
+      para(ja && named.length ? `Tasks (${named.join('・')})` : 'Tasks', {
         heading: HeadingLevel.HEADING_2,
       }),
     );

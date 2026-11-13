@@ -52,6 +52,64 @@ export const REPORTS: Record<
   },
 };
 
+/** The parts of a progress report or a task brief, each of which can be left out. */
+export type ReportPart =
+  | 'overview'
+  | 'what'
+  | 'doingNow'
+  | 'difficulties'
+  | 'next'
+  | 'dates';
+
+export const REPORT_PARTS: {
+  key: ReportPart;
+  label: string;
+  ja: string;
+  /** Only in these reports. */
+  kinds: ReportKind[];
+}[] = [
+  {
+    key: 'overview',
+    label: 'Overview of the period',
+    ja: '期間の概要',
+    kinds: ['progress'],
+  },
+  {
+    key: 'what',
+    label: 'What it is (summary)',
+    ja: '概要',
+    kinds: ['progress', 'briefs'],
+  },
+  {
+    key: 'doingNow',
+    label: 'Doing now',
+    ja: '現状',
+    kinds: ['progress', 'briefs'],
+  },
+  {
+    key: 'difficulties',
+    label: 'Difficulties',
+    ja: '課題',
+    kinds: ['progress', 'briefs'],
+  },
+  {
+    key: 'next',
+    label: 'Next step',
+    ja: '今後の予定',
+    kinds: ['progress', 'briefs'],
+  },
+  {
+    key: 'dates',
+    label: 'Due and as-of dates',
+    ja: '期限・更新日',
+    kinds: ['progress', 'briefs'],
+  },
+];
+
+/** Whether the report has this part: every part, unless the owner chose some. */
+export const hasPart = (o: Pick<ReportOptions, 'parts'>, p: ReportPart) =>
+  !o.parts || o.parts.includes(p);
+
 export interface ReportOptions {
   kind: ReportKind;
   format: ReportFormat;
@@ -70,6 +128,8 @@ export interface ReportOptions {
   language: ReportLanguage;
   /** Task list columns, by key. */
   columns: string[];
+  /** For the progress report and briefs: the parts to write; missing means all. */
+  parts?: ReportPart[];
   includeNotes: boolean;
   preparedBy: string;
   /** Only these tasks, such as the rows selected in the Tasks table. */

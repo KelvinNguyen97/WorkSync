@@ -1492,4 +1492,10 @@ export const JA: Record<string, string> = {
   'Collapse all': 'すべて閉じる',
   Collapse: '閉じる',
   'Show the files': 'ファイルを表示',
+  Contents: '内容',
+  'Overview of the period': '期間の概要',
+  'What it is (summary)': '概要',
+  'Due and as-of dates': '期限・更新日',
+  'Untick what the report should leave out. Each task keeps its number, title and status.':
+    'レポートに含めないものはチェックを外してください。各タスクの番号・件名・状態は常に入ります。',
 };

@@ -18,6 +18,8 @@ import {
 import {
   COLUMNS,
   DEFAULT_COLUMNS,
+  REPORT_PARTS,
+  type ReportPart,
   REPORTS,
   reportTasks,
   thisWeek,
@@ -29,7 +31,7 @@ import {
 import { useApp } from './appState';
 import { Icon, type IconName } from './Icon';
 import { Modal } from './parts';
-import { tr } from './i18n';
+import { tr, uiLanguage } from './i18n';
 
 const ICONS: Record<ReportKind, IconName> = {
   progress: 'gauge',
@@ -42,6 +44,20 @@ const FORMAT_NAME: Record<ReportFormat, string> = {
   xlsx: 'Excel',
 };
 const PREPARED_KEY = 'worksync.preparedBy';
+
+const PARTS_KEY = 'worksync.reportParts';
+
+/** The report parts chosen last time; every part the first time. */
+const rememberedParts = (): ReportPart[] => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PARTS_KEY) ?? 'null');
+    if (Array.isArray(saved))
+      return REPORT_PARTS.map((p) => p.key).filter((k) => saved.includes(k));
+  } catch {
+    // Not saved, or not readable: every part.
+  }
+  return REPORT_PARTS.map((p) => p.key);
+};
 
 const remembered = () => {
   try {
@@ -76,6 +92,7 @@ export function ReportDialog({
     to: week.to,
     language: 'working',
     columns: DEFAULT_COLUMNS,
+    parts: rememberedParts(),
     includeNotes: false,
     preparedBy: remembered(),
     taskIds: taskIds?.length ? taskIds : undefined,
@@ -133,6 +150,8 @@ export function ReportDialog({
   const make = async () => {
     try {
       localStorage.setItem(PREPARED_KEY, o.preparedBy);
+      if (o.kind === 'progress' || o.kind === 'briefs')
+        localStorage.setItem(PARTS_KEY, JSON.stringify(o.parts ?? []));
     } catch {
       // Remembering the name is only a convenience.
     }
@@ -378,6 +397,36 @@ export function ReportDialog({
               : ''}
           </span>
         </fieldset>
+        {(o.kind === 'progress' || o.kind === 'briefs') && (
+          <fieldset>
+            <legend>{tr('Contents')}</legend>
+            <div className="checks">
+              {REPORT_PARTS.filter((p) => p.kinds.includes(o.kind)).map((p) => (
+                <label key={p.key} className="check">
+                  <input
+                    type="checkbox"
+                    checked={(o.parts ?? []).includes(p.key)}
+                    onChange={() =>
+                      set({
+                        parts: REPORT_PARTS.map((x) => x.key).filter((k) =>
+                          k === p.key
+                            ? !(o.parts ?? []).includes(k)
+                            : (o.parts ?? []).includes(k),
+                        ),
+                      })
+                    }
+                  />{' '}
+                  {uiLanguage() === 'ja' ? p.ja : p.label}
+                </label>
+              ))}
+            </div>
+            <span className="hint-text">
+              {tr(
+                'Untick what the report should leave out. Each task keeps its number, title and status.',
+              )}
+            </span>
+          </fieldset>
+        )}
         {o.kind === 'taskList' && (
           <fieldset>
             <legend>{tr('Columns')}</legend>
