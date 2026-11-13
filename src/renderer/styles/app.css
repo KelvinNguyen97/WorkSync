@@ -4335,3 +4335,71 @@ html[data-glass] .mg {
   font-style: italic;
   color: var(--muted);
 }
+
+/* Releases: one line per release until it is opened */
+.rl-tl-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.rl-card-head {
+  flex-wrap: nowrap;
+  padding: 4px 8px 4px 4px;
+}
+.rl-card-toggle {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rl-card-toggle:hover:not(:disabled) {
+  background: rgb(var(--hl) / 0.05);
+}
+.rl-card-toggle:disabled {
+  cursor: default;
+}
+.rl-card-toggle > .ic:first-child {
+  color: var(--muted);
+  transform: rotate(-90deg);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.rl-ms.shown .rl-card-toggle > .ic:first-child {
+  transform: none;
+}
+.rl-card-line {
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-2);
+}
+.rl-count {
+  white-space: nowrap;
+}
+.rl-ms.folded .rl-card-head {
+  border-bottom: 0;
+}
+.rl-ms.folded .rl-card {
+  margin-bottom: 8px;
+}
+.rl-ms.folded .rl-when {
+  padding-top: 10px;
+}
+.rl-ms.folded .rl-rail .dot {
+  margin-top: 14px;
+}

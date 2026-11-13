@@ -209,6 +209,8 @@ export function ReleasesView({
           </div>
         ) : tab === 'timeline' ? (
           <Timeline
+            projectId={projectId}
+            searching={!!q}
             list={newestFirst}
             all={all}
             lists={lists}
@@ -370,19 +372,45 @@ export function ReleasesView({
   );
 }
 
-/** The releases as milestones, newest first; a file opens to what changed. */
+/** Releases opened on the timeline, per project, while the app runs. */
+const expandedOf = new Map<string, Set<string>>();
+
+/**
+ * The releases as milestones, newest first. Each is one line (date,
+ * product, version, summary) and opens to its files; a file opens to what
+ * changed. While searching, the releases found are open.
+ */
 function Timeline({
+  projectId,
   list,
   all,
   lists,
+  searching,
   onEdit,
 }: {
+  projectId: string;
   list: Release[];
   all: Release[];
   lists: ReleaseLists | null;
+  searching: boolean;
   onEdit: (r: Release) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(
+    () => new Set(expandedOf.get(projectId) ?? []),
+  );
+  const keep = (next: Set<string>) => {
+    expandedOf.set(projectId, next);
+    setExpanded(next);
+  };
+  const toggleRelease = (id: string) => {
+    const next = new Set(expanded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    keep(next);
+  };
+  const isExpanded = (id: string) => searching || expanded.has(id);
+  const allOpen = list.every((r) => isExpanded(r.id));
   const { today } = useApp();
   const ago = (d: string) => {
     const days = Math.round((Date.parse(today) - Date.parse(d)) / 86400000);
@@ -406,166 +434,216 @@ function Timeline({
   if (!list.length)
     return <p className="muted rl-empty">{tr('No release matches.')}</p>;
   return (
-    <ol className="rl-tl">
-      {list.map((r) => {
-        const planned = r.status === 'planned';
-        const ownText = !!(r.purpose || r.changes || r.verification);
-        return (
-          <li key={r.id} className={`rl-ms ${planned ? 'planned' : ''}`}>
-            <div className="rl-when">
-              <b className={planned ? 'p' : 'mono'}>
-                {planned ? tr('Planned') : sheetDate(r.releasedOn)}
-              </b>
-              {!planned && r.releasedOn && (
-                <span className="muted">{ago(r.releasedOn)}</span>
-              )}
-            </div>
-            <div className="rl-rail" aria-hidden="true">
-              <span className="dot" />
-            </div>
-            <section className="rl-card">
-              <div className="rl-card-head">
-                <span className="rl-pill">{r.product}</span>
-                <h2 className="mono">{r.version}</h2>
-                {r.target && <span className="muted">{r.target}</span>}
-                <span className="rl-date-sm mono muted">
+    <>
+      <div className="rl-tl-bar">
+        <span className="muted">
+          {tr(list.length === 1 ? '1 release' : '{n} releases', {
+            n: list.length,
+          })}
+        </span>
+        <span style={{ flex: 1 }} />
+        <button
+          className="btn sm"
+          disabled={searching || allOpen}
+          onClick={() => keep(new Set(list.map((r) => r.id)))}
+        >
+          {tr('Expand all')}
+        </button>
+        <button
+          className="btn sm"
+          disabled={searching || !list.some((r) => expanded.has(r.id))}
+          onClick={() => keep(new Set())}
+        >
+          {tr('Collapse all')}
+        </button>
+      </div>
+      <ol className="rl-tl">
+        {list.map((r) => {
+          const planned = r.status === 'planned';
+          const ownText = !!(r.purpose || r.changes || r.verification);
+          const shown = isExpanded(r.id);
+          return (
+            <li
+              key={r.id}
+              className={`rl-ms ${planned ? 'planned' : ''} ${shown ? 'shown' : 'folded'}`}
+            >
+              <div className="rl-when">
+                <b className={planned ? 'p' : 'mono'}>
                   {planned ? tr('Planned') : sheetDate(r.releasedOn)}
-                </span>
-                {planned && (
-                  <span className="rl-pill planned">{tr('Planned')}</span>
+                </b>
+                {!planned && r.releasedOn && (
+                  <span className="muted">{ago(r.releasedOn)}</span>
                 )}
-                <span style={{ flex: 1 }} />
-                {r.modules.length > 0 && (
-                  <span className="muted">
-                    {tr(r.modules.length === 1 ? '1 file' : '{n} files', {
-                      n: r.modules.length,
-                    })}
-                  </span>
-                )}
-                <button
-                  className="icon-btn"
-                  aria-label={tr('Edit {name}', {
-                    name: `${r.product} ${r.version}`,
-                  })}
-                  title={tr('Edit the release')}
-                  onClick={() => onEdit(r)}
-                >
-                  <Icon name="edit" />
-                </button>
               </div>
-              {r.summary && <p className="rl-card-sum">{r.summary}</p>}
-              {!r.modules.length &&
-                (ownText ? (
-                  <div className="rl-boxes pad">
-                    {box('Change log', r.changes, false)}
-                    {box('Purpose', r.purpose, false)}
-                    {box('Verification', r.verification, false)}
-                  </div>
-                ) : (
-                  <p className="muted rl-card-sum">
-                    {tr('No files in this release.')}
-                  </p>
-                ))}
-              {r.modules.length > 0 && (
-                <ul className="rl-files">
-                  {r.modules.map((m) => {
-                    const isOpen = open === m.id;
-                    const info = fileInfo(r, m);
-                    const prev = previousVersion(all, r, m);
-                    const none =
-                      !info.changes && !info.purpose && !info.verification;
-                    const extra = (lists?.fields ?? []).filter(
-                      (f) => m.extra[f.key],
-                    );
-                    return (
-                      <li key={m.id} className={isOpen ? 'open' : ''}>
-                        <button
-                          className="rl-file"
-                          aria-expanded={isOpen}
-                          onClick={() => setOpen(isOpen ? null : m.id)}
-                        >
-                          <Icon name="file" />
-                          {m.fileName || moduleName(m) ? (
-                            <span className="n mono">
-                              {m.fileName || moduleName(m)}
-                            </span>
-                          ) : (
-                            <span className="n none">{tr('No info')}</span>
-                          )}
-                          {m.fileName && m.module && (
-                            <span className="muted">{m.module}</span>
-                          )}
-                          <span style={{ flex: 1 }} />
-                          {m.environment && (
-                            <span className="rl-env">{m.environment}</span>
-                          )}
-                          <span className="rl-v mono">{m.version}</span>
-                          <Icon name="chev" />
-                        </button>
-                        {isOpen && (
-                          <div className="rl-detail">
-                            <div className="rl-meta">
-                              {m.destination && (
-                                <span>
-                                  {colName('destination')}{' '}
-                                  <b>{m.destination}</b>
-                                </span>
-                              )}
-                              {m.category && (
-                                <span>
-                                  {colName('category')} <b>{m.category}</b>
-                                </span>
-                              )}
-                              {m.type && (
-                                <span>
-                                  {tr('Type')} <b>{m.type}</b>
-                                </span>
-                              )}
-                              <span>
-                                {tr('Version')}{' '}
-                                <b className="mono">
-                                  {prev || tr('first')} → {m.version || '—'}
-                                </b>
+              <div className="rl-rail" aria-hidden="true">
+                <span className="dot" />
+              </div>
+              <section className="rl-card">
+                <div className="rl-card-head">
+                  <button
+                    className="rl-card-toggle"
+                    aria-expanded={shown}
+                    disabled={searching}
+                    title={
+                      searching
+                        ? undefined
+                        : shown
+                          ? tr('Collapse')
+                          : tr('Show the files')
+                    }
+                    onClick={() => toggleRelease(r.id)}
+                  >
+                    <Icon name="chev" />
+                    <span className="rl-pill">{r.product}</span>
+                    <h2 className="mono">{r.version}</h2>
+                    {r.target && <span className="muted">{r.target}</span>}
+                    <span className="rl-date-sm mono muted">
+                      {planned ? tr('Planned') : sheetDate(r.releasedOn)}
+                    </span>
+                    {planned && (
+                      <span className="rl-pill planned">{tr('Planned')}</span>
+                    )}
+                    {!shown && r.summary ? (
+                      <span className="rl-card-line">{r.summary}</span>
+                    ) : (
+                      <span style={{ flex: 1 }} />
+                    )}
+                    {r.modules.length > 0 && (
+                      <span className="muted rl-count">
+                        {tr(r.modules.length === 1 ? '1 file' : '{n} files', {
+                          n: r.modules.length,
+                        })}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    className="icon-btn"
+                    aria-label={tr('Edit {name}', {
+                      name: `${r.product} ${r.version}`,
+                    })}
+                    title={tr('Edit the release')}
+                    onClick={() => onEdit(r)}
+                  >
+                    <Icon name="edit" />
+                  </button>
+                </div>
+                {shown && r.summary && (
+                  <p className="rl-card-sum">{r.summary}</p>
+                )}
+                {shown &&
+                  !r.modules.length &&
+                  (ownText ? (
+                    <div className="rl-boxes pad">
+                      {box('Change log', r.changes, false)}
+                      {box('Purpose', r.purpose, false)}
+                      {box('Verification', r.verification, false)}
+                    </div>
+                  ) : (
+                    <p className="muted rl-card-sum">
+                      {tr('No files in this release.')}
+                    </p>
+                  ))}
+                {shown && r.modules.length > 0 && (
+                  <ul className="rl-files">
+                    {r.modules.map((m) => {
+                      const isOpen = open === m.id;
+                      const info = fileInfo(r, m);
+                      const prev = previousVersion(all, r, m);
+                      const none =
+                        !info.changes && !info.purpose && !info.verification;
+                      const extra = (lists?.fields ?? []).filter(
+                        (f) => m.extra[f.key],
+                      );
+                      return (
+                        <li key={m.id} className={isOpen ? 'open' : ''}>
+                          <button
+                            className="rl-file"
+                            aria-expanded={isOpen}
+                            onClick={() => setOpen(isOpen ? null : m.id)}
+                          >
+                            <Icon name="file" />
+                            {m.fileName || moduleName(m) ? (
+                              <span className="n mono">
+                                {m.fileName || moduleName(m)}
                               </span>
-                              {extra.map((f) => (
-                                <span key={f.key}>
-                                  {f.name} <b>{m.extra[f.key]}</b>
-                                </span>
-                              ))}
-                            </div>
-                            {none ? (
-                              <div className="rl-noinfo">{tr('No info')}</div>
                             ) : (
-                              <div className="rl-boxes">
-                                {box(
-                                  'Change log',
-                                  info.changes,
-                                  info.fromRelease.changes,
-                                )}
-                                {box(
-                                  'Purpose',
-                                  info.purpose,
-                                  info.fromRelease.purpose,
-                                )}
-                                {box(
-                                  'Verification',
-                                  info.verification,
-                                  info.fromRelease.verification,
-                                )}
-                              </div>
+                              <span className="n none">{tr('No info')}</span>
                             )}
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          </li>
-        );
-      })}
-    </ol>
+                            {m.fileName && m.module && (
+                              <span className="muted">{m.module}</span>
+                            )}
+                            <span style={{ flex: 1 }} />
+                            {m.environment && (
+                              <span className="rl-env">{m.environment}</span>
+                            )}
+                            <span className="rl-v mono">{m.version}</span>
+                            <Icon name="chev" />
+                          </button>
+                          {isOpen && (
+                            <div className="rl-detail">
+                              <div className="rl-meta">
+                                {m.destination && (
+                                  <span>
+                                    {colName('destination')}{' '}
+                                    <b>{m.destination}</b>
+                                  </span>
+                                )}
+                                {m.category && (
+                                  <span>
+                                    {colName('category')} <b>{m.category}</b>
+                                  </span>
+                                )}
+                                {m.type && (
+                                  <span>
+                                    {tr('Type')} <b>{m.type}</b>
+                                  </span>
+                                )}
+                                <span>
+                                  {tr('Version')}{' '}
+                                  <b className="mono">
+                                    {prev || tr('first')} → {m.version || '—'}
+                                  </b>
+                                </span>
+                                {extra.map((f) => (
+                                  <span key={f.key}>
+                                    {f.name} <b>{m.extra[f.key]}</b>
+                                  </span>
+                                ))}
+                              </div>
+                              {none ? (
+                                <div className="rl-noinfo">{tr('No info')}</div>
+                              ) : (
+                                <div className="rl-boxes">
+                                  {box(
+                                    'Change log',
+                                    info.changes,
+                                    info.fromRelease.changes,
+                                  )}
+                                  {box(
+                                    'Purpose',
+                                    info.purpose,
+                                    info.fromRelease.purpose,
+                                  )}
+                                  {box(
+                                    'Verification',
+                                    info.verification,
+                                    info.fromRelease.verification,
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }
 

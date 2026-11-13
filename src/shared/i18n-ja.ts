@@ -1488,4 +1488,8 @@ export const JA: Record<string, string> = {
     '1 行が、同じリリースの既にあるファイルと重複していました（2 つのシートをまとめたときなど）。1 つのファイルにまとめ、内容が違う場合は両方を残します。',
   '{n} rows repeated a file already in the same release (as when two sheets are put together). Each is merged into one file; where the texts differ, both are kept.':
     '{n} 行が、同じリリースの既にあるファイルと重複していました（2 つのシートをまとめたときなど）。それぞれ 1 つのファイルにまとめ、内容が違う場合は両方を残します。',
+  'Expand all': 'すべて開く',
+  'Collapse all': 'すべて閉じる',
+  Collapse: '閉じる',
+  'Show the files': 'ファイルを表示',
 };
