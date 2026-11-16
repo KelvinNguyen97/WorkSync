@@ -17,6 +17,8 @@ import path from 'node:path';
  * During development the data goes into the user's app-data folder.
  */
 export function dataFolderPath(): string {
+  if (process.env.WORKSYNC_TEST_DATA_DIR)
+    return process.env.WORKSYNC_TEST_DATA_DIR;
   if (!app.isPackaged) {
     return path.join(app.getPath('userData'), 'WorkSync-data-dev');
   }

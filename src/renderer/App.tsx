@@ -50,7 +50,16 @@ import type { Note } from '../shared/notes';
 import { tr, uiLanguage } from './i18n';
 import { ImportChoice, MergeWizard } from './importMerge';
 import { ReleasesView } from './releases';
-import { FromProjects, WorkView } from './work';
+import { FromProjects, WorkView, workChanged } from './work';
+import {
+  JoinRequests,
+  NoticesBell,
+  useWorkspaces,
+  WorkspacesDialog,
+  WorkspacesNav,
+  wsChanged,
+} from './workspaces';
+import type { Notice } from '../shared/workspace';
 import {
   DiscussionsView,
   DiscussionWindow,
@@ -96,6 +105,7 @@ type Dialog =
   | { kind: 'publish'; projectId: string }
   | { kind: 'write' }
   | { kind: 'settings' }
+  | { kind: 'workspaces' }
   | {
       kind: 'importClash';
       info: NonNullable<
@@ -285,6 +295,36 @@ function Shell({
       }),
     [],
   );
+
+  const { list: wsList } = useWorkspaces();
+  const sharedIds = new Set(wsList.flatMap((w) => w.projects.map((p) => p.id)));
+  // After a sync brought changes in: show them.
+  useEffect(
+    () =>
+      window.worksync.onWorkspaceChanged(() => {
+        void reloadAll();
+        workChanged();
+        wsChanged();
+      }),
+    [reloadAll],
+  );
+  // Others see which ticket you have open (a hint; nothing is locked).
+  useEffect(() => {
+    const t = openId ? tasks.find((x) => x.id === openId) : null;
+    void window.worksync
+      .setViewing(
+        t ? `ticket ${t.customerId || t.titleOriginal.slice(0, 20)}` : '',
+      )
+      .catch(() => undefined);
+  }, [openId]);
+  const openNotice = async (n: Notice) => {
+    if (!n.itemId) return;
+    if (tasks.some((t) => t.id === n.itemId)) return setOpenId(n.itemId);
+    const ds = await window.worksync.listDiscussions().catch(() => []);
+    if (ds.some((d) => d.id === n.itemId)) return setOpenDiscussion(n.itemId);
+    setRoute({ view: 'mine', page: 'tasks' });
+    setWorkFocus(n.itemId);
+  };
 
   const openMenu = useCallback(
     (task: Task, opener: HTMLElement, at?: { x: number; y: number }) =>
@@ -581,6 +621,20 @@ function Shell({
                 <span className="grow">{tr('Catalog')}</span>
                 <span className="count">{catalog.length}</span>
               </button>
+              <NoticesBell onOpen={(n) => void openNotice(n)} />
+            </div>
+          </div>
+          <div>
+            <div className="nav-label">{tr('Workspaces')}</div>
+            <div className="nav">
+              <WorkspacesNav onOpen={() => setDialog({ kind: 'workspaces' })} />
+              <button
+                className="nav-item custom"
+                onClick={() => setDialog({ kind: 'workspaces' })}
+              >
+                <Icon name="users" />
+                <span className="grow">{tr('Workspaces…')}</span>
+              </button>
             </div>
           </div>
           <div>
@@ -603,6 +657,14 @@ function Shell({
                             .map((l) => l.toUpperCase())
                             .join(' · ')}{' '}
                           → {p.workingLanguage.toUpperCase()}
+                          {sharedIds.has(p.id) && (
+                            <span
+                              className="proj-shared"
+                              title={tr('Shared in a workspace')}
+                            >
+                              <Icon name="users" />
+                            </span>
+                          )}
                         </span>
                       </span>
                       <span className="count">{focusCount(p.id)}</span>
@@ -1006,6 +1068,7 @@ function Shell({
             tabIndex={-1}
             onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 2)}
           >
+            <JoinRequests />
             <div className={`v-${route.view}`}>{body}</div>
           </main>
         </div>
@@ -1188,6 +1251,9 @@ function Shell({
           project={project(dialog.projectId)!}
           onClose={() => setDialog(null)}
         />
+      )}
+      {dialog?.kind === 'workspaces' && (
+        <WorkspacesDialog onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'review' && (
         <ReviewDialog source={dialog.source} onClose={() => setDialog(null)} />

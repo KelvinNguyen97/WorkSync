@@ -5,8 +5,12 @@ import {
   dialog,
   ipcMain,
   Notification,
+  safeStorage,
   shell,
 } from 'electron';
+import os from 'node:os';
+import { Workspaces, type Protector } from './workspace';
+import { WORKSPACE_EVENT } from '../shared/ipc';
 import { buildBatches, readAnswer } from '../shared/aiBatch';
 import {
   buildOwnerBatches,
@@ -18,7 +22,14 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
 import { Releases } from './releases';
-import { meAsMember, Work } from './work';
+import {
+  meAsMember,
+  myMemberId,
+  myName,
+  setMyMemberId,
+  windowsAccount,
+  Work,
+} from './work';
 import { Discussions } from './discussions';
 import { buildSummaryBatches } from '../shared/discussions';
 import type { Member } from '../shared/work';
@@ -181,6 +192,20 @@ function open(): Startup {
     releases = new Releases(db);
     work = new Work(db, (projectId) => membersFor(projectId));
     discussions = new Discussions(db, store, work);
+    const database = db;
+    workspaces = new Workspaces(database, {
+      protector,
+      account: windowsAccount,
+      pcName: () => os.hostname(),
+      myName: () => myName(database),
+      myMemberId: () => myMemberId(database),
+      setMyMemberId: (id) => setMyMemberId(database, id),
+      appVersion: app.getVersion(),
+    });
+    setMembersProvider(
+      (projectId) =>
+        workspaces?.membersForProject(projectId) ?? [meAsMember(database)],
+    );
     try {
       mine.dropUnusedNoteImages();
     } catch (error) {
@@ -230,6 +255,26 @@ const need = (): Store => {
 let releases: Releases | null = null;
 let work: Work | null = null;
 let discussions: Discussions | null = null;
+let workspaces: Workspaces | null = null;
+const needWorkspaces = (): Workspaces => {
+  if (!workspaces)
+    throw new Error('The data could not be opened. Restart WorkSync.');
+  return workspaces;
+};
+/**
+ * Workspace secrets are kept with Windows' protection for the signed-in user.
+ * Where the system offers none (some Linux desktops), they are kept as they are.
+ */
+const protector: Protector = {
+  seal: (plain) =>
+    safeStorage.isEncryptionAvailable()
+      ? `s:${safeStorage.encryptString(plain).toString('base64')}`
+      : `p:${Buffer.from(plain).toString('base64')}`,
+  open: (sealed) =>
+    sealed.startsWith('s:')
+      ? safeStorage.decryptString(Buffer.from(sealed.slice(2), 'base64'))
+      : Buffer.from(sealed.slice(2), 'base64').toString(),
+};
 const needDiscussions = (): Discussions => {
   if (!discussions)
     throw new Error('The data could not be opened. Restart WorkSync.');
@@ -363,12 +408,122 @@ export function checkLinkedFiles(): void {
   }
 }
 
-const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
+const handlers: Omit<
+  WorkSyncApi,
+  'onSourcesChanged' | 'onOpen' | 'onWorkspaceChanged'
+> = {
   listMyTasks: async () => needMine().listMyTasks(),
   saveMyTask: async (input, id) => needMine().saveMyTask(input, id),
   completeMyTask: async (id) => needMine().deleteMyTask(id),
   restoreMyTask: async (t) => needMine().restoreMyTask(t),
   listProjectTasks: async (projectId) => needWork().listTasks(projectId),
+  listWorkspaces: async () => needWorkspaces().list(),
+  renumberTicket: async (id, customerId) => need().renumber(id, customerId),
+  chooseWorkspaceFolder: async () => {
+    if (process.env.WORKSYNC_TEST_WORKSPACE_FOLDER)
+      return process.env.WORKSYNC_TEST_WORKSPACE_FOLDER;
+    const win = BrowserWindow.getFocusedWindow() ?? getMainWindow();
+    const r = await dialog.showOpenDialog(win!, {
+      title: 'Choose the workspace folder on the shared drive',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    return r.canceled ? null : (r.filePaths[0] ?? null);
+  },
+  createWorkspace: async (folder, name) => {
+    const problem = writeTargetProblem(
+      folder,
+      needLinks().sources.list(),
+      'another folder',
+    );
+    if (problem) throw new Error(problem);
+    const w = await needWorkspaces().create(folder, name);
+    notifyWorkspace();
+    return w;
+  },
+  joinWorkspace: async (folder) => {
+    const w = await needWorkspaces().requestJoin(folder);
+    notifyWorkspace();
+    return w;
+  },
+  joinWithRecovery: async (folder, password) => {
+    let file = process.env.WORKSYNC_TEST_PICK_FILE ?? null;
+    if (!file) {
+      const win = BrowserWindow.getFocusedWindow() ?? getMainWindow();
+      const r = await dialog.showOpenDialog(win!, {
+        title: 'Choose the recovery file',
+        filters: [
+          { name: 'WorkSync recovery file', extensions: ['wsrecovery'] },
+        ],
+      });
+      file = r.canceled ? null : (r.filePaths[0] ?? null);
+    }
+    if (!file) return null;
+    const w = await needWorkspaces().joinWithRecovery(
+      folder,
+      fs.readFileSync(file, 'utf8'),
+      password,
+    );
+    notifyWorkspace();
+    return w;
+  },
+  forgetWorkspace: async (id) => {
+    needWorkspaces().forget(id);
+    notifyWorkspace();
+  },
+  joinRequests: async () => needWorkspaces().requests(),
+  approveJoin: async (w, pc, as) => {
+    await needWorkspaces().approve(w, pc, as);
+    notifyWorkspace();
+  },
+  declineJoin: async (w, pc) => needWorkspaces().decline(w, pc),
+  workspaceMembers: async (w) => needWorkspaces().members(w),
+  removeFromWorkspace: async (w, who) => {
+    await needWorkspaces().remove(w, who);
+    notifyWorkspace();
+  },
+  leaveWorkspace: async (w) => {
+    await needWorkspaces().leave(w);
+    notifyWorkspace();
+  },
+  setWorkspaceOffline: async (w, off) => {
+    needWorkspaces().setOffline(w, off);
+    void syncWorkspaces();
+  },
+  shareProject: async (w, projectId) => {
+    await needWorkspaces().share(w, projectId);
+    notifyWorkspace();
+  },
+  saveRecoveryFile: async (w, password) => {
+    const text = await needWorkspaces().recoveryFile(w, password);
+    let file = process.env.WORKSYNC_TEST_EXPORT_FILE ?? null;
+    if (!file) {
+      const win = BrowserWindow.getFocusedWindow() ?? getMainWindow();
+      const r = await dialog.showSaveDialog(win!, {
+        title: 'Save the recovery file',
+        defaultPath: path.join(
+          app.getPath('documents'),
+          'WorkSync recovery.wsrecovery',
+        ),
+        filters: [
+          { name: 'WorkSync recovery file', extensions: ['wsrecovery'] },
+        ],
+      });
+      file = r.canceled ? null : (r.filePath ?? null);
+    }
+    if (!file) return false;
+    fs.writeFileSync(file, text);
+    return true;
+  },
+  syncNow: async () => syncWorkspaces(),
+  listNotices: async () => needWorkspaces().notices(),
+  markNoticesRead: async (ids) => needWorkspaces().markNoticesRead(ids),
+  setViewing: async (text) => {
+    if (workspaces) workspaces.viewing = text.slice(0, 80);
+  },
+  showWorkspaceUpdate: async (w) => {
+    const info = await needWorkspaces().info(w);
+    if (info?.update) shell.showItemInFolder(info.update.file);
+  },
   listDiscussions: async (projectId) => needDiscussions().list(projectId),
   saveDiscussion: async (projectId, input, id) =>
     needDiscussions().save(projectId, input, id),
@@ -1076,6 +1231,8 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
     st.getProject(id);
     // A backup first, so a project deleted by mistake can be restored from Settings.
     const safety = backupBefore(db!, backupFolder(), 'delete');
+    // A shared project is only taken off this PC; the other members keep it.
+    workspaces?.forgetProject(id);
     const r = st.deleteProject(id);
     log(
       'info',
@@ -1554,6 +1711,85 @@ export function remindMyTasks(now = new Date()): number {
 export function appSettings(): AppSettings {
   open();
   return store?.getSettings() ?? DEFAULT_SETTINGS;
+}
+
+function notifyWorkspace(): void {
+  for (const w of BrowserWindow.getAllWindows())
+    w.webContents.send(WORKSPACE_EVENT);
+}
+
+let syncing = false;
+let noticesShownUpTo = new Date().toISOString();
+/** One sync round of every workspace; tells the window and shows notices. */
+export async function syncWorkspaces(): Promise<number> {
+  if (!workspaces || syncing) return 0;
+  syncing = true;
+  try {
+    const before = JSON.stringify(
+      (await workspaces.list()).map((w) => [
+        w.state,
+        w.online,
+        w.waiting,
+        w.problem,
+      ]),
+    );
+    const n = await workspaces.syncAll();
+    const after = JSON.stringify(
+      (await workspaces.list()).map((w) => [
+        w.state,
+        w.online,
+        w.waiting,
+        w.problem,
+      ]),
+    );
+    const fresh = workspaces.noticesSince(noticesShownUpTo);
+    if (fresh.length) {
+      noticesShownUpTo = fresh[0].at;
+      if (store?.getSettings().reminders && Notification.isSupported()) {
+        const lang = resolveUiLanguage(
+          store.getSettings().uiLanguage,
+          app.getLocale(),
+        );
+        const text = (s: string) => translateMessage(lang, s);
+        // Grouped when many arrive together (doc 08, 3.9).
+        const note =
+          fresh.length === 1
+            ? new Notification({ title: 'WorkSync', body: text(fresh[0].text) })
+            : new Notification({
+                title: 'WorkSync',
+                body: translate(lang, '{n} new notices in your workspaces', {
+                  n: fresh.length,
+                }),
+              });
+        shownNotes.add(note);
+        note.on('click', () => {
+          shownNotes.delete(note);
+          showMainWindow();
+        });
+        note.on('close', () => shownNotes.delete(note));
+        note.show();
+      }
+    }
+    if (n || fresh.length || before !== after) notifyWorkspace();
+    return n;
+  } catch (error) {
+    log('warn', `Workspace sync failed: ${String(error)}`);
+    return 0;
+  } finally {
+    syncing = false;
+  }
+}
+
+/** Syncs every 3 seconds while WorkSync is in front, every 30 seconds behind (doc 08, 3.4). */
+export function startWorkspaceSync(): void {
+  let last = 0;
+  setInterval(() => {
+    const front = BrowserWindow.getAllWindows().some((w) => w.isFocused());
+    const every = front || process.env.WORKSYNC_TEST_USER_DATA ? 3000 : 30_000;
+    if (Date.now() - last < every) return;
+    last = Date.now();
+    void syncWorkspaces();
+  }, 1000);
 }
 
 export function registerIpcHandlers(): void {

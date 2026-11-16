@@ -549,6 +549,33 @@ export class Store {
     return this.getTask(id);
   }
 
+  /**
+   * Gives a ticket another number to settle a number clash (doc 08, 3.8):
+   * the number given, or the next free one. Works for tickets from a file too.
+   */
+  renumber(id: string, customerId: string): Task {
+    const t = this.getTask(id);
+    if (t.source === 'file')
+      throw new Error(
+        'A ticket from the customer’s file keeps the customer’s number. Change the other ticket’s number.',
+      );
+    const n = customerId.trim() || this.nextCustomerId(t.projectId);
+    this.checkNumber(t.projectId, n, id);
+    this.tx(() => {
+      this.db
+        .prepare(
+          'UPDATE tasks SET customer_id = ?, updated_at = ? WHERE id = ?',
+        )
+        .run(n, this.now(), id);
+      this.log(
+        id,
+        'Changes',
+        `No. ${t.customerId} → ${n}, to settle a number clash.`,
+      );
+    });
+    return this.getTask(id);
+  }
+
   /** Changes task fields and records which ones changed in the history. */
   updateTask(id: string, patch: Partial<TaskInput>): Task {
     const before = this.getTask(id);

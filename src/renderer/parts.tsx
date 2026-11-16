@@ -54,15 +54,36 @@ export function PriorityTag({ task }: { task: Task }) {
 
 /** The task's No., unless the project hides numbers in its views. */
 export function TaskNumber({ task }: { task: Task }) {
-  const { project } = useApp();
+  const { project, tasks } = useApp();
   if (project(task.projectId)?.showNumbers === false) return null;
+  const clash = isClash(task, tasks);
   return (
     <span className="tc-id">
       <small>{tr('No.')}</small>
       {task.customerId}
+      {clash && (
+        <span
+          className="clash"
+          title={tr(
+            'Another ticket in this project has the same number. Settle it from the ticket.',
+          )}
+        >
+          {tr('Number clash')}
+        </span>
+      )}
     </span>
   );
 }
+
+/** Two tickets of a project with the same No., made offline by two people (doc 08, 3.8). */
+export const isClash = (task: Task, all: Task[]) =>
+  !!task.customerId &&
+  all.some(
+    (t) =>
+      t.id !== task.id &&
+      t.projectId === task.projectId &&
+      t.customerId === task.customerId,
+  );
 
 /** How messages name a task: by its No., or by its title when the project hides numbers. */
 export function taskLabel(task: Task, p: Project | undefined): string {

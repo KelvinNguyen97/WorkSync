@@ -47,6 +47,51 @@ import {
 import { tr, uiLanguage } from './i18n';
 import { TicketTasks } from './work';
 import { DiscussionBar } from './discussions';
+import { isClash } from './parts';
+import { OpenByOthers } from './workspaces';
+
+/** Settles a number clash: the next free number, or a number you choose (doc 08, 3.8). */
+function ClashBar({ task }: { task: Task }) {
+  const { attempt, putTask, toast } = useApp();
+  const [no, setNo] = useState('');
+  const set = async (customerId: string) => {
+    const u = await attempt(() =>
+      window.worksync.renumberTicket(task.id, customerId),
+    );
+    if (u) {
+      putTask(u);
+      toast(tr('This ticket is now No. {no}.', { no: u.customerId }));
+    }
+  };
+  return (
+    <div className="keepnote warn clash-bar" role="alert">
+      <Icon name="alert" />
+      <span className="grow">
+        {tr(
+          'Number clash: another ticket in this project also has No. {no}. Talk with the person who made it and decide which one changes.',
+          { no: task.customerId },
+        )}
+      </span>
+      <button className="btn sm" onClick={() => void set('')}>
+        {tr('Give this ticket the next free number')}
+      </button>
+      <input
+        className="inp"
+        aria-label={tr('Change the number to')}
+        placeholder={tr('Change the number to…')}
+        value={no}
+        onChange={(e) => setNo(e.target.value)}
+      />
+      <button
+        className="btn sm"
+        disabled={!no.trim()}
+        onClick={() => void set(no.trim())}
+      >
+        {tr('Change')}
+      </button>
+    </div>
+  );
+}
 import { historyJa } from '../shared/historyJa';
 
 /** Splits text into paragraphs on blank lines, or on single lines when there are none. */
@@ -1137,6 +1182,10 @@ export function TaskPopup({
             <div className="tm-meta">
               <StatusChip status={task.status} />
               <DeadlineChip task={task} dueSoonDays={p.dueSoonDays} />
+              <OpenByOthers
+                projectId={task.projectId}
+                label={`ticket ${task.customerId || task.titleOriginal.slice(0, 20)}`}
+              />
               {flagChips.map((x) => (
                 <span key={x} className="chip over">
                   {x}
@@ -1177,6 +1226,7 @@ export function TaskPopup({
           </header>
           <div className="tm-body">
             <div className="tm-main" ref={mainRef}>
+              {isClash(task, tasks) && <ClashBar task={task} />}
               {onOpenDiscussion && (
                 <DiscussionBar
                   task={task}

@@ -421,6 +421,66 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX work_history_item ON work_history(item_id, at);
   `,
+  // 25: shared workspaces (doc 08): the workspaces this PC is in, which
+  // projects are shared, what was last synced of each row, and the notices
+  `
+  CREATE TABLE workspaces (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    folder TEXT NOT NULL,
+    pc_id TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'member',
+    offline INTEGER NOT NULL DEFAULT 0,
+    keys TEXT NOT NULL DEFAULT '{}',
+    last_sync TEXT,
+    last_error TEXT,
+    joined_at TEXT NOT NULL
+  );
+  CREATE TABLE ws_projects (
+    project_id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    shared_at TEXT NOT NULL
+  );
+  CREATE TABLE ws_rows (
+    project_id TEXT NOT NULL,
+    tbl TEXT NOT NULL,
+    id TEXT NOT NULL,
+    data TEXT NOT NULL,
+    clocks TEXT NOT NULL DEFAULT '{}',
+    deleted INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (project_id, tbl, id)
+  );
+  CREATE TABLE ws_cursors (
+    workspace_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    pc_id TEXT NOT NULL,
+    seq INTEGER NOT NULL,
+    PRIMARY KEY (workspace_id, project_id, pc_id)
+  );
+  CREATE TABLE ws_notices (
+    id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL,
+    project_id TEXT,
+    item_id TEXT,
+    at TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    text TEXT NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX ws_notices_at ON ws_notices(at);
+  CREATE TABLE ws_outbox (
+    n INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL,
+    change TEXT NOT NULL
+  );
+  CREATE TABLE ws_pending (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    pc_id TEXT NOT NULL,
+    change TEXT NOT NULL,
+    at TEXT NOT NULL
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

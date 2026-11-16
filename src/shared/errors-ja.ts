@@ -470,6 +470,133 @@ export const ERRORS_JA: [string, string][] = [
     'A task can only be assigned to a member of the workspace.',
     'タスクの担当はワークスペースのメンバーだけにできます。',
   ],
+  [
+    'A ticket from the customer’s file keeps the customer’s number. Change the other ticket’s number.',
+    'お客様ファイルのチケットはお客様の番号のままです。もう一方のチケットの番号を変えてください。',
+  ],
+  [
+    'The workspace folder did not answer in time.',
+    'ワークスペースフォルダーが時間内に応答しませんでした。',
+  ],
+  [
+    'This PC’s workspace key cannot be opened under this Windows account. Join the workspace again from this PC.',
+    'この Windows アカウントではこの PC のワークスペースの鍵を開けません。この PC からもう一度ワークスペースに参加してください。',
+  ],
+  [
+    'That workspace is not on this PC.',
+    'そのワークスペースはこの PC にありません。',
+  ],
+  [
+    'This folder is not a WorkSync workspace. Choose the folder that has workspace.wsw in it.',
+    'このフォルダーは WorkSync のワークスペースではありません。workspace.wsw があるフォルダーを選んでください。',
+  ],
+  [
+    'The workspace file in this folder cannot be read.',
+    'このフォルダーのワークスペースファイルを読めません。',
+  ],
+  [
+    'The workspace file in this folder was changed by someone. Ask a member to recreate the workspace folder.',
+    'このフォルダーのワークスペースファイルが誰かに変更されています。メンバーにワークスペースフォルダーの作り直しを頼んでください。',
+  ],
+  ['Give the workspace a name.', 'ワークスペースに名前を付けてください。'],
+  [
+    'This folder already is a workspace. Choose Join a workspace instead.',
+    'このフォルダーはすでにワークスペースです。「ワークスペースに参加」を選んでください。',
+  ],
+  [
+    'This PC is already in that workspace.',
+    'この PC はすでにそのワークスペースに参加しています。',
+  ],
+  [
+    'This workspace needs a newer WorkSync. Update from the workspace folder first.',
+    'このワークスペースには新しい WorkSync が必要です。先にワークスペースフォルダーから更新してください。',
+  ],
+  ['That join request is no longer there.', 'その参加申請はもうありません。'],
+  [
+    'That join request was changed by someone. Ask the person to ask again.',
+    'その参加申請は誰かに変更されています。もう一度申請するよう本人に頼んでください。',
+  ],
+  [
+    'Leave the workspace instead.',
+    '代わりにワークスペースから抜けてください。',
+  ],
+  [
+    'That member is not in the workspace.',
+    'そのメンバーはワークスペースにいません。',
+  ],
+  [
+    'To take this PC out, choose Leave the workspace.',
+    'この PC を外すには「ワークスペースから抜ける」を選んでください。',
+  ],
+  [
+    'Choose a password of at least 8 characters.',
+    '8 文字以上のパスワードにしてください。',
+  ],
+  [
+    'This recovery file is for another workspace.',
+    'この復旧ファイルは別のワークスペースのものです。',
+  ],
+  [
+    'This recovery file was taken out of the workspace.',
+    'この復旧ファイルはワークスペースから外されています。',
+  ],
+  [
+    'You are not a member of that workspace yet.',
+    'まだそのワークスペースのメンバーではありません。',
+  ],
+  [
+    'That project is already shared.',
+    'そのプロジェクトはすでに共有しています。',
+  ],
+  [
+    'This PC is not a member of the workspace any more.',
+    'この PC はもうワークスペースのメンバーではありません。',
+  ],
+  [
+    'This is not a WorkSync recovery file.',
+    'WorkSync の復旧ファイルではありません。',
+  ],
+  [
+    'The password does not open this recovery file.',
+    'このパスワードでは復旧ファイルを開けません。',
+  ],
+  ['{0} gave you a task: {1}.', '{0} からタスクを渡されました: {1}'],
+  ['{0} made a task Done: {1}.', '{0} がタスクを完了にしました: {1}'],
+  [
+    '{0} mentioned you in “{1}”.',
+    '{0} が「{1}」であなたにメンションしました。',
+  ],
+  ['{0} commented on “{1}”.', '{0} が「{1}」にコメントしました。'],
+  [
+    '{0} changed the {1} you set a few minutes ago.',
+    '{0} が、あなたが数分前に設定した {1} を変更しました。',
+  ],
+  [
+    "Your {0} and {1}'s {2} have the same number. Talk with them and decide which one changes.",
+    'あなたの {0} と {1} の {2} が同じ番号です。相談して、どちらを変えるか決めてください。',
+  ],
+  ['You let {0} ({1} · {2}) in.', '{0}（{1} · {2}）の参加を許可しました。'],
+  [
+    '{0} let {1} ({2} · {3}) in.',
+    '{0} が {1}（{2} · {3}）の参加を許可しました。',
+  ],
+  [
+    'You removed {0}. Every member is told.',
+    '{0} を外しました。全メンバーに知らせます。',
+  ],
+  [
+    '{0} removed {1} ({2}) from the workspace.',
+    '{0} が {1}（{2}）をワークスペースから外しました。',
+  ],
+  [
+    'You were removed from the workspace {0}. Its projects stay here as local copies.',
+    'ワークスペース {0} から外されました。プロジェクトはこの PC にローカルコピーとして残ります。',
+  ],
+  ['You are in the workspace {0}.', 'ワークスペース {0} に参加しました。'],
+  [
+    'Back online with {0}: {1} changes came in and {2} were sent.',
+    '{0} にオンラインで戻りました: {1} 件を受信し、{2} 件を送信しました。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

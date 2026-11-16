@@ -1689,4 +1689,121 @@ export const JA: Record<string, string> = {
     'コメント {n} までを進捗チケット {no} に要約しました。',
   'someone who is not a member': 'メンバーではない人',
   'Display name': '表示名',
+  'A hint only; nothing is locked.': '目安です。ロックはしません。',
+  'A newer WorkSync ({version}) is in the workspace folder.':
+    'ワークスペースフォルダーに新しい WorkSync（{version}）があります。',
+  'Another ticket in this project has the same number. Settle it from the ticket.':
+    'このプロジェクトの別のチケットが同じ番号です。チケットから解決してください。',
+  'Arriving…': '受信中…',
+  'Asked to join. Tell a member the code {code}.':
+    '参加を申請しました。メンバーにコード {code} を伝えてください。',
+  'Cancel the request': '申請を取り消す',
+  'Change the number to': '番号の変更先',
+  'Change the number to…': '番号を変更…',
+  'Check that their screen shows this code, at their desk, by Teams or by phone. Then let them in.':
+    '相手の画面にこのコードが出ているか、席で、Teams で、または電話で確認してから参加を許可してください。',
+  'Choose the file and join': 'ファイルを選んで参加',
+  Code: 'コード',
+  Create: '作成',
+  'Create a workspace': 'ワークスペースを作成',
+  Decline: '断る',
+  'Forget it': '消す',
+  'Give this ticket the next free number': 'このチケットを次の空き番号にする',
+  'How others in a workspace see you. Your Windows account and PC name are shown with it.':
+    'ワークスペースで他の人に見える名前です。Windows アカウントと PC 名も一緒に表示されます。',
+  'If every member’s PC is gone, a recovery file lets a new PC in on its own. Keep it on a USB stick or another safe place, with its password.':
+    'メンバー全員の PC がなくなっても、復旧ファイルがあれば新しい PC だけで参加できます。パスワードと一緒に USB メモリなど安全な場所に保管してください。',
+  'Its shared projects stay on this PC as local copies, no longer synced.':
+    '共有プロジェクトはこの PC にローカルコピーとして残り、同期されなくなります。',
+  'Join a workspace': 'ワークスペースに参加',
+  'Join requests': '参加申請',
+  'Join with a recovery file': '復旧ファイルで参加',
+  'Join {folder} with a recovery file': '復旧ファイルで {folder} に参加',
+  'Keep working on this PC; changes wait and are sent when you turn this off.':
+    'この PC で作業を続けます。変更は保留され、オフにすると送信されます。',
+  Leave: '抜ける',
+  'Leave the workspace': 'ワークスペースから抜ける',
+  'Leave {name}?': '{name} から抜けますか？',
+  'Let in': '参加を許可',
+  'Let in as a new member': '新しいメンバーとして許可',
+  'Let in as {who} again': '{who} として再参加を許可',
+  'Let {who} in as the same member.':
+    '{who} を同じメンバーとして参加させました。',
+  'Let {who} in.': '{who} の参加を許可しました。',
+  'Made the workspace {name}. Share projects in it, and let people in.':
+    'ワークスペース {name} を作成しました。プロジェクトを共有し、メンバーを招いてください。',
+  'New workspace in {folder}': '{folder} に新しいワークスペース',
+  'No notices yet.': 'まだお知らせはありません。',
+  'None yet.': 'まだありません。',
+  Notices: 'お知らせ',
+  'Number clash': '番号の重複',
+  'Number clash: another ticket in this project also has No. {no}. Talk with the person who made it and decide which one changes.':
+    '番号の重複: このプロジェクトの別のチケットも No. {no} です。作成した人と相談して、どちらを変えるか決めてください。',
+  Offline: 'オフライン',
+  Online: 'オンライン',
+  'Password for the recovery file': '復旧ファイルのパスワード',
+  'Password, 8 characters or more': 'パスワード（8 文字以上）',
+  'Problems: {n} files not signed by a member are ignored':
+    '問題: メンバーの署名がない {n} 件のファイルを無視しています',
+  'Project to share': '共有するプロジェクト',
+  'Read-only: needs a newer WorkSync':
+    '読み取り専用: 新しい WorkSync が必要です',
+  'Recovery file': '復旧ファイル',
+  'Remove this PC': 'この PC を外す',
+  'Remove {who}?': '{who} を外しますか？',
+  Removed: '外しました',
+  'Removed {who}. Every member is told.':
+    '{who} を外しました。全メンバーに知らせます。',
+  'Save a recovery file': '復旧ファイルを保存',
+  'Saved the recovery file. Keep it and its password safe.':
+    '復旧ファイルを保存しました。ファイルとパスワードを安全に保管してください。',
+  'Share a project…': 'プロジェクトを共有…',
+  'Shared in a workspace': 'ワークスペースで共有中',
+  'Shared projects': '共有プロジェクト',
+  'Shared. Every member of {name} sees it.':
+    '共有しました。{name} の全メンバーに表示されます。',
+  'Shared: tickets, situations, difficulties, tasks, discussions, people, glossary and releases. Stays on your PC: your notes on a ticket, your next action, your priority, pins, My tasks, settings, and the link to the customer’s file.':
+    '共有するもの: チケット、状況、課題、タスク、ディスカッション、人、用語集、リリース。この PC に残るもの: チケットの自分用メモ、次のアクション、自分の優先度、ピン、マイタスク、設定、お客様ファイルとのリンク。',
+  'Show it': '表示',
+  'Sync now': '今すぐ同期',
+  'Tell a member of the workspace this code. They check it with you and let you in.':
+    'ワークスペースのメンバーにこのコードを伝えてください。メンバーが確認して参加を許可します。',
+  'The recovery file’s password': '復旧ファイルのパスワード',
+  'Their history, tasks and comments stay theirs.':
+    '履歴、タスク、コメントはその人のまま残ります。',
+  'Their later changes are refused and a new workspace key is made for everyone else. What they already saw stays in their own copy. Every member is told; it takes effect once a second member’s WorkSync has seen it, or after 24 hours.':
+    '以後の変更は受け付けず、他の全員に新しいワークスペースの鍵を作ります。すでに見た内容はその人のコピーに残ります。全メンバーに知らせ、別のメンバーの WorkSync が確認した時点か、24 時間後に有効になります。',
+  'This ticket is now No. {no}.': 'このチケットは No. {no} になりました。',
+  'Waiting to be let in · code {code}': '参加の許可待ち · コード {code}',
+  'What happened in your workspaces that concerns you.':
+    'ワークスペースで起きた、あなたに関係すること。',
+  'Work offline': 'オフラインで作業',
+  'Work on the same projects with people on the same network, through a folder on the shared drive. No server and no passwords: each PC has its own key, and a member lets a new PC in after checking a 6-digit code.':
+    '同じネットワークの人と、共有ドライブのフォルダーを通して同じプロジェクトで作業します。サーバーもパスワードも不要です。PC ごとに鍵を持ち、新しい PC はメンバーが 6 桁のコードを確認して参加を許可します。',
+  'Working offline': 'オフラインで作業中',
+  Workspaces: 'ワークスペース',
+  'Workspaces…': 'ワークスペース…',
+  'You are in the workspace {name}.': 'ワークスペース {name} に参加しました。',
+  'You are not in a workspace. Projects stay on this PC only. Create a workspace in a folder on the shared drive, or join one a colleague made.':
+    'ワークスペースに参加していません。プロジェクトはこの PC だけにあります。共有ドライブのフォルダーにワークスペースを作るか、同僚が作ったものに参加してください。',
+  'Your name': 'あなたの名前',
+  'Your request was declined': '申請は断られました',
+  'last seen {time}': '最終確認 {time}',
+  'not synced yet': '未同期',
+  online: 'オンライン',
+  'removal waits for a second member': '別のメンバーの確認待ち',
+  removed: '外しました',
+  'synced at {time}': '{time} に同期',
+  'synced {n} min ago': '{n} 分前に同期',
+  'synced {n} s ago': '{n} 秒前に同期',
+  '{n} change waiting': '{n} 件の変更が保留中',
+  '{n} changes waiting': '{n} 件の変更が保留中',
+  '{who} has this ticket open': '{who} がこのチケットを開いています',
+  '{who} wants to join {workspace}':
+    '{who} が {workspace} への参加を申請しています',
+  '{n} new notices in your workspaces':
+    'ワークスペースのお知らせが {n} 件あります',
+  'Choose the workspace folder on the shared drive':
+    '共有ドライブのワークスペースフォルダーを選んでください',
+  'Share the project': '共有する',
 };

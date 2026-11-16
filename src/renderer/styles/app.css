@@ -5041,3 +5041,259 @@ html[data-glass] .mg {
 .sm-action input[type='date'] {
   width: auto;
 }
+
+/* ---------------------------------------------------------- workspaces (doc 08) */
+.ws-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ws-nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--fg);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.ws-nav-item:hover {
+  background: var(--raised);
+}
+.ws-nav-item .grow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+.ws-nav-item b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ws-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.ws-state .dot,
+.ws-pc .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--low);
+  flex: none;
+}
+.ws-state.on {
+  color: var(--ok-ink);
+}
+.ws-state.on .dot,
+.ws-pc .dot.on {
+  background: var(--ok-ink);
+}
+.ws-state.wait .dot {
+  background: var(--high);
+}
+.ws-state.bad {
+  color: var(--urgent-ink);
+}
+.ws-state.bad .dot {
+  background: var(--urgent);
+}
+.proj-shared {
+  margin-left: 6px;
+  vertical-align: -2px;
+  color: var(--accent);
+  display: inline-grid;
+}
+.proj-shared .ic {
+  width: 14px;
+  height: 14px;
+}
+.ws-unread {
+  background: var(--accent) !important;
+  color: var(--accent-ink) !important;
+}
+.ws-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ws-req {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+}
+.ws-req .grow {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ws-req small {
+  color: var(--fg-2);
+}
+.ws-code {
+  font: 700 20px var(--mono);
+  letter-spacing: 0.08em;
+  padding: 2px 10px;
+  border-radius: 8px;
+  background: var(--sunken);
+  border: 1px solid var(--line-strong);
+}
+.ws-code.big {
+  font-size: 34px;
+  padding: 6px 18px;
+}
+.ws-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 60vh;
+  overflow: auto;
+}
+.ws-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ws-notice.unread {
+  border-color: var(--accent);
+}
+.ws-notice .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.ws-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ws-top {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.ws-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+.ws-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ws-card-head .grow {
+  flex: 1;
+  font-size: 15px;
+}
+.ws-card h3 {
+  margin: 4px 0 0;
+}
+.ws-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ws-inline .inp {
+  width: auto;
+  min-width: 200px;
+}
+.ws-projects {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.ws-note {
+  font-size: 12.5px;
+  margin: 0;
+}
+.ws-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ws-members {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-member {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.ws-member.removed {
+  opacity: 0.6;
+}
+.ws-member .grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ws-pc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.tc-id .clash {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgb(240 82 79 / 0.18);
+  color: var(--urgent-ink);
+  font: 700 10.5px var(--ui);
+  letter-spacing: 0.02em;
+}
+.clash-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.clash-bar .grow {
+  flex: 1 1 260px;
+}
+.clash-bar .inp {
+  width: 160px;
+}
+.ws-open {
+  color: var(--st-ip-ink);
+}

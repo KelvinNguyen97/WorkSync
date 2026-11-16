@@ -3,6 +3,7 @@ import {
   API_METHODS,
   OPEN_EVENT,
   SOURCES_EVENT,
+  WORKSPACE_EVENT,
   type OpenTarget,
   channel,
   type WorkSyncApi,
@@ -44,6 +45,12 @@ api.onOpen = (listener) => {
     listener(target);
   ipcRenderer.on(OPEN_EVENT, handler);
   return () => ipcRenderer.removeListener(OPEN_EVENT, handler);
+};
+
+api.onWorkspaceChanged = (listener) => {
+  const handler = () => listener();
+  ipcRenderer.on(WORKSPACE_EVENT, handler);
+  return () => ipcRenderer.removeListener(WORKSPACE_EVENT, handler);
 };
 
 contextBridge.exposeInMainWorld('worksync', api);

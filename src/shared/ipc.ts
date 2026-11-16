@@ -36,6 +36,7 @@ import type {
   SummaryBatch,
 } from './discussions';
 import type { Member, ProjectTask, ProjectTaskInput, WorkEvent } from './work';
+import type { JoinRequest, Notice, WorkspaceInfo, WsMember } from './workspace';
 import type { Note, NoteInput } from './notes';
 import type { AutoItem, MergeChoices, Question } from './merge';
 import type { Release, ReleaseInput, ReleaseLists } from './releases';
@@ -409,6 +410,49 @@ export interface WorkSyncApi {
     answer: Partial<SummaryAnswer> & { resolved?: string[] },
   ): Promise<Task>;
 
+  /** Settles a number clash: the number given, or the next free one when empty. */
+  renumberTicket(id: string, customerId: string): Promise<Task>;
+  /** Shared workspaces (doc 08) this PC is in, or waiting to join. */
+  listWorkspaces(): Promise<WorkspaceInfo[]>;
+  /** Asks for a folder on the shared drive. Null when cancelled. */
+  chooseWorkspaceFolder(): Promise<string | null>;
+  createWorkspace(folder: string, name: string): Promise<WorkspaceInfo>;
+  joinWorkspace(folder: string): Promise<WorkspaceInfo>;
+  /** Joins with a recovery file (asked for), opened with its password. Null when cancelled. */
+  joinWithRecovery(
+    folder: string,
+    password: string,
+  ): Promise<WorkspaceInfo | null>;
+  /** Cancels a join request, or forgets a declined one. */
+  forgetWorkspace(id: string): Promise<void>;
+  joinRequests(): Promise<JoinRequest[]>;
+  approveJoin(
+    workspaceId: string,
+    pcId: string,
+    asMember?: string,
+  ): Promise<void>;
+  declineJoin(workspaceId: string, pcId: string): Promise<void>;
+  workspaceMembers(workspaceId: string): Promise<WsMember[]>;
+  removeFromWorkspace(
+    workspaceId: string,
+    who: { pcId?: string; memberId?: string },
+  ): Promise<void>;
+  leaveWorkspace(workspaceId: string): Promise<void>;
+  setWorkspaceOffline(workspaceId: string, offline: boolean): Promise<void>;
+  shareProject(workspaceId: string, projectId: string): Promise<void>;
+  /** Saves a recovery file locked with this password. False when cancelled. */
+  saveRecoveryFile(workspaceId: string, password: string): Promise<boolean>;
+  /** Syncs now; returns how many changes came in. */
+  syncNow(): Promise<number>;
+  listNotices(): Promise<Notice[]>;
+  markNoticesRead(ids?: string[]): Promise<void>;
+  /** What you have open, shown to others as a hint ("has ticket 015 open"). */
+  setViewing(text: string): Promise<void>;
+  /** Shows the newer WorkSync zip in the workspace folder. */
+  showWorkspaceUpdate(workspaceId: string): Promise<void>;
+  /** Called after a sync brought changes in, or the workspaces changed. */
+  onWorkspaceChanged(listener: () => void): () => void;
+
   /** Notes: on their own or attached to a project. */
   listNotes(): Promise<Note[]>;
   /** Adds a note, or changes the one with this id; only the parts given change. */
@@ -511,6 +555,8 @@ export type OpenTarget =
 
 /** Sent by the main process when linked files change state. */
 export const SOURCES_EVENT = 'worksync:sources-changed';
+/** Sent by the main process after a sync brought changes in. */
+export const WORKSPACE_EVENT = 'worksync:workspace-changed';
 /** Sent by the main process to show a page in the window. */
 export const OPEN_EVENT = 'worksync:open';
 
@@ -522,6 +568,27 @@ export const API_METHODS = [
   'completeMyTask',
   'restoreMyTask',
   'listProjectTasks',
+  'listWorkspaces',
+  'renumberTicket',
+  'chooseWorkspaceFolder',
+  'createWorkspace',
+  'joinWorkspace',
+  'joinWithRecovery',
+  'forgetWorkspace',
+  'joinRequests',
+  'approveJoin',
+  'declineJoin',
+  'workspaceMembers',
+  'removeFromWorkspace',
+  'leaveWorkspace',
+  'setWorkspaceOffline',
+  'shareProject',
+  'saveRecoveryFile',
+  'syncNow',
+  'listNotices',
+  'markNoticesRead',
+  'setViewing',
+  'showWorkspaceUpdate',
   'listDiscussions',
   'saveDiscussion',
   'deleteDiscussion',

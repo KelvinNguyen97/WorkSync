@@ -25,6 +25,7 @@ import {
   publishOnClose,
   registerIpcHandlers,
   remindMyTasks,
+  startWorkspaceSync,
 } from './ipc';
 import {
   dropQuickSearchKey,
@@ -88,6 +89,9 @@ const createWindow = (): void => {
 // Windows shows notifications under this name, and needs it to show them at all.
 if (process.platform === 'win32') app.setAppUserModelId('com.worksync.desktop');
 
+// End-to-end tests run two WorkSyncs side by side, each with its own folders.
+if (process.env.WORKSYNC_TEST_USER_DATA)
+  app.setPath('userData', process.env.WORKSYNC_TEST_USER_DATA);
 const primary = app.requestSingleInstanceLock();
 if (!primary) app.quit();
 app.on('second-instance', showMainWindow);
@@ -105,6 +109,7 @@ app.whenReady().then(() => {
   applyAppSettings(appSettings());
   createWindow();
   setInterval(checkLinkedFiles, CHECK_EVERY_MS);
+  startWorkspaceSync();
   // My tasks reminders: every 5 minutes, and shortly after start.
   setTimeout(() => remindMyTasks(), 20 * 1000);
   setInterval(() => remindMyTasks(), 5 * 60 * 1000);
