@@ -45,6 +45,8 @@ import {
   confirmDelete,
 } from './parts';
 import { tr, uiLanguage } from './i18n';
+import { TicketTasks } from './work';
+import { DiscussionBar } from './discussions';
 import { historyJa } from '../shared/historyJa';
 
 /** Splits text into paragraphs on blank lines, or on single lines when there are none. */
@@ -938,12 +940,14 @@ export function TaskPopup({
   onEdit,
   onDelete,
   openMenu,
+  onOpenDiscussion,
 }: {
   taskId: string;
   onClose: () => void;
   onEdit: (t: Task) => void;
   onDelete: (t: Task) => void;
   openMenu: (task: Task, opener: HTMLElement) => void;
+  onOpenDiscussion?: (id: string) => void;
 }) {
   const { tasks, project, today, putTask, toast, attempt, people } = useApp();
   const label = useTaskLabel();
@@ -1173,6 +1177,12 @@ export function TaskPopup({
           </header>
           <div className="tm-body">
             <div className="tm-main" ref={mainRef}>
+              {onOpenDiscussion && (
+                <DiscussionBar
+                  task={task}
+                  onOpenDiscussion={onOpenDiscussion}
+                />
+              )}
               <section className="sec">
                 <EditField
                   task={task}
@@ -1289,6 +1299,9 @@ export function TaskPopup({
                     </div>
                   )}
                 </div>
+              </section>
+              <section className="sec">
+                <TicketTasks projectId={task.projectId} ticketId={task.id} />
               </section>
               <Description task={task} />
             </div>

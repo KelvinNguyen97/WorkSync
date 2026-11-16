@@ -18,6 +18,10 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
 import { Releases } from './releases';
+import { meAsMember, Work } from './work';
+import { Discussions } from './discussions';
+import { buildSummaryBatches } from '../shared/discussions';
+import type { Member } from '../shared/work';
 import { releaseWorkbook } from './releaseExcel';
 import { releaseHtml } from './releaseHtml';
 import {
@@ -175,6 +179,8 @@ function open(): Startup {
     sources = new Sources(db, store);
     mine = new Mine(db);
     releases = new Releases(db);
+    work = new Work(db, (projectId) => membersFor(projectId));
+    discussions = new Discussions(db, store, work);
     try {
       mine.dropUnusedNoteImages();
     } catch (error) {
@@ -222,6 +228,25 @@ const need = (): Store => {
 };
 
 let releases: Releases | null = null;
+let work: Work | null = null;
+let discussions: Discussions | null = null;
+const needDiscussions = (): Discussions => {
+  if (!discussions)
+    throw new Error('The data could not be opened. Restart WorkSync.');
+  return discussions;
+};
+/** Members a project's tasks can be assigned to; the workspace sets this for shared projects. */
+let membersFor = (projectId: string): Member[] => {
+  void projectId;
+  return db ? [meAsMember(db)] : [];
+};
+export function setMembersProvider(f: (projectId: string) => Member[]): void {
+  membersFor = f;
+}
+const needWork = (): Work => {
+  if (!work) throw new Error('The data could not be opened. Restart WorkSync.');
+  return work;
+};
 /** The release file last previewed, until it is imported. */
 let lastReleaseImport: { projectId: string; plan: ReleaseImportPlan } | null =
   null;
@@ -343,6 +368,81 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
   saveMyTask: async (input, id) => needMine().saveMyTask(input, id),
   completeMyTask: async (id) => needMine().deleteMyTask(id),
   restoreMyTask: async (t) => needMine().restoreMyTask(t),
+  listProjectTasks: async (projectId) => needWork().listTasks(projectId),
+  listDiscussions: async (projectId) => needDiscussions().list(projectId),
+  saveDiscussion: async (projectId, input, id) =>
+    needDiscussions().save(projectId, input, id),
+  deleteDiscussion: async (id) => needDiscussions().delete(id),
+  progressWithNo: async (projectId, no) => {
+    const d = needDiscussions();
+    const t = d.progressWithNo(projectId, no);
+    return t
+      ? {
+          id: t.id,
+          no: t.customerId,
+          title: t.titleTranslation || t.titleOriginal,
+          linked: !!d.forTicket(t.id),
+        }
+      : null;
+  },
+  linkDiscussion: async (id, taskId) => needDiscussions().link(id, taskId),
+  unlinkDiscussion: async (id) => needDiscussions().unlink(id),
+  makeProgressFromDiscussion: async (id) => needDiscussions().makeProgress(id),
+  discussionForTicket: async (taskId) => needDiscussions().forTicket(taskId),
+  listComments: async (id) => needDiscussions().comments(id),
+  addComment: async (id, input) => needDiscussions().addComment(id, input),
+  editComment: async (id, body) => needDiscussions().editComment(id, body),
+  deleteComment: async (id) => needDiscussions().deleteComment(id),
+  setDecision: async (id, v) => needDiscussions().setDecision(id, v),
+  getAttachment: async (id) => needDiscussions().attachment(id),
+  openAttachment: async (id) => {
+    const a = needDiscussions().attachment(id);
+    const dir = path.join(
+      app.getPath('temp'),
+      'WorkSync files',
+      id.slice(0, 8),
+    );
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, a.name);
+    fs.writeFileSync(file, a.data);
+    const err = await shell.openPath(file);
+    if (err) throw new Error(`The file could not be opened: ${err}`);
+  },
+  saveAttachment: async (id) => {
+    const a = needDiscussions().attachment(id);
+    const r = await dialog.showSaveDialog({
+      defaultPath: path.join(app.getPath('downloads'), a.name),
+    });
+    if (r.canceled || !r.filePath) return false;
+    fs.writeFileSync(r.filePath, a.data);
+    return true;
+  },
+  summaryRequest: async (ids, limit) => {
+    const d = needDiscussions();
+    const first = ids[0] ? d.get(ids[0]) : null;
+    const project = first ? need().getProject(first.projectId) : null;
+    const members = first ? needWork().membersOf(first.projectId) : [];
+    const items = d.summaryItems(
+      ids,
+      (id) => members.find((m) => m.id === id)?.name ?? 'Someone',
+    );
+    return buildSummaryBatches(items, project?.workingLanguage ?? 'en', limit);
+  },
+  applySummary: async (id, answer) =>
+    needDiscussions().applySummary(id, answer),
+  saveProjectTask: async (projectId, input, id) =>
+    needWork().saveTask(projectId, input, id),
+  deleteProjectTask: async (id) => needWork().deleteTask(id),
+  restoreProjectTask: async (t) => needWork().restoreTask(t),
+  workHistory: async (itemId) => needWork().history(itemId),
+  listMembers: async (projectId) => needWork().membersOf(projectId),
+  myMemberId: async () => needWork().me(),
+  moveMyTaskToProject: async (myTaskId, projectId) => {
+    const m = needMine();
+    const t = needWork().moveToProject(projectId, m.getMyTask(myTaskId));
+    m.deleteMyTask(myTaskId);
+    return t;
+  },
   listNotes: async () => needMine().listNotes(),
   saveNote: async (input, id) => needMine().saveNote(input, id),
   viewNote: async (id) => needMine().viewNote(id),
@@ -1032,7 +1132,10 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
     need().deleteDifficulty(taskId, difficultyId),
   setDifficultyOpen: async (taskId, difficultyId, isOpen) =>
     need().setDifficultyOpen(taskId, difficultyId, isOpen),
-  deleteTask: async (id) => need().deleteTask(id),
+  deleteTask: async (id) => {
+    needDiscussions().ticketDeleted(id);
+    need().deleteTask(id);
+  },
   listActivity: async (taskId) => need().listActivity(taskId),
   addNote: async (taskId, text) => need().addNote(taskId, text),
 
@@ -1236,6 +1339,16 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
         st.listOwnerTranslations(project.id),
         project.originalLanguages[0] ?? 'ja',
       ),
+      taskProgress: (() => {
+        const out: Record<string, { done: number; total: number }> = {};
+        for (const w of needWork().listTasks(project.id))
+          if (w.ticketId) {
+            const x = (out[w.ticketId] ??= { done: 0, total: 0 });
+            x.total++;
+            if (w.status === 'done') x.done++;
+          }
+        return out;
+      })(),
     };
     // Assignees in the report's language, from the people list.
     const tasks = reportTasks(st.listTasks(), options).map((t) => ({
@@ -1403,6 +1516,36 @@ export function remindMyTasks(now = new Date()): number {
     mine.setReminderKey(t.id, key);
     shown++;
   }
+  // Project tasks assigned to you remind by the same rules.
+  if (work)
+    for (const p of work.assignedToMe()) {
+      const like = {
+        title: p.title,
+        status: p.status === 'doing' ? ('ongoing' as const) : ('todo' as const),
+        priority: p.priority,
+        reminders: p.reminders,
+        dueDate: p.dueDate,
+      };
+      const key = reminderKey(like, now);
+      if (!key || key === p.lastReminderKey) continue;
+      const lang = resolveUiLanguage(
+        store.getSettings().uiLanguage,
+        app.getLocale(),
+      );
+      const text = reminderText(like, toIsoDate(now), (s, v) =>
+        translate(lang, s, v),
+      );
+      const n = new Notification({ title: text.title, body: text.body });
+      shownNotes.add(n);
+      n.on('click', () => {
+        shownNotes.delete(n);
+        openInWindow({ page: 'projectTask', projectId: p.projectId, id: p.id });
+      });
+      n.on('close', () => shownNotes.delete(n));
+      n.show();
+      work.setReminderKey(p.id, key);
+      shown++;
+    }
   if (shown) log('info', `Showed ${shown} reminder${shown === 1 ? '' : 's'}`);
   return shown;
 }

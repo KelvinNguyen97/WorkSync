@@ -83,6 +83,26 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
     (a, b) =>
       `あなたの優先度を ${word(a)} にしました。チケット本来の優先度は ${word(b)} です。`,
   ],
+  [
+    /^Linked to the discussion “(.+)”\.$/,
+    (t) => `ディスカッション「${t}」とリンクしました。`,
+  ],
+  [
+    /^Unlinked from the discussion “(.+)”\.$/,
+    (t) => `ディスカッション「${t}」とのリンクを外しました。`,
+  ],
+  [
+    /^The discussion “(.+)” was deleted\.$/,
+    (t) => `ディスカッション「${t}」が削除されました。`,
+  ],
+  [
+    /^Updated from discussion (.*?), comments? (.+)\.$/,
+    (no, r) => `ディスカッション ${no} のコメント ${r} から更新しました。`,
+  ],
+  [
+    /^Updated from discussion (.*?), no comments\.$/,
+    (no) => `ディスカッション ${no} から更新しました。`,
+  ],
   [/^Removed\.$/, () => '解除しました。'],
   [/^Confirmed the situation\.$/, () => '状況を確認しました。'],
   [/^Reopened: (.+)\.$/, (t) => `再開：${t}。`],

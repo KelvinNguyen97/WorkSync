@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { daysBetween, shortDate } from '../shared/model';
 import {
@@ -57,6 +64,7 @@ export function MyTasksView({
   query,
   head,
   focusId,
+  fromProjects,
 }: {
   tasks: MyTask[];
   setTasks: (f: (list: MyTask[]) => MyTask[]) => void;
@@ -64,6 +72,8 @@ export function MyTasksView({
   head: HeaderSlot;
   /** A task to select, such as one whose reminder was clicked. */
   focusId: string | null;
+  /** Project tasks assigned to you (doc 10, 3.4). */
+  fromProjects?: ReactNode;
 }) {
   const { attempt, toast, today, settings } = useApp();
   const now = useNow();
@@ -244,6 +254,7 @@ export function MyTasksView({
           {tr('Sorted by due date, then priority')}
         </span>
       </div>
+      {fromProjects}
       <div className="mt-body">
         <div className="mt-list" role="list" aria-label={tr('My tasks')}>
           <div className="mt-row mt-headrow" aria-hidden="true">
@@ -346,6 +357,10 @@ export function MyTasksView({
               task={selected}
               onSaved={put}
               onClose={() => setSel(null)}
+              onMoved={() => {
+                setTasks((list) => list.filter((x) => x.id !== selected.id));
+                setSel(null);
+              }}
             />
           ) : (
             <div className="mt-help">
@@ -363,12 +378,30 @@ function MyTaskEditor({
   task,
   onSaved,
   onClose,
+  onMoved,
 }: {
   task: MyTask;
   onSaved: (t: MyTask) => void;
   onClose: () => void;
+  onMoved: () => void;
 }) {
-  const { attempt, toast } = useApp();
+  const { attempt, toast, projects } = useApp();
+  const [moveTo, setMoveTo] = useState('');
+  const move = async () => {
+    if (!moveTo) return;
+    const t = await attempt(() =>
+      window.worksync.moveMyTaskToProject(task.id, moveTo),
+    );
+    if (!t) return;
+    window.dispatchEvent(new Event('worksync:work-changed'));
+    toast(
+      tr('Moved “{title}” to {project}. It is assigned to you.', {
+        title: task.title,
+        project: projects.find((p) => p.id === moveTo)?.name ?? '',
+      }),
+    );
+    onMoved();
+  };
   const [v, setV] = useState<MyTaskInput>({
     title: task.title,
     description: task.description,
@@ -489,6 +522,31 @@ function MyTaskEditor({
           {tr('Save')}
         </button>
       </div>
+      {projects.length > 0 && (
+        <div className="mt-move">
+          <select
+            className="inp"
+            aria-label={tr('Move to project')}
+            value={moveTo}
+            onChange={(e) => setMoveTo(e.target.value)}
+          >
+            <option value="">{tr('Move to project…')}</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn"
+            disabled={!moveTo}
+            onClick={() => void move()}
+          >
+            {tr('Move')}
+          </button>
+        </div>
+      )}
       <details className="mt-rules">
         <summary>{tr('When reminders appear')}</summary>
         <ReminderRules />

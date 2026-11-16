@@ -28,6 +28,14 @@ import type { Batch, ReadAnswer } from './aiBatch';
 import type { PendingChange, WritePlan, WriteResult } from './writes';
 import type { ReportOptions } from './reports';
 import type { MyTask, MyTaskInput } from './myTasks';
+import type {
+  Comment,
+  Discussion,
+  DiscussionInput,
+  SummaryAnswer,
+  SummaryBatch,
+} from './discussions';
+import type { Member, ProjectTask, ProjectTaskInput, WorkEvent } from './work';
 import type { Note, NoteInput } from './notes';
 import type { AutoItem, MergeChoices, Question } from './merge';
 import type { Release, ReleaseInput, ReleaseLists } from './releases';
@@ -330,6 +338,77 @@ export interface WorkSyncApi {
   /** Puts back a task completed a moment ago. */
   restoreMyTask(task: MyTask): Promise<MyTask>;
 
+  /** Project tasks (doc 10); all projects when no project is given. */
+  listProjectTasks(projectId?: string): Promise<ProjectTask[]>;
+  /** Adds a project task, or changes the one with this id. */
+  saveProjectTask(
+    projectId: string,
+    input: Partial<ProjectTaskInput>,
+    id?: string,
+  ): Promise<ProjectTask>;
+  deleteProjectTask(id: string): Promise<ProjectTask>;
+  restoreProjectTask(task: ProjectTask): Promise<ProjectTask>;
+  /** What happened to a project task or a discussion, newest first. */
+  workHistory(itemId: string): Promise<WorkEvent[]>;
+  /** Who a project's tasks can be assigned to; in a local project only you. */
+  listMembers(projectId: string): Promise<Member[]>;
+  /** Your own member id. */
+  myMemberId(): Promise<string>;
+  /** Moves a My tasks item into a project; it keeps its title, note, date and priority. */
+  moveMyTaskToProject(
+    myTaskId: string,
+    projectId: string,
+  ): Promise<ProjectTask>;
+
+  /** Discussion tickets (doc 09); all projects when no project is given. */
+  listDiscussions(projectId?: string): Promise<Discussion[]>;
+  saveDiscussion(
+    projectId: string,
+    input: Partial<DiscussionInput>,
+    id?: string,
+  ): Promise<Discussion>;
+  deleteDiscussion(id: string): Promise<Discussion>;
+  /** The progress ticket with this No., to offer linking. */
+  progressWithNo(
+    projectId: string,
+    no: string,
+  ): Promise<{ id: string; no: string; title: string; linked: boolean } | null>;
+  linkDiscussion(id: string, taskId: string): Promise<Discussion>;
+  unlinkDiscussion(id: string): Promise<Discussion>;
+  /** Makes a progress ticket with the discussion's No. and links them. */
+  makeProgressFromDiscussion(
+    id: string,
+  ): Promise<{ discussion: Discussion; task: Task }>;
+  /** The discussion linked to a progress ticket, if any. */
+  discussionForTicket(taskId: string): Promise<Discussion | null>;
+  listComments(discussionId: string): Promise<Comment[]>;
+  addComment(
+    discussionId: string,
+    input: {
+      body: string;
+      parentId?: string | null;
+      files?: { name: string; type: string; bytes: Uint8Array }[];
+    },
+  ): Promise<Comment>;
+  editComment(id: string, body: string): Promise<Comment>;
+  deleteComment(id: string): Promise<Comment>;
+  setDecision(id: string, decision: boolean): Promise<Comment>;
+  /** An attached file's bytes, for showing an image. */
+  getAttachment(
+    id: string,
+  ): Promise<{ name: string; type: string; data: Uint8Array }>;
+  /** Opens an attached file with its app. */
+  openAttachment(id: string): Promise<void>;
+  /** Asks where to save an attached file. False when cancelled. */
+  saveAttachment(id: string): Promise<boolean>;
+  /** The Summarize request for these discussions, in batches. */
+  summaryRequest(ids: string[], limit?: number): Promise<SummaryBatch[]>;
+  /** Applies a reviewed summary to the linked progress ticket. */
+  applySummary(
+    id: string,
+    answer: Partial<SummaryAnswer> & { resolved?: string[] },
+  ): Promise<Task>;
+
   /** Notes: on their own or attached to a project. */
   listNotes(): Promise<Note[]>;
   /** Adds a note, or changes the one with this id; only the parts given change. */
@@ -426,6 +505,7 @@ export interface WorkSyncApi {
 /** What a reminder, the tray or the shortcut asks the window to show. */
 export type OpenTarget =
   | { page: 'myTasks'; id?: string }
+  | { page: 'projectTask'; projectId: string; id: string }
   | { page: 'catalog' }
   | { page: 'quickShown' };
 
@@ -441,6 +521,32 @@ export const API_METHODS = [
   'saveMyTask',
   'completeMyTask',
   'restoreMyTask',
+  'listProjectTasks',
+  'listDiscussions',
+  'saveDiscussion',
+  'deleteDiscussion',
+  'progressWithNo',
+  'linkDiscussion',
+  'unlinkDiscussion',
+  'makeProgressFromDiscussion',
+  'discussionForTicket',
+  'listComments',
+  'addComment',
+  'editComment',
+  'deleteComment',
+  'setDecision',
+  'getAttachment',
+  'openAttachment',
+  'saveAttachment',
+  'summaryRequest',
+  'applySummary',
+  'saveProjectTask',
+  'deleteProjectTask',
+  'restoreProjectTask',
+  'workHistory',
+  'listMembers',
+  'myMemberId',
+  'moveMyTaskToProject',
   'listNotes',
   'saveNote',
   'viewNote',

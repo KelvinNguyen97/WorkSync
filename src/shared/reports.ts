@@ -141,6 +141,8 @@ export interface ReportOptions {
    * in by the main process from the translations the owner accepted.
    */
   translations?: Record<string, string>;
+  /** Project tasks per ticket, done and in all; filled in by the main process. */
+  taskProgress?: Record<string, { done: number; total: number }>;
 }
 
 const STATUS_JA: Record<Status, string> = {

@@ -618,6 +618,12 @@ function briefBlock(t: Task, h: ReportHead): Paragraph[] {
     statusText(t, o),
     dates && b.due,
     dates && b.asOf && tr(h, `as of ${b.asOf}`, `${b.asOf}時点`),
+    o.taskProgress?.[t.id]?.total &&
+      tr(
+        h,
+        `${o.taskProgress[t.id].done} of ${o.taskProgress[t.id].total} tasks done`,
+        `タスク ${o.taskProgress[t.id].done}/${o.taskProgress[t.id].total} 完了`,
+      ),
   ]
     .filter(Boolean)
     .join(' · ');

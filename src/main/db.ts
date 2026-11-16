@@ -343,6 +343,84 @@ const MIGRATIONS: string[] = [
     chosen_at TEXT NOT NULL
   );
   `,
+  // 24: project tasks (doc 10), discussion tickets with comments and files
+  // (doc 09), and their history
+  `
+  CREATE TABLE project_tasks (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    ticket_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+    discussion_id TEXT,
+    title TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    assignee TEXT NOT NULL DEFAULT '',
+    due_date TEXT,
+    priority TEXT NOT NULL DEFAULT 'N',
+    status TEXT NOT NULL DEFAULT 'todo',
+    reminders INTEGER NOT NULL DEFAULT 1,
+    last_reminder_key TEXT,
+    made_by TEXT NOT NULL DEFAULT '',
+    done_by TEXT NOT NULL DEFAULT '',
+    done_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX project_tasks_project ON project_tasks(project_id);
+  CREATE TABLE discussions (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    customer_id TEXT NOT NULL DEFAULT '',
+    linked_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'open',
+    labels TEXT NOT NULL DEFAULT '[]',
+    watchers TEXT NOT NULL DEFAULT '[]',
+    made_by TEXT NOT NULL DEFAULT '',
+    summarized_at TEXT,
+    summarized_upto TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX discussions_project ON discussions(project_id);
+  CREATE TABLE comments (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    discussion_id TEXT NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
+    parent_id TEXT,
+    author TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    decision INTEGER NOT NULL DEFAULT 0,
+    deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    edited_at TEXT
+  );
+  CREATE INDEX comments_discussion ON comments(discussion_id, created_at);
+  CREATE TABLE attachments (
+    id TEXT PRIMARY KEY,
+    discussion_id TEXT NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
+    comment_id TEXT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT '',
+    size INTEGER NOT NULL DEFAULT 0,
+    hash TEXT NOT NULL,
+    data BLOB NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX attachments_discussion ON attachments(discussion_id);
+  CREATE TABLE work_history (
+    id TEXT PRIMARY KEY,
+    uid TEXT,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    by TEXT NOT NULL DEFAULT '',
+    text TEXT NOT NULL
+  );
+  CREATE INDEX work_history_item ON work_history(item_id, at);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

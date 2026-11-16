@@ -50,6 +50,12 @@ import type { Note } from '../shared/notes';
 import { tr, uiLanguage } from './i18n';
 import { ImportChoice, MergeWizard } from './importMerge';
 import { ReleasesView } from './releases';
+import { FromProjects, WorkView } from './work';
+import {
+  DiscussionsView,
+  DiscussionWindow,
+  SummarizeDialog,
+} from './discussions';
 
 type Route =
   | { view: 'focus'; scope: 'all' | string }
@@ -64,7 +70,9 @@ type Route =
         | 'calendar'
         | 'dashboard'
         | 'published'
-        | 'releases';
+        | 'releases'
+        | 'work'
+        | 'discussions';
       projectId: string;
     };
 
@@ -147,6 +155,12 @@ function Shell({
   const [active, setActive] = useState<string | null>(projects[0]?.id ?? null);
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openDiscussion, setOpenDiscussion] = useState<string | null>(null);
+  const [summarize, setSummarize] = useState<{
+    id: string;
+    projectId: string;
+  } | null>(null);
+  const [workFocus, setWorkFocus] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [menu, setMenu] = useState<MenuAnchor | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -259,6 +273,10 @@ function Shell({
       window.worksync.onOpen((target) => {
         if (target.page === 'catalog')
           setRoute({ view: 'mine', page: 'catalog' });
+        if (target.page === 'projectTask') {
+          setRoute({ view: 'mine', page: 'tasks' });
+          setWorkFocus(target.id);
+        }
         if (target.page === 'myTasks') {
           setRoute({ view: 'mine', page: 'tasks' });
           setMyFocus(target.id ?? null);
@@ -395,6 +413,17 @@ function Shell({
         query={query}
         head={headEl}
         focusId={myFocus}
+        fromProjects={
+          <FromProjects
+            query={query}
+            focusId={workFocus}
+            onOpenTicket={(r) =>
+              r.kind === 'discussion'
+                ? setOpenDiscussion(r.id)
+                : setOpenId(r.id)
+            }
+          />
+        }
       />
     ) : !projects.length ? (
       <Welcome
@@ -436,6 +465,22 @@ function Shell({
         onPublish={() =>
           setDialog({ kind: 'publish', projectId: route.projectId })
         }
+      />
+    ) : route.view === 'work' ? (
+      <WorkView
+        projectId={route.projectId}
+        query={query}
+        header={props.header}
+        openTicket={(r) =>
+          r.kind === 'discussion' ? setOpenDiscussion(r.id) : setOpenId(r.id)
+        }
+      />
+    ) : route.view === 'discussions' ? (
+      <DiscussionsView
+        projectId={route.projectId}
+        query={query}
+        header={props.header}
+        openTicket={(id) => setOpenId(id)}
       />
     ) : route.view === 'releases' ? (
       <ReleasesView projectId={route.projectId} props={props} />
@@ -977,6 +1022,36 @@ function Shell({
           onEdit={(task) => setDialog({ kind: 'editTask', task })}
           onDelete={(task) => setDialog({ kind: 'deleteTask', task })}
           openMenu={openMenu}
+          onOpenDiscussion={(id) => {
+            setOpenId(null);
+            setOpenDiscussion(id);
+          }}
+        />
+      )}
+      {openDiscussion && (
+        <DiscussionWindow
+          id={openDiscussion}
+          onClose={() => setOpenDiscussion(null)}
+          openTicket={(id) => {
+            setOpenDiscussion(null);
+            setOpenId(id);
+          }}
+          onSummarize={(id) =>
+            void window.worksync
+              .listDiscussions()
+              .then((l) => {
+                const d = l.find((x) => x.id === id);
+                if (d) setSummarize({ id, projectId: d.projectId });
+              })
+              .catch(() => undefined)
+          }
+        />
+      )}
+      {summarize && (
+        <SummarizeDialog
+          ids={[summarize.id]}
+          projectId={summarize.projectId}
+          onClose={() => setSummarize(null)}
         />
       )}
       {menu && (

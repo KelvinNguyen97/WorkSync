@@ -721,6 +721,16 @@ const VIEW_INFO: Record<
     desc: 'Columns by status. Drag to change a status.',
   },
   tasks: { name: 'Tickets', icon: 'menu', desc: 'A table of every ticket.' },
+  work: {
+    name: 'Tasks',
+    icon: 'checklist',
+    desc: 'Small jobs for the project, each for one person, with a due date.',
+  },
+  discussions: {
+    name: 'Discussions',
+    icon: 'chat',
+    desc: 'Talk tickets through with comments and files, and summarize them into progress.',
+  },
   timeline: {
     name: 'Timeline',
     icon: 'timeline',

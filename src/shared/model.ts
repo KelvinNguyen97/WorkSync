@@ -51,6 +51,8 @@ export const VIEW_KEYS = [
   'published',
   'files',
   'releases',
+  'work',
+  'discussions',
 ] as const;
 export type ViewKey = (typeof VIEW_KEYS)[number];
 export const BUILT_VIEWS: ViewKey[] = [
@@ -59,6 +61,8 @@ export const BUILT_VIEWS: ViewKey[] = [
   'timeline',
   'calendar',
   'tasks',
+  'work',
+  'discussions',
   'dashboard',
   'published',
   'files',
@@ -74,6 +78,8 @@ export const DEFAULT_VIEWS: Record<ViewKey, boolean> = {
   published: false,
   files: true,
   releases: false,
+  work: true,
+  discussions: true,
 };
 
 export interface Project {
@@ -273,6 +279,29 @@ export type TaskInput = Pick<
   language?: LanguageCode;
   /** True to keep `language` as the owner's choice, false to detect it again. */
   languageSet?: boolean;
+};
+
+/** A ticket with nothing filled in yet. */
+export const EMPTY_TASK_INPUT: TaskInput = {
+  customerId: '',
+  titleOriginal: '',
+  titleTranslation: '',
+  descriptionOriginal: '',
+  descriptionTranslation: '',
+  summary: '',
+  notes: '',
+  status: 'Not started',
+  priority: 'N',
+  labels: [],
+  assignee: '',
+  category: '',
+  remarks: '',
+  plannedStart: null,
+  plannedEnd: null,
+  actualStart: null,
+  actualEnd: null,
+  nextAction: '',
+  nextActionDate: null,
 };
 
 export type ProjectInput = Pick<

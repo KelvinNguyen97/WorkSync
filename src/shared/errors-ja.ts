@@ -411,6 +411,65 @@ export const ERRORS_JA: [string, string][] = [
     'This workbook has no markers like {{release.version}}, so the export would not fill anything. Start from "Save the default template".',
     'このブックには {{release.version}} のようなマーカーがないため、書き出しで何も埋まりません。「標準テンプレートを保存」から始めてください。',
   ],
+  [
+    'This discussion no longer exists.',
+    'このディスカッションはもうありません。',
+  ],
+  ['The state must be Open or Resolved.', '状態は未解決か解決にしてください。'],
+  [
+    'Another discussion in this project already has the number {0}.',
+    'このプロジェクトの別のディスカッションが番号 {0} を使っています。',
+  ],
+  [
+    'A linked discussion has its progress ticket’s number. Unlink it first to change the number.',
+    'リンクしたディスカッションの番号は進捗チケットの番号です。番号を変えるには先にリンクを外してください。',
+  ],
+  [
+    'That ticket is not in this project.',
+    'そのチケットはこのプロジェクトにありません。',
+  ],
+  [
+    'Progress ticket {0} is already linked to the discussion “{1}”. Unlink that one first.',
+    '進捗チケット {0} はディスカッション「{1}」とリンク済みです。先にそちらのリンクを外してください。',
+  ],
+  [
+    'This discussion already has a progress ticket.',
+    'このディスカッションにはすでに進捗チケットがあります。',
+  ],
+  ['This comment no longer exists.', 'このコメントはもうありません。'],
+  [
+    'Write a comment or add a file.',
+    'コメントを書くか、ファイルを追加してください。',
+  ],
+  ['{0} is larger than 25 MB.', '{0} は 25 MB を超えています。'],
+  [
+    'Only the person who wrote a comment can edit it.',
+    'コメントを編集できるのは書いた人だけです。',
+  ],
+  [
+    'A comment can be edited for 15 minutes. After that it can only be deleted.',
+    'コメントを編集できるのは 15 分間です。その後は削除だけできます。',
+  ],
+  [
+    'Only the person who wrote a comment can delete it.',
+    'コメントを削除できるのは書いた人だけです。',
+  ],
+  ['This comment was deleted.', 'このコメントは削除されました。'],
+  ['This file is no longer there.', 'このファイルはもうありません。'],
+  [
+    'Link this discussion to a progress ticket first.',
+    '先にこのディスカッションを進捗チケットにリンクしてください。',
+  ],
+  ['The file could not be opened: {0}', 'ファイルを開けませんでした: {0}'],
+  ['This task no longer exists.', 'このタスクはもうありません。'],
+  [
+    'The status must be To do, Doing or Done.',
+    '状態は未着手、対応中、完了のどれかにしてください。',
+  ],
+  [
+    'A task can only be assigned to a member of the workspace.',
+    'タスクの担当はワークスペースのメンバーだけにできます。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

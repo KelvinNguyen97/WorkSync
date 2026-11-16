@@ -24,6 +24,8 @@ export interface AppSettings {
   everything: boolean;
   /** The language of WorkSync's own screens; projects keep their own languages. */
   uiLanguage: UiLanguageChoice;
+  /** Your name as others in a workspace see it; empty uses the Windows account. */
+  displayName: string;
 }
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
@@ -38,6 +40,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   quickSearchKey: 'CommandOrControl+Shift+F',
   everything: true,
   uiLanguage: 'system',
+  displayName: '',
 };
 
 export type BackupKind =
