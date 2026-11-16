@@ -14,6 +14,7 @@ export const JA: Record<string, string> = {
   Catalog: 'カタログ',
   Projects: 'プロジェクト',
   'New task': '新しいタスク',
+  'New ticket': '新しいチケット',
   'Choose views': '表示を選ぶ',
   People: '人',
   Glossary: '用語集',
@@ -54,8 +55,8 @@ export const JA: Record<string, string> = {
   'Publish again': 'もう一度公開',
   'Review changes': '変更を確認',
   'Welcome to WorkSync': 'WorkSync へようこそ',
-  'Start with a project for one customer. Link the customer’s Excel file to bring in its tasks, or add tasks by hand.':
-    'まずはお客様ごとにプロジェクトを作りましょう。お客様の Excel ファイルをリンクしてタスクを取り込むか、手で追加できます。',
+  'Start with a project for one customer. Link the customer’s Excel file to bring in its tickets, or add tickets by hand.':
+    'まずはお客様ごとにプロジェクトを作りましょう。お客様の Excel ファイルをリンクしてチケットを取り込むか、手で追加できます。',
   'Try the sample project': 'サンプルプロジェクトを試す',
   'Keep both, or replace yours with the one you are importing.':
     '両方残すか、今あるものを取り込むものに置き換えるかを選んでください。',
@@ -67,8 +68,8 @@ export const JA: Record<string, string> = {
   'In the file': 'ファイルの中身',
   'adds it as': 'は次の名前で追加します:',
   ', and yours stays as it is.': '。今あるものはそのまま残ります。',
-  'deletes yours, with its tasks, notes and history, and puts the imported one in its place. WorkSync backs up first, so you can get yours back from Settings.':
-    'は今あるものをタスク、ノート、履歴ごと削除し、取り込むものに置き換えます。先にバックアップするので、設定から元に戻せます。',
+  'deletes yours, with its tickets, notes and history, and puts the imported one in its place. WorkSync backs up first, so you can get yours back from Settings.':
+    'は今あるものをチケット、ノート、履歴ごと削除し、取り込むものに置き換えます。先にバックアップするので、設定から元に戻せます。',
   'Link a customer file': 'お客様ファイルをリンク',
   Steps: '手順',
   Back: '戻る',
@@ -79,8 +80,8 @@ export const JA: Record<string, string> = {
   'An .xlsx, .xlsm, .xls or .csv file, for example in your Box Drive folder.':
     '.xlsx、.xlsm、.xls、.csv ファイル（例: Box Drive のフォルダー内）',
   'No customer file yet?': 'お客様ファイルがまだない場合',
-  'Skip this and add tasks by hand': '飛ばして手でタスクを追加する',
-  'Sheet with the tasks': 'タスクのあるシート',
+  'Skip this and add tickets by hand': '飛ばして手でチケットを追加する',
+  'Sheet with the tickets': 'チケットのあるシート',
   'When the customer saves new versions': 'お客様が新しい版を保存するとき',
   'The file keeps its name. Read this file.':
     'ファイル名は変わらない。このファイルを読む。',
@@ -93,8 +94,8 @@ export const JA: Record<string, string> = {
     '見出しの行をクリックしてください。見出しが 2 行（例: 予定 の下に 開始 と 終了）の場合は、2 行目も Ctrl キーを押しながらクリックします。',
   'These matches come from the header text. Change any that are wrong. Columns left unmatched are kept as extra fields.':
     '見出しの文字から対応を推測しました。違っているものは変えてください。対応のない列は追加の項目として残します。',
-  'Without an ID column, tasks are matched between versions by their exact title, which can make mistakes when a title changes.':
-    'ID の列がないと、版の間でタスクをタイトルの完全一致で照合するため、タイトルが変わると取り違えることがあります。',
+  'Without an ID column, tickets are matched between versions by their exact title, which can make mistakes when a title changes.':
+    'ID の列がないと、版の間でチケットをタイトルの完全一致で照合するため、タイトルが変わると取り違えることがあります。',
   'Reading the file…': 'ファイルを読んでいます…',
   'What each status word in the file means': 'ファイルの状態の言葉の意味',
   'Choose…': '選んでください…',
@@ -124,11 +125,11 @@ export const JA: Record<string, string> = {
   'Not in this file': 'このファイルにはありません',
   '(no header)': '（見出しなし）',
   ' (the ID)': '（ID）',
-  'Tasks are shown and found by their ID, as you call them in meetings':
-    'タスクは会議で呼ぶとおり ID で表示・検索されます',
+  'Tickets are shown and found by their ID, as you call them in meetings':
+    'チケットは会議で呼ぶとおり ID で表示・検索されます',
   'Use the ID as the title': 'ID をタイトルにする',
-  'The title is the ID. Tasks show and are found by their ID; the other columns are kept as fields from the file.':
-    'タイトルは ID です。タスクは ID で表示・検索され、ほかの列はファイルの項目として残します。',
+  'The title is the ID. Tickets show and are found by their ID; the other columns are kept as fields from the file.':
+    'タイトルは ID です。チケットは ID で表示・検索され、ほかの列はファイルの項目として残します。',
   'Where to change it': '変更する場所',
   'Only for me': '自分用だけ',
   'Change in the file': 'ファイルで変更',
@@ -137,7 +138,7 @@ export const JA: Record<string, string> = {
   'Changes the file’s value. Write to copy writes the file’s own word for it into your copy.':
     'ファイルの値を変えます。「コピーに書き込む」で、ファイル独自の言葉でコピーに書き込みます。',
   'Added by hand, so there is no customer file to write to.':
-    '手で追加したタスクなので、書き込むお客様ファイルはありません。',
+    '手で追加したチケットなので、書き込むお客様ファイルはありません。',
   'Priority level': '優先度',
   File: 'ファイル',
   'Remove override, back to': '上書きをやめて、次に戻す:',
@@ -197,15 +198,16 @@ export const JA: Record<string, string> = {
   'Change priority': '優先度を変更',
   ', your override': ' （自分で上書き）',
   'Edit task': 'タスクを編集',
+  'Edit ticket': 'チケットを編集',
   'Unpin from the focus list': 'フォーカスから外す',
   'Pin to the focus list': 'フォーカスに固定',
-  'Delete task': 'タスクを削除',
+  'Delete ticket': 'チケットを削除',
   Close: '閉じる',
   'Copy brief': '概要をコピー',
   'Update situation': '状況を更新',
   Summary: '要約',
-  'No summary yet, so this task’s brief is incomplete.':
-    '要約がまだないため、このタスクの概要は不完全です。',
+  'No summary yet, so this ticket’s brief is incomplete.':
+    '要約がまだないため、このチケットの概要は不完全です。',
   Situation: '状況',
   'Change what you last recorded, without making a new update':
     '新しい更新を作らずに、最後の記録を書き換えます',
@@ -214,7 +216,7 @@ export const JA: Record<string, string> = {
   'As of': '時点',
   'No situation recorded yet. Use Update situation to add one.':
     '状況はまだ記録されていません。「状況を更新」で追加してください。',
-  'Task fields': 'タスクの項目',
+  'Ticket fields': 'チケットの項目',
   'Not set': '未設定',
   Start: '開始',
   End: '終了',
@@ -236,7 +238,7 @@ export const JA: Record<string, string> = {
   ' · no longer in the file': ' ・もうファイルにありません',
   'Open in Excel': 'Excel で開く',
   'Prepare the request': '依頼文を準備',
-  'Choose other tasks': '別のタスクを選ぶ',
+  'Choose other tickets': '別のチケットを選ぶ',
   'Paste the answer': '回答を貼り付け',
   'Copy request': '依頼文をコピー',
   'Back to the request': '依頼文に戻る',
@@ -244,14 +246,14 @@ export const JA: Record<string, string> = {
   'Fill in': '反映する',
   'Paste this request into the Gemini web app, then paste its answer back here.':
     'この依頼文を Gemini ウェブアプリに貼り付け、回答をここに貼り付けてください。',
-  'Paste Gemini’s whole answer. WorkSync checks every task against the request.':
-    'Gemini の回答全体を貼り付けてください。WorkSync が依頼文とタスクごとに照合します。',
+  'Paste Gemini’s whole answer. WorkSync checks every ticket against the request.':
+    'Gemini の回答全体を貼り付けてください。WorkSync が依頼文とチケットごとに照合します。',
   'Select all': 'すべて選ぶ',
   Clear: 'クリア',
-  'Show translated tasks too': '翻訳済みのタスクも表示',
+  'Show translated tickets too': '翻訳済みのチケットも表示',
   ' · no summary': ' ・要約なし',
-  'Every task is translated and summarized. Tick “Show translated tasks too” to do some again.':
-    'すべてのタスクが翻訳・要約済みです。やり直すときは「翻訳済みのタスクも表示」にチェックしてください。',
+  'Every ticket is translated and summarized. Tick “Show translated tickets too” to do some again.':
+    'すべてのチケットが翻訳・要約済みです。やり直すときは「翻訳済みのチケットも表示」にチェックしてください。',
   'characters · batch': '文字 ・ バッチ',
   'Copy the request and paste it into a new chat in the Gemini web app.':
     '依頼文をコピーし、Gemini ウェブアプリの新しいチャットに貼り付けてください。',
@@ -263,19 +265,19 @@ export const JA: Record<string, string> = {
   'Missing:': '足りないもの:',
   'Not in the request:': '依頼にないもの:',
   'Paste again': 'もう一度貼り付け',
-  'No tasks in the expected format. Each task should start with a line like === TASK 012 === and end with === END ===. Check that you copied Gemini’s whole answer.':
-    '決まった形式のタスクがありません。各タスクは === TASK 012 === のような行で始まり、=== END === で終わる必要があります。Gemini の回答全体をコピーしたか確認してください。',
-  'Missing tasks stay as they are. Ask Gemini for them again, or prepare a new request with them.':
-    '足りないタスクはそのままです。Gemini にもう一度頼むか、それらで新しい依頼文を作ってください。',
+  'No tickets in the expected format. Each ticket should start with a line like === TICKET 012 === and end with === END ===. Check that you copied Gemini’s whole answer.':
+    '決まった形式のチケットがありません。各チケットは === TICKET 012 === のような行で始まり、=== END === で終わる必要があります。Gemini の回答全体をコピーしたか確認してください。',
+  'Missing tickets stay as they are. Ask Gemini for them again, or prepare a new request with them.':
+    '足りないチケットはそのままです。Gemini にもう一度頼むか、それらで新しい依頼文を作ってください。',
   'Title:': 'タイトル:',
-  'No title in the answer, so this task is left as it is.':
-    '回答にタイトルがないため、このタスクはそのままにします。',
+  'No title in the answer, so this ticket is left as it is.':
+    '回答にタイトルがないため、このチケットはそのままにします。',
   'Replace your summary with: ': '要約を次で置き換える:',
   'Summary: ': '要約:',
   'Description,': '説明、',
   'paragraph(s)': '段落',
-  'Nothing prepared yet. Choose tasks first.':
-    'まだ何も準備していません。先にタスクを選んでください。',
+  'Nothing prepared yet. Choose tickets first.':
+    'まだ何も準備していません。先にチケットを選んでください。',
   Done: '完了',
   'Term, such as 受入テスト': '用語（例: 受入テスト）',
   Term: '用語',
@@ -329,27 +331,28 @@ export const JA: Record<string, string> = {
   'Your working language': 'あなたの作業言語',
   'Due soon, in days': '期限間近とする日数',
   'Dates in reports': 'レポートの日付',
-  'Show task numbers (No.) in the views': '表示にタスク番号（No.）を出す',
-  'Each task keeps its number as its identity, and search still finds it. Reviews, copies and reports always show it.':
-    '各タスクは番号で識別され、検索でも見つかります。確認画面、コピー、レポートには常に表示されます。',
+  'Show ticket numbers (No.) in the views': '表示にチケット番号（No.）を出す',
+  'Each ticket keeps its number as its identity, and search still finds it. Reviews, copies and reports always show it.':
+    '各チケットは番号で識別され、検索でも見つかります。確認画面、コピー、レポートには常に表示されます。',
   'Delete this project': 'このプロジェクトを削除',
-  'Removes its tasks, history, glossary and people from WorkSync. Files on your PC and the shared drive stay.':
-    'タスク、履歴、用語集、人を WorkSync から削除します。PC と共有ドライブのファイルは残ります。',
+  'Removes its tickets, history, glossary and people from WorkSync. Files on your PC and the shared drive stay.':
+    'チケット、履歴、用語集、人を WorkSync から削除します。PC と共有ドライブのファイルは残ります。',
   'Delete project…': 'プロジェクトを削除…',
   'Delete this project?': 'このプロジェクトを削除しますか？',
   'Deleting…': '削除しています…',
   'Delete project': 'プロジェクトを削除',
   'This deletes': '削除するもの:',
-  'with their summaries, situations, history and notes, and the project’s glossary, people, linked files and Tasks table settings.':
-    '（要約、状況、履歴、メモを含む）と、プロジェクトの用語集、人、リンクしたファイル、タスク表の設定。',
+  'with their summaries, situations, history and notes, and the project’s glossary, people, linked files and Tickets table settings.':
+    '（要約、状況、履歴、メモを含む）と、プロジェクトの用語集、人、リンクしたファイル、チケット表の設定。',
   'The project’s notes stay, under “No project” in Notes. The customer’s files, your written copies, reports and the published page stay where they are. WorkSync backs up your data first, so you can restore it from Settings.':
     'プロジェクトのノートは、ノートの「プロジェクトなし」に残ります。お客様のファイル、書き込んだコピー、レポート、公開ページもそのままです。先にデータをバックアップするので、設定から元に戻せます。',
   'Type the project name to confirm':
     '確認のためプロジェクト名を入力してください',
   'Project name': 'プロジェクト名',
   'Add task': 'タスクを追加',
-  'From the customer’s file, which matches the task by it. It changes when the file does.':
-    'お客様ファイルの値で、タスクの照合に使います。ファイルが変わると変わります。',
+  'Add ticket': 'チケットを追加',
+  'From the customer’s file, which matches the ticket by it. It changes when the file does.':
+    'お客様ファイルの値で、チケットの照合に使います。ファイルが変わると変わります。',
   'Next number': '次の番号',
   'Original title': '原文のタイトル',
   'Language of the title and description': 'タイトルと説明の言語',
@@ -362,7 +365,7 @@ export const JA: Record<string, string> = {
   'Title in': 'タイトル ・',
   'Leave empty if not translated yet': 'まだ翻訳していなければ空のまま',
   'Summary, in your own words': '要約（自分の言葉で）',
-  'What is this task really about?': 'このタスクは要するに何ですか？',
+  'What is this ticket really about?': 'このチケットは要するに何ですか？',
   Labels: 'ラベル',
   'Auth, Release 2.1': '認証, リリース 2.1',
   'Planned start': '予定開始',
@@ -376,20 +379,20 @@ export const JA: Record<string, string> = {
   'Description in': '説明 ・',
   'Keep the same paragraphs, so they line up side by side.':
     '段落をそろえると、並べて表示できます。',
-  'Your own to-do for this task': 'このタスクでの自分の TODO',
+  'Your own to-do for this ticket': 'このチケットでの自分の TODO',
   By: '期限',
   'Background: technical context, decisions and links':
     '背景: 技術的な事情、決定事項、リンク',
-  'Turning a view off only hides it from this project. Tasks, dates, situations and history stay exactly as they are.':
-    '表示をオフにしても、このプロジェクトで隠れるだけです。タスク、日付、状況、履歴はそのまま残ります。',
-  'The task, its situation updates and its history are deleted. This cannot be undone.':
-    'タスクとその状況の更新、履歴を削除します。元に戻せません。',
+  'Turning a view off only hides it from this project. Tickets, dates, situations and history stay exactly as they are.':
+    '表示をオフにしても、このプロジェクトで隠れるだけです。チケット、日付、状況、履歴はそのまま残ります。',
+  'The ticket, its situation updates and its history are deleted. This cannot be undone.':
+    'チケットとその状況の更新、履歴を削除します。元に戻せません。',
   'Keep it': '残す',
   'The row stays in the customer’s file. WorkSync remembers that you deleted it, so the next review lists it unticked and it stays deleted unless you tick it.':
     '行はお客様ファイルに残ります。削除したことを覚えているので、次の確認ではチェックなしで表示され、チェックしない限り削除されたままです。',
   'Give a copy to someone': 'コピーを渡す',
-  'A .worksync file with the tasks, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.':
-    'タスク、状況、履歴、用語集、人、ボードを含む .worksync ファイルです。相手の変更を戻すには、相手がコピーを書き出し、あなたがそれを取り込んでマージします。',
+  'A .worksync file with the tickets, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.':
+    'チケット、状況、履歴、用語集、人、ボードを含む .worksync ファイルです。相手の変更を戻すには、相手がコピーを書き出し、あなたがそれを取り込んでマージします。',
   'Include my notes, next actions and the project’s notes':
     '自分のメモ、次のアクション、プロジェクトのノートを含める',
   'Saving…': '保存しています…',
@@ -400,7 +403,7 @@ export const JA: Record<string, string> = {
   State: '状態',
   'Last read': '最終読み込み',
   'Main language': '主な言語',
-  Tasks: 'タスク',
+  Tickets: 'チケット',
   Format: '形式',
   '· sheet': ' ・シート',
   'The file is not at its old place. Choose where it is now.':
@@ -415,10 +418,10 @@ export const JA: Record<string, string> = {
     'まだファイルをリンクしていません。お客様の Excel ファイル（例: Box Drive の WBS や課題一覧）をリンクしてください。',
   'WorkSync copies each version into its own data folder and reads the copy, so the customer’s file is never changed or kept open.':
     'WorkSync は各版を自分のデータフォルダーにコピーしてから読むので、お客様ファイルを変更したり開いたままにしたりしません。',
-  'Its tasks stay, with their history, and are marked Removed from file. The file itself is not touched.':
-    'タスクは履歴とともに残り、「ファイルから削除」と表示されます。ファイル自体には触れません。',
-  'Unlinked. The tasks are kept.':
-    'リンクを解除しました。タスクは残しています。',
+  'Its tickets stay, with their history, and are marked Removed from file. The file itself is not touched.':
+    'チケットは履歴とともに残り、「ファイルから削除」と表示されます。ファイル自体には触れません。',
+  'Unlinked. The tickets are kept.':
+    'リンクを解除しました。チケットは残しています。',
   'Review the new version': '新しい版を確認',
   Later: '後で',
   'Mark as reviewed': '確認済みにする',
@@ -432,12 +435,12 @@ export const JA: Record<string, string> = {
     'タイトルが同じまま ID が多く変わっているため、番号が振り直されたようです。',
   'Match by title instead': '代わりにタイトルで照合',
   '· row': ' ・行',
-  'Joined to the task chosen below; it keeps its summary, situation and history':
-    '下で選んだタスクにつなげます。要約、状況、履歴はそのままです',
-  'You deleted this task, but it is still in the file. Tick it to bring it back.':
-    'このタスクは削除しましたが、ファイルにはまだあります。戻すならチェックしてください。',
-  'Same task as': '同じタスク:',
-  'None, it is a new task': 'なし（新しいタスク）',
+  'Joined to the ticket chosen below; it keeps its summary, situation and history':
+    '下で選んだチケットにつなげます。要約、状況、履歴はそのままです',
+  'You deleted this ticket, but it is still in the file. Tick it to bring it back.':
+    'このチケットは削除しましたが、ファイルにはまだあります。戻すならチェックしてください。',
+  'Same ticket as': '同じチケット:',
+  'None, it is a new ticket': 'なし（新しいチケット）',
   ' (removed earlier)': ' （以前に削除）',
   ' (leaving the file)': ' （ファイルから消える）',
   'No new rows.': '新しい行はありません。',
@@ -445,16 +448,16 @@ export const JA: Record<string, string> = {
   'You changed this too': 'あなたもこれを変更しました',
   'Keep yours:': '自分のものを残す:',
   'Use the file:': 'ファイルのものを使う:',
-  'No changed tasks.': '変更されたタスクはありません。',
-  'No longer in the file. The task is kept with its history and marked Removed from file.':
-    'もうファイルにありません。タスクは履歴とともに残り、「ファイルから削除」と表示されます。',
+  'No changed tickets.': '変更されたチケットはありません。',
+  'No longer in the file. The ticket is kept with its history and marked Removed from file.':
+    'もうファイルにありません。チケットは履歴とともに残り、「ファイルから削除」と表示されます。',
   'No removed rows.': '削除された行はありません。',
   'rows were skipped, such as blank rows, totals and section titles':
     '行を飛ばしました（空行、合計行、見出しなど）',
   'Columns:': '列:',
   'Save and review the changes': '保存して変更を確認',
-  'After saving, the review shows what changes in your tasks, such as new titles. Nothing changes until you apply it. Your summaries, situations and notes stay.':
-    '保存後、確認画面でタスクの変化（新しいタイトルなど）を表示します。反映するまで何も変わりません。要約、状況、メモはそのままです。',
+  'After saving, the review shows what changes in your tickets, such as new titles. Nothing changes until you apply it. Your summaries, situations and notes stay.':
+    '保存後、確認画面でチケットの変化（新しいタイトルなど）を表示します。反映するまで何も変わりません。要約、状況、メモはそのままです。',
   Filter: 'フィルター',
   'Filter every view by person, status, priority and label':
     'すべての表示を担当者、状態、優先度、ラベルで絞り込みます',
@@ -475,6 +478,7 @@ export const JA: Record<string, string> = {
   Low: '低',
   'Sorted by due date, then priority': '期限順、次に優先度順',
   Task: 'タスク',
+  Ticket: 'チケット',
   Due: '期限',
   Reminder: 'リマインダー',
   'Complete (removes the task)': '完了（タスクを削除）',
@@ -505,8 +509,8 @@ export const JA: Record<string, string> = {
   'Untitled note': '無題のノート',
   'No note matches. Try another filter.':
     '一致するノートがありません。別のフィルターを試してください。',
-  'No notes in this project yet. Meeting notes and memos that aren’t about one task go well here.':
-    'このプロジェクトのノートはまだありません。特定のタスクに属さない議事録やメモに向いています。',
+  'No notes in this project yet. Meeting notes and memos that aren’t about one ticket go well here.':
+    'このプロジェクトのノートはまだありません。特定のチケットに属さない議事録やメモに向いています。',
   'No notes yet. Choose New note to write one.':
     'ノートはまだありません。「新しいノート」で書き始めましょう。',
   'Choose a note, or make a new one.': 'ノートを選ぶか、新しく作ってください。',
@@ -531,7 +535,7 @@ export const JA: Record<string, string> = {
   'Other spellings': '別の表記',
   'Such as 田中太郎, Tanaka-san, separated by commas':
     '例: 田中太郎, Tanaka-san（カンマ区切り）',
-  'In the tasks, not in the list yet:': 'タスクにあり、一覧にまだない名前:',
+  'In the tickets, not in the list yet:': 'チケットにあり、一覧にまだない名前:',
   'In the files': 'ファイル内',
   'No people yet. Add the names the files use, so assignees show in':
     '人はまだいません。ファイルで使われる名前を追加すると、担当者が',
@@ -557,8 +561,8 @@ export const JA: Record<string, string> = {
     'WorkSync はフォルダーに index.html、tasks.xlsx、指紋ファイルを書き込みます。次のアクションは含めず、メモはチェックしたときだけ含めます。共有フォルダーを開ける人は誰でも読めるので、お客様の機密ルールが社内で許す範囲だけ公開してください。',
   'Reading…': '読んでいます…',
   'Open the published page': '公開ページを開く',
-  'The page shows each task’s brief, with search by number, label or title, and the dashboard. It leaves out your next actions and, unless you choose, your notes.':
-    'ページには各タスクの概要が載り、番号、ラベル、タイトルで検索でき、ダッシュボードもあります。次のアクションは含まず、メモも選んだときだけ含めます。',
+  'The page shows each ticket’s brief, with search by number, label or title, and the dashboard. It leaves out your next actions and, unless you choose, your notes.':
+    'ページには各チケットの概要が載り、番号、ラベル、タイトルで検索でき、ダッシュボードもあります。次のアクションは含まず、メモも選んだときだけ含めます。',
   'Quick search': 'クイック検索',
   Search: '検索',
   'Search the Catalog and files on this PC':
@@ -574,23 +578,23 @@ export const JA: Record<string, string> = {
   'in this report': '件をこのレポートに',
   'Making…': '作成しています…',
   Report: 'レポート',
-  'Only the': 'タスク表で選んだ',
-  'you selected in the Tasks table.': '件だけ。',
+  'Only the': 'チケット表で選んだ',
+  'you selected in the Tickets table.': '件だけ。',
   'Use the whole project': 'プロジェクト全体を使う',
   Language: '言語',
   ', the customer’s language': ' （お客様の言語）',
   'Both, side by side': '両方を並べて',
   'Translate with Gemini': 'Gemini で翻訳',
   'Period from': '期間の開始',
-  'Which tasks': '対象のタスク',
+  'Which tickets': '対象のチケット',
   Label: 'ラベル',
   'Any label': 'すべてのラベル',
   'Assignee or handled by': '担当者・担当',
   Anyone: 'だれでも',
   'Leave a group unticked to include all of it.':
     'グループのチェックをすべて外すと、そのグループは全部含めます。',
-  ' The progress report covers open tasks and tasks that changed in the period.':
-    ' 進捗レポートには、未完了のタスクと期間内に変化したタスクが入ります。',
+  ' The progress report covers open tickets and tickets that changed in the period.':
+    ' 進捗レポートには、未完了のチケットと期間内に変化したチケットが入ります。',
   'Prepared by': '作成者',
   'Your name, shown at the top': 'あなたの名前（上部に表示）',
   'Preparing the request…': '依頼文を準備しています…',
@@ -634,8 +638,8 @@ export const JA: Record<string, string> = {
   'A new version of WorkSync never touches it. On Windows it sits beside the app folder: to move it, move the WorkSync folder and its WorkSync-data folder together.':
     'WorkSync の新しい版がここに触れることはありません。Windows ではアプリのフォルダーの隣にあります。移すときは、WorkSync フォルダーと WorkSync-data フォルダーを一緒に移してください。',
   'Log files': 'ログファイル',
-  'Errors and steps such as backups, never task text.':
-    'エラーとバックアップなどの手順だけを記録し、タスクの文章は記録しません。',
+  'Errors and steps such as backups, never ticket text.':
+    'エラーとバックアップなどの手順だけを記録し、チケットの文章は記録しません。',
   Backups: 'バックアップ',
   'Backup folder': 'バックアップフォルダー',
   'In the data folder. A second drive or a USB drive is safer, because it survives a disk failure.':
@@ -661,9 +665,10 @@ export const JA: Record<string, string> = {
   'Clear filters': 'フィルターを解除',
   'Clear the selection': '選択を解除',
   'This row was removed from the file.': 'この行はファイルから削除されました。',
-  'No task matches the filters.': 'フィルターに一致するタスクがありません。',
-  'No tasks in this project yet.':
-    'このプロジェクトにはまだタスクがありません。',
+  'No ticket matches the filters.':
+    'フィルターに一致するチケットがありません。',
+  'No tickets in this project yet.':
+    'このプロジェクトにはまだチケットがありません。',
   '· removed from the file': ' ・ファイルから削除',
   Any: 'すべて',
   'A date or month such as 2026/11, a range such as 2026/11/01-2026/11/15, or none':
@@ -671,7 +676,7 @@ export const JA: Record<string, string> = {
   'The default columns and sort, with no filters':
     '既定の列と並び順、フィルターなし',
   'Reset the table': '表をリセット',
-  'Selected tasks': '選択したタスク',
+  'Selected tickets': '選択したチケット',
   'Label to add or remove': '追加・削除するラベル',
   Remove: '外す',
   'Set the status': '状態を設定',
@@ -683,17 +688,17 @@ export const JA: Record<string, string> = {
   Someone: 'だれか',
   'No situation recorded yet': '状況はまだ記録されていません',
   'Quick filters': 'クイックフィルター',
-  'No tasks match. Clear the search or the filter to see the full focus list.':
-    '一致するタスクがありません。検索かフィルターを解除するとフォーカス一覧がすべて表示されます。',
-  'Nothing needs attention right now. Tasks appear here when they are pinned, urgent, overdue, due soon, late to start, with your next action due, or past their next step.':
-    '今は注意が必要なものはありません。固定、緊急、期限切れ、期限間近、開始遅れ、次のアクションの期日、次の手順の期限超過のタスクがここに表示されます。',
-  'No tasks yet.': 'タスクはまだありません。',
+  'No tickets match. Clear the search or the filter to see the full focus list.':
+    '一致するチケットがありません。検索かフィルターを解除するとフォーカス一覧がすべて表示されます。',
+  'Nothing needs attention right now. Tickets appear here when they are pinned, urgent, overdue, due soon, late to start, with your next action due, or past their next step.':
+    '今は注意が必要なものはありません。固定、緊急、期限切れ、期限間近、開始遅れ、次のアクションの期日、次の手順の期限超過のチケットがここに表示されます。',
+  'No tickets yet.': 'チケットはまだありません。',
   'Hide hidden columns': '隠した列を隠す',
   'Nobody yet': 'まだだれもいません',
   'Board columns': 'ボードの列',
   'Status columns': '状態の列',
-  'Hiding a column only hides it on the Board; its tasks keep their status. Show hidden on the Board shows them again for a moment.':
-    '列を隠してもボードで見えなくなるだけで、タスクの状態は変わりません。ボードの「隠した列を表示」で一時的に表示できます。',
+  'Hiding a column only hides it on the Board; its tickets keep their status. Show hidden on the Board shows them again for a moment.':
+    '列を隠してもボードで見えなくなるだけで、チケットの状態は変わりません。ボードの「隠した列を表示」で一時的に表示できます。',
   'Your own columns': '自分の列',
   'Name, such as Waiting for test': '名前（例: テスト待ち）',
   'New column name': '新しい列の名前',
@@ -705,7 +710,7 @@ export const JA: Record<string, string> = {
   Zoom: 'ズーム',
   'Your priority override': '自分で上書きした優先度',
   Overdue: '期限切れ',
-  'No tasks with dates': '日付のあるタスクはありません',
+  'No tickets with dates': '日付のあるチケットはありません',
   ' match the search': ' （検索に一致）',
   ' yet': ' （まだ）',
   High: '高',
@@ -720,11 +725,11 @@ export const JA: Record<string, string> = {
   'Next step date': '次の手順の日付',
   'Your next action': '自分の次のアクション',
   'No next step yet': '次の手順はまだありません',
-  'Tasks by status': '状態別のタスク',
+  'Tickets by status': '状態別のチケット',
   'Hide table': '表を隠す',
   'View as table': '表で表示',
   Share: '割合',
-  'Open tasks by priority': '優先度別の未完了タスク',
+  'Open tickets by priority': '優先度別の未完了チケット',
   'Last import': '最後の取り込み',
   'No linked file has been imported yet.':
     'リンクしたファイルはまだ取り込まれていません。',
@@ -734,8 +739,8 @@ export const JA: Record<string, string> = {
   'Only these cells change. The customer’s file in Box is never touched.':
     '変わるのはこれらのセルだけです。Box にあるお客様ファイルには触れません。',
   'Checking the linked files…': 'リンクしたファイルを確認しています…',
-  'No changes waiting. Changes you make in WorkSync to a task from a file, such as its status, dates, priority, assignee or remarks, are listed here until you write them to a copy.':
-    '書き込み待ちの変更はありません。ファイルから来たタスクの状態、日付、優先度、担当者、備考などを WorkSync で変えると、コピーに書き込むまでここに表示されます。',
+  'No changes waiting. Changes you make in WorkSync to a ticket from a file, such as its status, dates, priority, assignee or remarks, are listed here until you write them to a copy.':
+    '書き込み待ちの変更はありません。ファイルから来たチケットの状態、日付、優先度、担当者、備考などを WorkSync で変えると、コピーに書き込むまでここに表示されます。',
   'Save copies in': 'コピーの保存先',
   'changed, and all': '件を変更し、全',
   'cells checked against the file it was made from.':
@@ -835,14 +840,14 @@ export const JA: Record<string, string> = {
   'Unpinned {name}.': '{name} の固定を外しました。',
   'Side by side': '並べて',
   Original: '原文',
-  'Tasks that need attention now. Always on.':
-    '今注意が必要なタスク。常にオン。',
+  'Tickets that need attention now. Always on.':
+    '今注意が必要なチケット。常にオン。',
   'Columns by status. Drag to change a status.':
     '状態ごとの列。ドラッグで状態を変えます。',
-  'A table of every task.': 'すべてのタスクの表。',
+  'A table of every ticket.': 'すべてのチケットの表。',
   'Planned and actual dates as a Gantt chart.':
     '予定と実績の日付をガントチャートで表示。',
-  'Tasks on their due dates.': '期限日にタスクを表示。',
+  'Tickets on their due dates.': '期限日にチケットを表示。',
   'Counts, priorities and what waits on the customer.':
     '件数、優先度、お客様待ちのもの。',
   'The read-only page your manager opens.': '上司が開く閲覧専用のページ。',
@@ -858,11 +863,11 @@ export const JA: Record<string, string> = {
     '{name} ・ カードをドラッグすると状態、右クリックすると優先度を変更できます',
   '{name} · planned and actual dates · {from} to {to}':
     '{name} ・ 予定と実績の日付 ・ {from}〜{to}',
-  '{name} · tasks on their due date · {label}':
-    '{name} ・ 期限日のタスク ・ {label}',
+  '{name} · tickets on their due date · {label}':
+    '{name} ・ 期限日のチケット ・ {label}',
   'as of {date}': '{date} 時点',
-  '{n} tasks': '{n} 件のタスク',
-  '{shown} of {n} tasks shown': '{n} 件中 {shown} 件を表示',
+  '{n} tickets': '{n} 件のチケット',
+  '{shown} of {n} tickets shown': '{n} 件中 {shown} 件を表示',
   '{n} removed from the file': '{n} 件がファイルから削除',
   '{name} · files are linked by their path and only ever read':
     '{name} ・ ファイルはパスでリンクし、読むだけです',
@@ -882,7 +887,7 @@ export const JA: Record<string, string> = {
   Fri: '金',
   Sat: '土',
   Sun: '日',
-  'Open tasks': '未完了のタスク',
+  'Open tickets': '未完了のチケット',
   'never confirmed': '未確認',
   'confirmed today': '今日確認',
   'confirmed {n} day ago': '{n} 日前に確認',
@@ -904,10 +909,10 @@ export const JA: Record<string, string> = {
   'Planned to start {date}': '{date} に開始予定',
   'Your action: {action}': '自分のアクション: {action}',
   ongoing: '進行中',
-  'Replaced {name} with {n} tasks.':
-    '{name} を置き換えました（タスク {n} 件）。',
-  'Imported {name} with {n} tasks.':
-    '{name} を取り込みました（タスク {n} 件）。',
+  'Replaced {name} with {n} tickets.':
+    '{name} を置き換えました（チケット {n} 件）。',
+  'Imported {name} with {n} tickets.':
+    '{name} を取り込みました（チケット {n} 件）。',
   'The old one is in the backups.': '元のものはバックアップにあります。',
   '{n} linked files are not at the same place on this PC: use Find the file under Files.':
     'リンクしたファイルのうち {n} 件はこの PC の同じ場所にありません。「ファイル」の「ファイルを探す」を使ってください。',
@@ -919,11 +924,11 @@ export const JA: Record<string, string> = {
   'past the planned end': '予定終了を過ぎたもの',
   'within {n} day': '{n} 日以内',
   'within {n} days': '{n} 日以内',
-  'on {n} task': '{n} 件のタスク',
-  'on {n} tasks': '{n} 件のタスク',
+  'on {n} ticket': '{n} 件のチケット',
+  'on {n} tickets': '{n} 件のチケット',
   '{status}: {n} of {all} · {pct}%': '{status}: {all} 件中 {n} 件 ・ {pct}%',
-  '{n} open task': '未完了 {n} 件',
-  '{n} open tasks': '未完了 {n} 件',
+  '{n} open ticket': '未完了 {n} 件',
+  '{n} open tickets': '未完了 {n} 件',
   'by {date}': '{date} まで',
   'due {date}': '期限 {date}',
   'and {n} more': 'ほか {n} 件',
@@ -934,27 +939,27 @@ export const JA: Record<string, string> = {
   'No open difficulties.': '未解決の課題はありません。',
   'Sort by {name}': '{name} で並べ替え',
   'Next date': '次の日付',
-  '{name} · built from each task’s summary, situation and dates':
-    '{name} ・ 各タスクの要約、状況、日付から作成',
-  '{n} task in this report': 'このレポートのタスク: {n} 件',
-  '{n} tasks in this report': 'このレポートのタスク: {n} 件',
+  '{name} · built from each ticket’s summary, situation and dates':
+    '{name} ・ 各チケットの要約、状況、日付から作成',
+  '{n} ticket in this report': 'このレポートのチケット: {n} 件',
+  '{n} tickets in this report': 'このレポートのチケット: {n} 件',
   'Make the {format} report': '{format} のレポートを作成',
   'Progress report': '進捗レポート',
-  'Task list': 'タスク一覧',
+  'Ticket list': 'チケット一覧',
   Schedule: 'スケジュール',
-  'Task briefs': 'タスクの概要',
-  'An overview of the period, then each task’s brief: what it is, its situation, difficulties and next steps.':
-    '期間の概要と、各タスクの概要（内容、現状、課題、今後の予定）。',
-  'A table of tasks with the columns you choose.':
-    '選んだ列でタスクを表にします。',
-  'Planned and actual dates for each task, drawn as shaded cells.':
-    '各タスクの予定と実績の日付を、塗りつぶしたセルで表します。',
-  'The brief of each task, for a meeting with your manager or the customer.':
-    '上司やお客様との打ち合わせ用の、各タスクの概要。',
-  'Only the {n} task you selected in the Tasks table.':
-    'タスク表で選んだ {n} 件だけ。',
-  'Only the {n} tasks you selected in the Tasks table.':
-    'タスク表で選んだ {n} 件だけ。',
+  'Ticket briefs': 'チケット概要',
+  'An overview of the period, then each ticket’s brief: what it is, its situation, difficulties and next steps.':
+    '期間の概要と、各チケットの概要（内容、現状、課題、今後の予定）。',
+  'A table of tickets with the columns you choose.':
+    '選んだ列でチケットを表にします。',
+  'Planned and actual dates for each ticket, drawn as shaded cells.':
+    '各チケットの予定と実績の日付を、塗りつぶしたセルで表します。',
+  'The brief of each ticket, for a meeting with your manager or the customer.':
+    '上司やお客様との打ち合わせ用の、各チケットの概要。',
+  'Only the {n} ticket you selected in the Tickets table.':
+    'チケット表で選んだ {n} 件だけ。',
+  'Only the {n} tickets you selected in the Tickets table.':
+    'チケット表で選んだ {n} 件だけ。',
   to: '〜',
   '{n} changes not published yet': '未公開の変更が {n} 件あります',
   'Hidden: {list}': '非表示: {list}',
@@ -968,7 +973,7 @@ export const JA: Record<string, string> = {
   Japanese: '日本語',
   Vietnamese: 'ベトナム語',
   '{name} · added by hand, so it is never written to a customer file':
-    '{name} ・ 手で追加するタスクなので、お客様ファイルには書き込みません',
+    '{name} ・ 手で追加するチケットなので、お客様ファイルには書き込みません',
   '{n} of {all} selected': '{all} 件中 {n} 件を選択',
   Translated: '翻訳済み',
   'Not needed': '不要',
@@ -1026,13 +1031,13 @@ export const JA: Record<string, string> = {
   'Replace yours': 'あなたのプロジェクトを置き換える',
   'Your project becomes this copy. What only you changed is lost; WorkSync backs up first, so you can get it back from Settings.':
     'あなたのプロジェクトがこのコピーに置き換わります。あなただけが変えた内容は失われますが、先にバックアップするので「設定」から戻せます。',
-  'The file holds {n} tasks. Merging does not need the customer’s file: WorkSync matches tasks, notes, terms and people by their own ids.':
-    'ファイルには {n} 件のタスクがあります。マージに顧客のファイルは不要です。WorkSync はタスク・ノート・用語・人を独自の ID で照合します。',
+  'The file holds {n} tickets. Merging does not need the customer’s file: WorkSync matches tickets, notes, terms and people by their own ids.':
+    'ファイルには {n} 件のチケットがあります。マージに顧客のファイルは不要です。WorkSync はチケット・ノート・用語・人を独自の ID で照合します。',
   'The project': 'プロジェクト',
   'What changed': '変更点',
   'Your choices': 'あなたの選択',
   Review: '確認',
-  '{who} added this task': '{who} がこのタスクを追加',
+  '{who} added this ticket': '{who} がこのチケットを追加',
   '{who} changed: {fields}': '{who} が変更：{fields}',
   '{who} deleted it': '{who} が削除',
   '{who} added a difficulty: {text}': '{who} が課題を追加：{text}',
@@ -1105,10 +1110,10 @@ export const JA: Record<string, string> = {
   'Your lines and {who}’s lines both stay, each once.':
     'あなたの行も {who} の行も、それぞれ一度ずつ残ります。',
   'Result preview': '結果のプレビュー',
-  'Hide the rest of the task': 'タスクの残りを隠す',
-  'See the rest of the task': 'タスクの残りを見る',
-  'The rest of the task, yours and {who}’s side by side':
-    'タスクの残りの項目（あなたと {who} を並べて表示）',
+  'Hide the rest of the ticket': 'チケットの残りを隠す',
+  'See the rest of the ticket': 'チケットの残りを見る',
+  'The rest of the ticket, yours and {who}’s side by side':
+    'チケットの残りの項目（あなたと {who} を並べて表示）',
   'Hide identical content': '同じ内容を隠す',
   Same: '同じ',
   'Ready to merge': 'マージの準備ができました',
@@ -1136,7 +1141,7 @@ export const JA: Record<string, string> = {
   'File languages': 'ファイルの言語',
   'Due soon (days)': '期限間近（日数）',
   'Report date format': 'レポートの日付形式',
-  'Show task numbers': 'タスク番号を表示',
+  'Show ticket numbers': 'チケット番号を表示',
   Number: '番号',
   'Title (translation)': 'タイトル（訳）',
   'Description (translation)': '説明（訳）',
@@ -1171,22 +1176,22 @@ export const JA: Record<string, string> = {
   'Saved {task}.': '{task} を保存しました。',
   'Added {task}.': '{task} を追加しました。',
   'Unlink {file}?': '{file} のリンクを解除しますか？',
-  'Add row {n} as a new task': '{n} 行目を新しいタスクとして追加',
+  'Add row {n} as a new ticket': '{n} 行目を新しいチケットとして追加',
   'Apply changes to No. {no}': 'No. {no} に変更を適用',
   'Complete {title}': '「{title}」を完了',
   'Reminders for {title}': '「{title}」のリマインダー',
   'Remove the tag {tag}': 'タグ「{tag}」を削除',
   'Open {url} in your browser': '{url} をブラウザーで開く',
-  'Your priority. The task’s own level is {level}.':
-    'あなたが設定した優先度です。タスク本来の優先度は「{level}」です。',
-  '1 task': '1 件のタスク',
+  'Your priority. The ticket’s own level is {level}.':
+    'あなたが設定した優先度です。チケット本来の優先度は「{level}」です。',
+  '1 ticket': '1 件のチケット',
   'Saved {n} translations of {what}.': '{what}の翻訳を {n} 件保存しました。',
   'Translate {what} · request {n} of {total}':
     '{what}を翻訳 · 依頼 {n} / {total}',
   'your notes': '自分用メモ',
   'the remarks': '備考',
   'Restore the backup from {date}': '{date} のバックアップから復元',
-  'Tasks in {name}': '{name} のタスク',
+  'Tickets in {name}': '{name} のチケット',
   'Select No. {no}': 'No. {no} を選択',
   'Filter {name}': '{name} で絞り込む',
   'Open {task}, {title}': '{task}「{title}」を開く',
@@ -1220,13 +1225,13 @@ export const JA: Record<string, string> = {
   'Removed {name} from the Catalog. The folder itself is untouched.':
     '{name} をカタログから外しました。フォルダー自体はそのままです。',
   'Delete the term “{term}”?': '用語「{term}」を削除しますか？',
-  'Gemini batches and the glossary marks in task text no longer use it.':
-    'Gemini の一括処理やタスク本文の用語表示で使われなくなります。',
+  'Gemini batches and the glossary marks in ticket text no longer use it.':
+    'Gemini の一括処理やチケット本文の用語表示で使われなくなります。',
   '{name} · Gemini batches use these translations exactly':
     '{name} · Gemini の一括処理はこの訳をそのまま使います',
   'Delete {name} from the people list?': '{name} を人の一覧から削除しますか？',
-  'Tasks are not changed: names in them stay as they are written.':
-    'タスクは変わりません。タスク内の名前は書かれたまま残ります。',
+  'Tickets are not changed: names in them stay as they are written.':
+    'チケットは変わりません。チケット内の名前は書かれたまま残ります。',
   'Delete this difficulty?': 'この課題を削除しますか？',
   'Use this for one written by mistake. A difficulty that went away should be marked resolved instead, so the history keeps it.':
     '間違えて書いた課題に使ってください。なくなった課題は「解決済み」にすると履歴に残ります。',
@@ -1234,9 +1239,10 @@ export const JA: Record<string, string> = {
   'Only the link goes; the page or file is not touched.':
     'リンクだけがなくなります。ページやファイル自体はそのままです。',
   'Delete the column “{name}”?': '列「{name}」を削除しますか？',
-  'Its tasks go back to {status}.': 'この列のタスクは「{status}」に戻ります。',
-  'Deleted {name}. Its tasks are back in {status}.':
-    '{name} を削除しました。タスクは「{status}」に戻りました。',
+  'Its tickets go back to {status}.':
+    'この列のチケットは「{status}」に戻ります。',
+  'Deleted {name}. Its tickets are back in {status}.':
+    '{name} を削除しました。チケットは「{status}」に戻りました。',
   'under {status}': '状態：{status}',
   'There is already a column called {name}. Choose another name.':
     '「{name}」という列はすでにあります。別の名前にしてください。',
@@ -1496,6 +1502,11 @@ export const JA: Record<string, string> = {
   'Overview of the period': '期間の概要',
   'What it is (summary)': '概要',
   'Due and as-of dates': '期限・更新日',
-  'Untick what the report should leave out. Each task keeps its number, title and status.':
-    'レポートに含めないものはチェックを外してください。各タスクの番号・件名・状態は常に入ります。',
+  'Untick what the report should leave out. Each ticket keeps its number, title and status.':
+    'レポートに含めないものはチェックを外してください。各チケットの番号・件名・状態は常に入ります。',
+  '{n} ticket': '{n} 件のチケット',
+  '{n} ticket changed since': '以降に {n} 件のチケットが変更',
+  '{n} tickets changed since': '以降に {n} 件のチケットが変更',
+  '{n} tickets missing': '不足チケット {n} 件',
+  'New tickets': '新しいチケット',
 };

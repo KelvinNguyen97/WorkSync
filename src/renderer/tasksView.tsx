@@ -233,8 +233,8 @@ export function TasksView({
   return (
     <>
       {props.header(
-        tr('Tasks'),
-        `${p.name} · ${rows.length === all.length ? tr('{n} tasks', { n: all.length }) : tr('{shown} of {n} tasks shown', { shown: rows.length, n: all.length })}${removed ? ` · ${tr('{n} removed from the file', { n: removed })}` : ''}`,
+        tr('Tickets'),
+        `${p.name} · ${rows.length === all.length ? tr('{n} tickets', { n: all.length }) : tr('{shown} of {n} tickets shown', { shown: rows.length, n: all.length })}${removed ? ` · ${tr('{n} removed from the file', { n: removed })}` : ''}`,
         <div className="vh-actions">
           {filtered && (
             <button
@@ -267,7 +267,7 @@ export function TasksView({
       <div
         className="tt"
         role="grid"
-        aria-label={tr('Tasks in {name}', { name: p.name })}
+        aria-label={tr('Tickets in {name}', { name: p.name })}
         aria-rowcount={rows.length + 2}
         aria-multiselectable
         style={{ ['--tt-cols' as string]: template, minWidth }}
@@ -388,8 +388,8 @@ export function TasksView({
         {!rows.length && (
           <div className="tt-empty">
             {all.length
-              ? tr('No task matches the filters.')
-              : tr('No tasks in this project yet.')}
+              ? tr('No ticket matches the filters.')
+              : tr('No tickets in this project yet.')}
           </div>
         )}
       </div>
@@ -439,7 +439,7 @@ function Cell({ column, task: t }: { column: TableColumn; task: Task }) {
           className={`tt-pri ${l} ${t.priorityOverride ? 'ovr' : ''}`}
           title={
             t.priorityOverride
-              ? `Your priority. The task's own level is ${tr(LEVEL_NAME[t.priority])}.`
+              ? `Your priority. The ticket's own level is ${tr(LEVEL_NAME[t.priority])}.`
               : undefined
           }
         >
@@ -607,7 +607,7 @@ function BulkBar({
   const [label, setLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const n = tasks.length;
-  const rows = tr(n === 1 ? '1 task' : '{n} tasks', { n });
+  const rows = tr(n === 1 ? '1 ticket' : '{n} tickets', { n });
   const fromFile = tasks.filter((t) => t.source === 'file').length;
 
   const apply = async (change: BulkChange, done: string) => {
@@ -637,7 +637,7 @@ function BulkBar({
     : false;
 
   return (
-    <div className="tt-bulk" role="toolbar" aria-label={tr('Selected tasks')}>
+    <div className="tt-bulk" role="toolbar" aria-label={tr('Selected tickets')}>
       <b>{n} selected</b>
       <span className="tt-bulk-group">
         <input

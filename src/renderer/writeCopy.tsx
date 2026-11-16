@@ -94,7 +94,7 @@ export function WriteDialog({ onClose }: { onClose: () => void }) {
       {plans && plans.length === 0 && !open && (
         <p className="muted">
           {tr(
-            'No changes waiting. Changes you make in WorkSync to a task from a file, such as its status, dates, priority, assignee or remarks, are listed here until you write them to a copy.',
+            'No changes waiting. Changes you make in WorkSync to a ticket from a file, such as its status, dates, priority, assignee or remarks, are listed here until you write them to a copy.',
           )}
         </p>
       )}

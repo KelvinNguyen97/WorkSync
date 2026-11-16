@@ -273,19 +273,19 @@ export function FocusView({
         <div className="empty">
           {props.query || quick ? (
             tr(
-              'No tasks match. Clear the search or the filter to see the full focus list.',
+              'No tickets match. Clear the search or the filter to see the full focus list.',
             )
           ) : projectTasks.length ? (
             tr(
-              'Nothing needs attention right now. Tasks appear here when they are pinned, urgent, overdue, due soon, late to start, with your next action due, or past their next step.',
+              'Nothing needs attention right now. Tickets appear here when they are pinned, urgent, overdue, due soon, late to start, with your next action due, or past their next step.',
             )
           ) : (
             <>
-              <p style={{ margin: '0 0 12px' }}>{tr('No tasks yet.')}</p>
+              <p style={{ margin: '0 0 12px' }}>{tr('No tickets yet.')}</p>
               {!all && (
                 <button className="btn primary" onClick={onNewTask}>
                   <Icon name="plus" />
-                  {tr('New task')}
+                  {tr('New ticket')}
                 </button>
               )}
             </>
@@ -562,7 +562,7 @@ function BoardColumnsDialog({
               <div key={s} className="bc-row">
                 <StatusChip status={s} />
                 <span className="muted">
-                  {n} task{n === 1 ? '' : 's'}
+                  {tr(n === 1 ? '{n} ticket' : '{n} tickets', { n: n })}
                 </span>
                 <button
                   className="switch"
@@ -585,7 +585,7 @@ function BoardColumnsDialog({
           })}
           <span className="hint-text">
             {tr(
-              'Hiding a column only hides it on the Board; its tasks keep their status. Show hidden on the Board shows them again for a moment.',
+              'Hiding a column only hides it on the Board; its tickets keep their status. Show hidden on the Board shows them again for a moment.',
             )}
           </span>
         </fieldset>
@@ -641,7 +641,7 @@ function BoardColumnsDialog({
                       title: tr('Delete the column “{name}”?', {
                         name: c.name,
                       }),
-                      text: tr('Its tasks go back to {status}.', {
+                      text: tr('Its tickets go back to {status}.', {
                         status: tr(c.status),
                       }),
                       yes: tr('Delete'),
@@ -655,10 +655,13 @@ function BoardColumnsDialog({
                     (ok) =>
                       ok &&
                       toast(
-                        tr('Deleted {name}. Its tasks are back in {status}.', {
-                          name: c.name,
-                          status: tr(c.status),
-                        }),
+                        tr(
+                          'Deleted {name}. Its tickets are back in {status}.',
+                          {
+                            name: c.name,
+                            status: tr(c.status),
+                          },
+                        ),
                       ),
                   );
                 }}

@@ -171,7 +171,7 @@ export function ImportChoice({
           )}
         <p className="muted step-help">
           {tr(
-            'The file holds {n} tasks. Merging does not need the customer’s file: WorkSync matches tasks, notes, terms and people by their own ids.',
+            'The file holds {n} tickets. Merging does not need the customer’s file: WorkSync matches tickets, notes, terms and people by their own ids.',
             { n: info.tasks },
           )}
         </p>
@@ -334,8 +334,8 @@ export function MergeWizard({
   const autoText = (a: AutoItem) => {
     const fields = a.fields.map((f) => tr(f)).join(', ');
     switch (a.tag) {
-      case 'New task':
-        return tr('{who} added this task', { who });
+      case 'New ticket':
+        return tr('{who} added this ticket', { who });
       case 'Changes':
       case 'Project':
         return tr('{who} changed: {fields}', { who, fields });
@@ -789,15 +789,15 @@ export function MergeWizard({
                 >
                   <Icon name="chev" className={whole ? 'up' : ''} />
                   {whole
-                    ? tr('Hide the rest of the task')
-                    : tr('See the rest of the task')}
+                    ? tr('Hide the rest of the ticket')
+                    : tr('See the rest of the ticket')}
                 </button>
                 {whole && (
                   <div className="mg-ctx">
                     <div className="mg-ctx-head">
                       <span className="muted">
                         {tr(
-                          'The rest of the task, yours and {who}’s side by side',
+                          'The rest of the ticket, yours and {who}’s side by side',
                           { who },
                         )}
                       </span>

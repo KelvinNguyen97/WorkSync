@@ -109,7 +109,9 @@ describe('owner translations', () => {
       'ja',
       [{ term: '受入テスト', translation: 'staging', note: '' }],
     );
-    expect(b.text).toContain('=== TASK 012 ===\nSUMMARY: Users are logged out');
+    expect(b.text).toContain(
+      '=== TICKET 012 ===\nSUMMARY: Users are logged out',
+    );
     expect(b.text).toContain('- staging = 受入テスト');
     const r = readOwnerAnswer(
       b,

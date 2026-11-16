@@ -323,8 +323,8 @@ function Shell({
       [
         tr(
           replace
-            ? 'Replaced {name} with {n} tasks.'
-            : 'Imported {name} with {n} tasks.',
+            ? 'Replaced {name} with {n} tickets.'
+            : 'Imported {name} with {n} tickets.',
           {
             name: r.name,
             n: r.tasks,
@@ -623,7 +623,7 @@ function Shell({
                           }
                         >
                           <Icon name="plus" />
-                          <span className="grow">{tr('New task')}</span>
+                          <span className="grow">{tr('New ticket')}</span>
                         </button>
                         <button
                           className="nav-item custom"
@@ -857,12 +857,12 @@ function Shell({
                   )}
                 </button>
                 <button
-                  aria-label={tr('New task')}
+                  aria-label={tr('New ticket')}
                   className="btn primary"
                   disabled={!currentProjectId}
                   title={
                     currentProjectId
-                      ? `Add a task to ${project(currentProjectId)?.name}`
+                      ? `Add a ticket to ${project(currentProjectId)?.name}`
                       : tr('Create a project first')
                   }
                   onClick={() =>
@@ -871,7 +871,7 @@ function Shell({
                   }
                 >
                   <Icon name="plus" />
-                  <span className="lbl">{tr('New task')}</span>
+                  <span className="lbl">{tr('New ticket')}</span>
                 </button>
               </div>
             )}
@@ -1144,7 +1144,7 @@ function Welcome({
       <h1>{tr('Welcome to WorkSync')}</h1>
       <p>
         {tr(
-          'Start with a project for one customer. Link the customer’s Excel file to bring in its tasks, or add tasks by hand.',
+          'Start with a project for one customer. Link the customer’s Excel file to bring in its tickets, or add tickets by hand.',
         )}
       </p>
       <div

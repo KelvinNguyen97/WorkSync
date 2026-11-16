@@ -1093,8 +1093,8 @@ export function TaskPopup({
               <span className="sp" />
               <button
                 className="icon-btn"
-                title={tr('Edit task')}
-                aria-label={tr('Edit task')}
+                title={tr('Edit ticket')}
+                aria-label={tr('Edit ticket')}
                 onClick={() => onEdit(task)}
               >
                 <Icon name="edit" />
@@ -1113,8 +1113,8 @@ export function TaskPopup({
               </button>
               <button
                 className="icon-btn"
-                title={tr('Delete task')}
-                aria-label={tr('Delete task')}
+                title={tr('Delete ticket')}
+                aria-label={tr('Delete ticket')}
                 onClick={() => onDelete(task)}
               >
                 <Icon name="trash" />
@@ -1198,7 +1198,7 @@ export function TaskPopup({
                       <div className="summary missing">
                         <span>
                           {tr(
-                            'No summary yet, so this task’s brief is incomplete.',
+                            'No summary yet, so this ticket’s brief is incomplete.',
                           )}
                         </span>
                       </div>
@@ -1294,7 +1294,7 @@ export function TaskPopup({
             </div>
             <aside className="tm-side">
               <section className="sec sec-fields">
-                <h3>{tr('Task fields')}</h3>
+                <h3>{tr('Ticket fields')}</h3>
                 <div className="fields">
                   <EditField
                     task={task}

@@ -46,11 +46,11 @@ describe('buildBatches', () => {
       of: 1,
       keys: { '012': 'a', '018': 'b', 'WM-08': 'c' },
     });
-    expect(b.text).toContain('Translate each task below into English.');
+    expect(b.text).toContain('Translate each ticket below into English.');
     expect(b.text).toContain(
-      '=== TASK 012 (Japanese) ===\nTITLE: ログイン画面のタイムアウト\nDESCRIPTION:\n受入テストを妨げている。\n\n至急対応が必要。\n=== END ===',
+      '=== TICKET 012 (Japanese) ===\nTITLE: ログイン画面のタイムアウト\nDESCRIPTION:\n受入テストを妨げている。\n\n至急対応が必要。\n=== END ===',
     );
-    expect(b.text).toContain('=== TASK WM-08 (Vietnamese) ===');
+    expect(b.text).toContain('=== TICKET WM-08 (Vietnamese) ===');
     expect(b.text).toContain('- 受入テスト = acceptance test');
     expect(b.text).not.toContain('帳票'); // no task uses it
   });
@@ -120,6 +120,28 @@ SUMMARY: Out of memory at month end.
       description: 'It blocks the acceptance test.\n\nIt needs an urgent fix.',
     });
     expect(r.items[1].description).toBe('');
+  });
+
+  it('reads answers in the new TICKET form and the old TASK form alike', () => {
+    const r = readAnswer(
+      KEYS,
+      `=== TICKET 012 ===
+TITLE: Login screen times out
+SUMMARY: Users are logged out after 5 minutes.
+=== END ===
+
+=== TASK 018 ===
+TITLE: Garbled text when importing CSV
+SUMMARY: Shift-JIS files are read as UTF-8.
+=== END ===
+
+=== TICKET 022 (Japanese) ===
+TITLE: Nightly batch stops
+SUMMARY: Out of memory at month end.
+=== END ===`,
+    );
+    expect(r.missing).toEqual([]);
+    expect(r.items.map((x) => x.key)).toEqual(['012', '018', '022']);
   });
 
   it('copes with chat formatting and reports missing, unknown and incomplete tasks', () => {

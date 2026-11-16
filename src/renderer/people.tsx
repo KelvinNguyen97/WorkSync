@@ -78,7 +78,7 @@ export function PeopleDialog({
           name: p.displayName || p.name,
         }),
         text: tr(
-          'Tasks are not changed: names in them stay as they are written.',
+          'Tickets are not changed: names in them stay as they are written.',
         ),
         yes: tr('Delete'),
       }))
@@ -178,13 +178,13 @@ export function PeopleDialog({
       {unknown.length > 0 && (
         <div className="people-unknown">
           <span className="muted">
-            {tr('In the tasks, not in the list yet:')}
+            {tr('In the tickets, not in the list yet:')}
           </span>
           {unknown.slice(0, 12).map(([name, n]) => (
             <button
               key={name}
               className="chip-btn"
-              title={tr(n === 1 ? '1 task' : '{n} tasks', { n })}
+              title={tr(n === 1 ? '1 ticket' : '{n} tickets', { n })}
               onClick={() => {
                 setDraft({ ...EMPTY, name });
                 setSpellings('');

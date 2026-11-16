@@ -120,7 +120,7 @@ describe('merging a copy back into the project', () => {
       expect.arrayContaining([
         ['Changes', '1', ['Summary']],
         ['Changes', '2', ['Status']],
-        ['New task', '3', []],
+        ['New ticket', '3', []],
       ]),
     );
     expect(plan.questions.map((q) => q.kind).sort()).toEqual([

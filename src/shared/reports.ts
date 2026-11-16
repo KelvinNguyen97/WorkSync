@@ -30,24 +30,24 @@ export const REPORTS: Record<
   progress: {
     name: 'Progress report',
     description:
-      'An overview of the period, then each task’s brief: what it is, its situation, difficulties and next steps.',
+      'An overview of the period, then each ticket’s brief: what it is, its situation, difficulties and next steps.',
     formats: ['docx', 'xlsx'],
   },
   taskList: {
-    name: 'Task list',
-    description: 'A table of tasks with the columns you choose.',
+    name: 'Ticket list',
+    description: 'A table of tickets with the columns you choose.',
     formats: ['xlsx', 'docx'],
   },
   schedule: {
     name: 'Schedule',
     description:
-      'Planned and actual dates for each task, drawn as shaded cells.',
+      'Planned and actual dates for each ticket, drawn as shaded cells.',
     formats: ['xlsx'],
   },
   briefs: {
-    name: 'Task briefs',
+    name: 'Ticket briefs',
     description:
-      'The brief of each task, for a meeting with your manager or the customer.',
+      'The brief of each ticket, for a meeting with your manager or the customer.',
     formats: ['docx'],
   },
 };

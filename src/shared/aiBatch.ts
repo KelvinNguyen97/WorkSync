@@ -38,7 +38,7 @@ export interface Batch {
 export const DEFAULT_BATCH_SIZE = 20_000;
 
 const begin = (key: string, lang?: string) =>
-  `=== TASK ${key}${lang ? ` (${lang})` : ''} ===`;
+  `=== TICKET ${key}${lang ? ` (${lang})` : ''} ===`;
 const END = '=== END ===';
 
 /** A key for each task: its number, with #2, #3 for numbers used twice in one batch. */
@@ -58,11 +58,11 @@ function instructions(
   hasDescriptions: boolean,
 ): string {
   const lines = [
-    `You are helping a project manager understand customer tasks. Translate each task below into ${working}.`,
+    `You are helping a project manager understand customer tickets. Translate each ticket below into ${working}.`,
     '',
     'Rules:',
-    `- Translate the title${hasDescriptions ? ' and the description' : ''} into natural ${working}. Keep task numbers, product names, file names, code and anything already in ${working} as it is.`,
-    `- Write a SUMMARY of one or two sentences in ${working} that says what the task is really about, for someone who has not read it.`,
+    `- Translate the title${hasDescriptions ? ' and the description' : ''} into natural ${working}. Keep ticket numbers, product names, file names, code and anything already in ${working} as it is.`,
+    `- Write a SUMMARY of one or two sentences in ${working} that says what the ticket is really about, for someone who has not read it.`,
     ...(hasDescriptions
       ? [
           '- Keep the description in the same paragraphs as the original, separated by a blank line, so they can be shown side by side.',
@@ -73,15 +73,15 @@ function instructions(
           '- Use the glossary translations below exactly, every time the term appears.',
         ]
       : []),
-    '- Answer with every task, in the same order, in exactly this format and nothing else:',
+    '- Answer with every ticket, in the same order, in exactly this format and nothing else:',
     '',
-    begin('<the same key as the task>'),
+    begin('<the same key as the ticket>'),
     'TITLE: <the title translated>',
     'SUMMARY: <one or two sentences>',
     ...(hasDescriptions
       ? [
           'DESCRIPTION:',
-          '<the description translated, only if the task has one>',
+          '<the description translated, only if the ticket has one>',
         ]
       : []),
     END,
@@ -188,7 +188,8 @@ export function readAnswer(
   answer: string,
 ): ReadAnswer {
   const text = tidy(answer);
-  const re = /^\s*={2,}\s*TASK\s+(.+?)\s*(?:\([^)]*\))?\s*={2,}\s*$/gim;
+  const re =
+    /^\s*={2,}\s*(?:TICKET|TASK)\s+(.+?)\s*(?:\([^)]*\))?\s*={2,}\s*$/gim;
   const starts: { key: string; at: number; end: number }[] = [];
   for (let m = re.exec(text); m; m = re.exec(text))
     starts.push({ key: m[1].trim(), at: m.index, end: m.index + m[0].length });

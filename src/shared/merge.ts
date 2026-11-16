@@ -47,7 +47,7 @@ export interface AutoItem {
   id: string;
   /** What kind of change, in English (translated by the page). */
   tag:
-    | 'New task'
+    | 'New ticket'
     | 'Changes'
     | 'Deleted'
     | 'Situation updates'
@@ -165,7 +165,7 @@ const LABELS: Record<string, string> = {
   working_language: 'Working language',
   due_soon_days: 'Due soon (days)',
   date_format: 'Report date format',
-  show_numbers: 'Show task numbers',
+  show_numbers: 'Show ticket numbers',
   customer_id: 'Number',
   language: 'Language',
   title_original: 'Title',
@@ -623,7 +623,7 @@ export function mergeProject(
     changedSince: [...TASK_ASKED, ...ownerFields, ...SITUATION],
     added: (t) => ({
       id: `add:tasks:${text(t.id)}`,
-      tag: 'New task',
+      tag: 'New ticket',
       where: taskWhere(t),
       fields: [],
       detail: '',

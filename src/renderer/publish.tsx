@@ -55,7 +55,12 @@ function StatusLines({ status }: { status: PublishStatus }) {
               {' '}
               ·{' '}
               {status.unpublished
-                ? `${status.unpublished} task${status.unpublished === 1 ? '' : 's'} changed since`
+                ? tr(
+                    status.unpublished === 1
+                      ? '{n} ticket changed since'
+                      : '{n} tickets changed since',
+                    { n: status.unpublished },
+                  )
                 : tr('nothing changed since')}
             </span>
           )}
@@ -266,7 +271,7 @@ export function PublishedView({
         <span>
           <Icon name="shield" />
           {tr(
-            'The page shows each task’s brief, with search by number, label or title, and the dashboard. It leaves out your next actions and, unless you choose, your notes.',
+            'The page shows each ticket’s brief, with search by number, label or title, and the dashboard. It leaves out your next actions and, unless you choose, your notes.',
           )}
         </span>
       </div>

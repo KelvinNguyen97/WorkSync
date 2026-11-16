@@ -130,7 +130,7 @@ export function buildPage(input: PageInput): string {
     <div class="ro">Read-only copy published by WorkSync. Changes made here are not saved.</div>
   </header>
   <div class="tools">
-    <label class="search"><span aria-hidden="true">⌕</span><input id="q" type="search" placeholder="Type a task number such as 012, a label, or words from the title" autocomplete="off"></label>
+    <label class="search"><span aria-hidden="true">⌕</span><input id="q" type="search" placeholder="Type a ticket number such as 012, a label, or words from the title" autocomplete="off"></label>
     <label class="sw"><input type="checkbox" id="origFirst"> Original first</label>
   </div>
   <div class="chips" role="group" aria-label="Filter">
@@ -151,7 +151,7 @@ export function buildPage(input: PageInput): string {
   <section class="dash" aria-labelledby="dashTitle">
     <h2 id="dashTitle">Dashboard</h2>
     <div class="tiles" id="tiles"></div>
-    <div class="cols"><div><h3>By status</h3><div id="byStatus"></div></div><div><h3>Open tasks by priority</h3><div id="byLevel"></div></div></div>
+    <div class="cols"><div><h3>By status</h3><div id="byStatus"></div></div><div><h3>Open tickets by priority</h3><div id="byLevel"></div></div></div>
   </section>
   <footer class="foot" id="foot"></footer>
 </div>
@@ -240,11 +240,11 @@ function renderBoard(list){
 }
 function render(){
   var q=$('q').value,list=D.tasks.filter(function(t){return pass(t)&&matches(t,q)});
-  $('count').textContent=list.length+' task'+(list.length===1?'':'s');
+  $('count').textContent=list.length+' ticket'+(list.length===1?'':'s');
   $('briefs').hidden=view!=='briefs';$('board').hidden=view!=='board';document.querySelector('.wrap').classList.toggle('wide',view==='board');
   Array.prototype.forEach.call(document.querySelectorAll('[data-v]'),function(b){b.setAttribute('aria-selected',b.getAttribute('data-v')===view?'true':'false')});
   if(view==='board'){renderBoard(list);return}
-  if(!list.length){$('briefs').innerHTML='<div class="empty">No task matches'+(q?' “'+esc(q)+'”':'')+'. Try the task number, such as 012.</div>';return}
+  if(!list.length){$('briefs').innerHTML='<div class="empty">No ticket matches'+(q?' “'+esc(q)+'”':'')+'. Try the ticket number, such as 012.</div>';return}
   $('briefs').innerHTML=list.map(function(t){
     var main=origFirst&&t.orig?t.orig:t.title,sub=origFirst&&t.orig?t.title:t.orig;
     var tag=(t.level==='U'||t.level==='H')&&!t.closed?'<span class="tag '+t.level+'">'+esc(t.levelName)+'</span>':'';
@@ -270,7 +270,7 @@ $('origFirst').addEventListener('change',function(e){origFirst=e.target.checked;
 Array.prototype.forEach.call(document.querySelectorAll('[data-f]'),function(b){b.addEventListener('click',function(){filter=b.getAttribute('data-f');Array.prototype.forEach.call(document.querySelectorAll('[data-f]'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});render()})});
 var open=D.tasks.filter(function(t){return !t.closed});
 var c=function(f){return open.filter(f).length};
-$('tiles').innerHTML=[['Open tasks',open.length],['Overdue',c(function(t){return t.overdue})],['Open difficulties',open.reduce(function(n,t){return n+t.difficulties},0)]].map(function(x){return '<div class="tile"><b>'+x[1]+'</b><span>'+esc(x[0])+'</span></div>'}).join('');
+$('tiles').innerHTML=[['Open tickets',open.length],['Overdue',c(function(t){return t.overdue})],['Open difficulties',open.reduce(function(n,t){return n+t.difficulties},0)]].map(function(x){return '<div class="tile"><b>'+x[1]+'</b><span>'+esc(x[0])+'</span></div>'}).join('');
 var max=function(a){return Math.max.apply(null,[1].concat(a.map(function(x){return x[1]})))};
 var bars=function(rows,color){var m=max(rows);return rows.map(function(x){return '<div class="bar"><span>'+esc(x[0])+'</span><i style="width:'+Math.round(x[1]/m*100)+'%;background:'+(color(x[0])||'var(--accent)')+'"></i><b>'+x[1]+'</b></div>'}).join('')};
 $('byStatus').innerHTML=bars(D.statuses.map(function(s){return[s,D.tasks.filter(function(t){return t.status===s}).length]}).filter(function(x){return x[1]}),function(){return ''});

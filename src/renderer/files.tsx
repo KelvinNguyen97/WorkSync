@@ -96,7 +96,7 @@ export function FilesView({
                   <th>{tr('State')}</th>
                   <th>{tr('Last read')}</th>
                   <th>{tr('Main language')}</th>
-                  <th>{tr('Tasks')}</th>
+                  <th>{tr('Tickets')}</th>
                   <th />
                 </tr>
               </thead>
@@ -237,7 +237,7 @@ export function FilesView({
         <Modal
           title={tr('Unlink {file}?', { file: name(confirm.currentFile) })}
           subtitle={tr(
-            'Its tasks stay, with their history, and are marked Removed from file. The file itself is not touched.',
+            'Its tickets stay, with their history, and are marked Removed from file. The file itself is not touched.',
           )}
           onClose={() => setConfirm(null)}
           narrow
@@ -254,7 +254,7 @@ export function FilesView({
                     setSources(await window.worksync.listSources());
                     await reloadTasks();
                     setConfirm(null);
-                    toast(tr('Unlinked. The tasks are kept.'));
+                    toast(tr('Unlinked. The tickets are kept.'));
                   })
                 }
               >
@@ -422,7 +422,7 @@ export function ReviewDialog({
     await reloadTasks();
     setSources(await window.worksync.listSources());
     toast(
-      `Applied: ${r.added} new, ${r.changed} changed, ${r.removed} removed. Each task’s history records it.`,
+      `Applied: ${r.added} new, ${r.changed} changed, ${r.removed} removed. Each ticket’s history records it.`,
     );
     onClose();
   };
@@ -545,7 +545,7 @@ export function ReviewDialog({
       <div className="tabs" role="tablist">
         {(
           [
-            ['added', 'New tasks', review.added.length],
+            ['added', 'New tickets', review.added.length],
             ['changed', 'Changed', review.changed.length],
             ['removed', 'Removed', review.removed.length],
           ] as const
@@ -570,7 +570,7 @@ export function ReviewDialog({
                   checked={add.has(r.row)}
                   disabled={!!joins[r.row]}
                   onChange={() => toggle(add, r.row, setAdd)}
-                  aria-label={tr('Add row {n} as a new task', { n: r.row })}
+                  aria-label={tr('Add row {n} as a new ticket', { n: r.row })}
                 />
                 <div>
                   <span className="tid">
@@ -586,23 +586,25 @@ export function ReviewDialog({
                   <div className="chg">
                     {joins[r.row]
                       ? tr(
-                          'Joined to the task chosen below; it keeps its summary, situation and history',
+                          'Joined to the ticket chosen below; it keeps its summary, situation and history',
                         )
                       : review.deletedRows.includes(r.row)
                         ? tr(
-                            'You deleted this task, but it is still in the file. Tick it to bring it back.',
+                            'You deleted this ticket, but it is still in the file. Tick it to bring it back.',
                           )
                         : `New row · added as Not translated · ${r.status}`}
                   </div>
                   {joinable.length > 0 && (
                     <label className="join-row">
-                      {tr('Same task as')}
+                      {tr('Same ticket as')}
                       <select
                         className="inp sm"
                         value={joins[r.row] ?? ''}
                         onChange={(e) => join(r.row, e.target.value)}
                       >
-                        <option value="">{tr('None, it is a new task')}</option>
+                        <option value="">
+                          {tr('None, it is a new ticket')}
+                        </option>
                         {joinable.map((x) => (
                           <option key={x.taskId} value={x.taskId}>
                             {tr('No.')} {x.customerId || '–'} ·{' '}
@@ -694,7 +696,7 @@ export function ReviewDialog({
               </div>
             ))
           ) : (
-            <p className="muted">{tr('No changed tasks.')}</p>
+            <p className="muted">{tr('No changed tickets.')}</p>
           ))}
         {tab === 'removed' &&
           (review.removed.length ? (
@@ -714,7 +716,7 @@ export function ReviewDialog({
                   </div>
                   <div className="chg">
                     {tr(
-                      'No longer in the file. The task is kept with its history and marked Removed from file.',
+                      'No longer in the file. The ticket is kept with its history and marked Removed from file.',
                     )}
                   </div>
                 </div>
@@ -831,7 +833,7 @@ function ColumnsDialog({
         <>
           <p className="muted step-help">
             {tr(
-              'After saving, the review shows what changes in your tasks, such as new titles. Nothing changes until you apply it. Your summaries, situations and notes stay.',
+              'After saving, the review shows what changes in your tickets, such as new titles. Nothing changes until you apply it. Your summaries, situations and notes stay.',
             )}
           </p>
           <ColumnMap

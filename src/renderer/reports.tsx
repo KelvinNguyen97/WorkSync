@@ -160,7 +160,7 @@ export function ReportDialog({
     setBusy(false);
     if (!r) return;
     const name = r.file.split(/[\\/]/).pop();
-    toast(`Saved ${name} with ${r.tasks} task${r.tasks === 1 ? '' : 's'}.`, {
+    toast(`Saved ${name} with ${r.tasks} ticket${r.tasks === 1 ? '' : 's'}.`, {
       label: 'Open',
       run: () => void attempt(() => window.worksync.openCopy(r.file, false)),
     });
@@ -171,7 +171,7 @@ export function ReportDialog({
     <Modal
       title={tr('Make a report')}
       subtitle={tr(
-        '{name} · built from each task’s summary, situation and dates',
+        '{name} · built from each ticket’s summary, situation and dates',
         { name: project.name },
       )}
       onClose={onClose}
@@ -183,8 +183,8 @@ export function ReportDialog({
           >
             {tr(
               count === 1
-                ? '{n} task in this report'
-                : '{n} tasks in this report',
+                ? '{n} ticket in this report'
+                : '{n} tickets in this report',
               { n: count },
             )}
           </span>
@@ -230,8 +230,8 @@ export function ReportDialog({
           <span>
             {tr(
               o.taskIds.length === 1
-                ? 'Only the {n} task you selected in the Tasks table.'
-                : 'Only the {n} tasks you selected in the Tasks table.',
+                ? 'Only the {n} ticket you selected in the Tickets table.'
+                : 'Only the {n} tickets you selected in the Tickets table.',
               { n: o.taskIds.length },
             )}
           </span>
@@ -300,7 +300,7 @@ export function ReportDialog({
               <Icon name={needingParts ? 'globe' : 'check'} />
               <span>
                 {needingParts
-                  ? `${needingParts} of your notes on ${needing.length} task${needing.length === 1 ? '' : 's'} are only in ${LANGUAGES[project.workingLanguage]}. ${o.language === 'original' ? 'They are marked as not translated.' : 'They show without a translation.'}${translatedNow ? ` ${translatedNow} are translated already.` : ''}`
+                  ? `${needingParts} of your notes on ${needing.length} ticket${needing.length === 1 ? '' : 's'} are only in ${LANGUAGES[project.workingLanguage]}. ${o.language === 'original' ? 'They are marked as not translated.' : 'They show without a translation.'}${translatedNow ? ` ${translatedNow} are translated already.` : ''}`
                   : `Your notes in this report are all translated into ${original}.`}
               </span>
               {needingParts > 0 && (
@@ -337,7 +337,7 @@ export function ReportDialog({
           </div>
         )}
         <fieldset>
-          <legend>{tr('Which tasks')}</legend>
+          <legend>{tr('Which tickets')}</legend>
           <div className="checks">
             {STATUSES.map((s) => (
               <label key={s} className="check">
@@ -392,7 +392,7 @@ export function ReportDialog({
             {tr('Leave a group unticked to include all of it.')}
             {o.kind === 'progress'
               ? tr(
-                  ' The progress report covers open tasks and tasks that changed in the period.',
+                  ' The progress report covers open tickets and tickets that changed in the period.',
                 )
               : ''}
           </span>
@@ -422,7 +422,7 @@ export function ReportDialog({
             </div>
             <span className="hint-text">
               {tr(
-                'Untick what the report should leave out. Each task keeps its number, title and status.',
+                'Untick what the report should leave out. Each ticket keeps its number, title and status.',
               )}
             </span>
           </fieldset>
@@ -598,7 +598,7 @@ export function OwnerTranslate({
         >
           {read.translations.length} {tr('translations found')}
           {read.missing.length
-            ? ` · ${read.missing.length} tasks missing (${read.missing.join(', ')})`
+            ? ` · ${tr('{n} tickets missing', { n: read.missing.length })} (${read.missing.join(', ')})`
             : ''}
           {read.incomplete.length
             ? ` · ${read.incomplete.length} lines empty`

@@ -133,7 +133,7 @@ export function AiDialog({
     const done = [...session.done, session.index];
     const next = session.batches.findIndex((_, k) => !done.includes(k));
     toast(
-      `Filled in ${updated.length} task${updated.length === 1 ? '' : 's'}. You can still edit each one.`,
+      `Filled in ${updated.length} ticket${updated.length === 1 ? '' : 's'}. You can still edit each one.`,
     );
     setAnswer('');
     setRead(null);
@@ -164,7 +164,7 @@ export function AiDialog({
     ) : step === 'copy' ? (
       <>
         <button className="btn" onClick={() => setStep('choose')}>
-          {tr('Choose other tasks')}
+          {tr('Choose other tickets')}
         </button>
         <button className="btn" onClick={() => setStep('paste')}>
           {tr('Paste the answer')}
@@ -195,7 +195,10 @@ export function AiDialog({
             onClick={() => void apply()}
           >
             <Icon name="check" />
-            {tr('Fill in')} {accept.size} task{accept.size === 1 ? '' : 's'}
+            {tr('Fill in')}{' '}
+            {tr(accept.size === 1 ? '{n} ticket' : '{n} tickets', {
+              n: accept.size,
+            })}
           </button>
         )}
       </>
@@ -206,13 +209,13 @@ export function AiDialog({
       title={step === 'paste' ? tr('Paste from AI') : tr('Copy for AI')}
       subtitle={
         step === 'choose'
-          ? `${project.name} · choose the tasks to translate into ${working} and summarize`
+          ? `${project.name} · choose the tickets to translate into ${working} and summarize`
           : step === 'copy'
             ? tr(
                 'Paste this request into the Gemini web app, then paste its answer back here.',
               )
             : tr(
-                'Paste Gemini’s whole answer. WorkSync checks every task against the request.',
+                'Paste Gemini’s whole answer. WorkSync checks every ticket against the request.',
               )
       }
       onClose={onClose}
@@ -243,7 +246,7 @@ export function AiDialog({
                   checked={showAll}
                   onChange={(e) => setShowAll(e.target.checked)}
                 />{' '}
-                {tr('Show translated tasks too')}
+                {tr('Show translated tickets too')}
               </label>
             </span>
           </div>
@@ -280,7 +283,7 @@ export function AiDialog({
             ) : (
               <p className="muted">
                 {tr(
-                  'Every task is translated and summarized. Tick “Show translated tasks too” to do some again.',
+                  'Every ticket is translated and summarized. Tick “Show translated tickets too” to do some again.',
                 )}
               </p>
             )}
@@ -334,7 +337,7 @@ export function AiDialog({
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder={tr(
-                  '=== TASK 012 ===\nTITLE: …\nSUMMARY: …\n=== END ===',
+                  '=== TICKET 012 ===\nTITLE: …\nSUMMARY: …\n=== END ===',
                 )}
                 autoFocus
               />
@@ -362,14 +365,14 @@ export function AiDialog({
               {read.items.length === 0 && (
                 <p className="muted">
                   {tr(
-                    'No tasks in the expected format. Each task should start with a line like === TASK 012 === and end with === END ===. Check that you copied Gemini’s whole answer.',
+                    'No tickets in the expected format. Each ticket should start with a line like === TICKET 012 === and end with === END ===. Check that you copied Gemini’s whole answer.',
                   )}
                 </p>
               )}
               {read.missing.length > 0 && read.items.length > 0 && (
                 <p className="muted">
                   {tr(
-                    'Missing tasks stay as they are. Ask Gemini for them again, or prepare a new request with them.',
+                    'Missing tickets stay as they are. Ask Gemini for them again, or prepare a new request with them.',
                   )}
                 </p>
               )}
@@ -414,7 +417,7 @@ export function AiDialog({
                         ) : (
                           <div className="chg">
                             {tr(
-                              'No title in the answer, so this task is left as it is.',
+                              'No title in the answer, so this ticket is left as it is.',
                             )}
                           </div>
                         )}
@@ -457,7 +460,7 @@ export function AiDialog({
       )}
       {(step === 'copy' || step === 'paste') && !batch && (
         <p className="muted">
-          {tr('Nothing prepared yet. Choose tasks first.')}
+          {tr('Nothing prepared yet. Choose tickets first.')}
         </p>
       )}
     </Modal>
@@ -513,7 +516,7 @@ export function GlossaryDialog({
       !(await confirmDelete({
         title: tr('Delete the term “{term}”?', { term: g.term }),
         text: tr(
-          'Gemini batches and the glossary marks in task text no longer use it.',
+          'Gemini batches and the glossary marks in ticket text no longer use it.',
         ),
         yes: tr('Delete'),
       }))

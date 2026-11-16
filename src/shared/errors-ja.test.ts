@@ -9,10 +9,10 @@ describe('messages from the main process in Japanese', () => {
     expect(
       translateMessage(
         'ja',
-        'No. 012 is already used by another task in this project. Choose another number, or leave it empty for the next one.',
+        'No. 012 is already used by another ticket in this project. Choose another number, or leave it empty for the next one.',
       ),
     ).toBe(
-      'No. 012 はこのプロジェクトの別のタスクが使っています。別の番号にするか、空にして次の番号を使ってください。',
+      'No. 012 はこのプロジェクトの別のチケットが使っています。別の番号にするか、空にして次の番号を使ってください。',
     );
     expect(
       translateMessage(

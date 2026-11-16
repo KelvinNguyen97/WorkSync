@@ -254,7 +254,7 @@ export function NotesView({
                 ? tr('No note matches. Try another filter.')
                 : inProject
                   ? tr(
-                      'No notes in this project yet. Meeting notes and memos that aren’t about one task go well here.',
+                      'No notes in this project yet. Meeting notes and memos that aren’t about one ticket go well here.',
                     )
                   : tr('No notes yet. Choose New note to write one.')}
             </div>

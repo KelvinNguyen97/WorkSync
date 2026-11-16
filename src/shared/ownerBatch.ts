@@ -91,7 +91,7 @@ export function translationMap(
   return map;
 }
 
-const begin = (key: string) => `=== TASK ${key} ===`;
+const begin = (key: string) => `=== TICKET ${key} ===`;
 const END = '=== END ===';
 const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
 
@@ -104,14 +104,14 @@ function instructions(
     `You are helping a project manager report to a customer. Translate the notes below from ${from} into ${to}, in the polite business style used in reports to customers.`,
     '',
     'Rules:',
-    `- Translate every line after its label. Keep task numbers, product names, file names and code as they are.`,
+    `- Translate every line after its label. Keep ticket numbers, product names, file names and code as they are.`,
     '- Keep each answer to one line, like the original.',
     ...(glossary.length
       ? ['- Use the glossary terms below exactly, every time the word appears.']
       : []),
-    '- Answer with every task, in the same order, with the same labels, in exactly this format and nothing else:',
+    '- Answer with every ticket, in the same order, with the same labels, in exactly this format and nothing else:',
     '',
-    begin('<the same key as the task>'),
+    begin('<the same key as the ticket>'),
     '<LABEL>: <the line translated>',
     END,
   ];
@@ -207,7 +207,8 @@ export function readOwnerAnswer(
     .replace(/^```[a-z]*\s*$/gim, '')
     .replace(/\*\*/g, '')
     .replace(/[＝]/g, '=');
-  const re = /^\s*={2,}\s*TASK\s+(.+?)\s*(?:\([^)]*\))?\s*={2,}\s*$/gim;
+  const re =
+    /^\s*={2,}\s*(?:TICKET|TASK)\s+(.+?)\s*(?:\([^)]*\))?\s*={2,}\s*$/gim;
   const starts: { key: string; at: number; end: number }[] = [];
   for (let m = re.exec(text); m; m = re.exec(text))
     starts.push({ key: m[1].trim(), at: m.index, end: m.index + m[0].length });

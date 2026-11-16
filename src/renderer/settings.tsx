@@ -147,7 +147,9 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           </b>{' '}
           and{' '}
           <b>
-            {restoring.tasks} task{restoring.tasks === 1 ? '' : 's'}
+            {tr(restoring.tasks === 1 ? '{n} ticket' : '{n} tickets', {
+              n: restoring.tasks,
+            })}
           </b>
           .
         </p>
@@ -348,7 +350,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               <b>{tr('Log files')}</b>
               <code title={info?.logFolder}>{info?.logFolder ?? '…'}</code>
               <small>
-                {tr('Errors and steps such as backups, never task text.')}
+                {tr('Errors and steps such as backups, never ticket text.')}
               </small>
             </span>
             <button

@@ -52,8 +52,8 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
     (f, r) => `${f} の ${r} 行目と照合しました。`,
   ],
   [
-    /^No longer in (.+)\. The task is kept with its history\.$/,
-    (f) => `${f} にはもうありません。タスクは履歴ごと残します。`,
+    /^No longer in (.+)\. The (?:task|ticket) is kept with its history\.$/,
+    (f) => `${f} にはもうありません。チケットは履歴ごと残します。`,
   ],
   [
     /^Joined by hand to row (\d+) of (.+?)(?:, No\. (.+) → (.+))?\.$/,
@@ -79,9 +79,9 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
   [/^Changed who can resolve: (.+)\.$/, (t) => `解決する人を変更：${t}。`],
   [/^Changed (.+)\.$/, (list) => `変更：${words(list)}。`],
   [
-    /^Set to (\w+) for you\. The task's own level is (\w+)\.$/,
+    /^Set to (\w+) for you\. The (?:task|ticket)'s own level is (\w+)\.$/,
     (a, b) =>
-      `あなたの優先度を ${word(a)} にしました。タスク本来の優先度は ${word(b)} です。`,
+      `あなたの優先度を ${word(a)} にしました。チケット本来の優先度は ${word(b)} です。`,
   ],
   [/^Removed\.$/, () => '解除しました。'],
   [/^Confirmed the situation\.$/, () => '状況を確認しました。'],

@@ -211,7 +211,7 @@ export function LinkWizard({
     await reloadTasks();
     setSources(await window.worksync.listSources());
     toast(
-      `Linked ${baseName(file)}. Added ${r.added} task${r.added === 1 ? '' : 's'}${r.skipped ? `, skipped ${r.skipped} row${r.skipped === 1 ? '' : 's'}` : ''}.`,
+      `Linked ${baseName(file)}. Added ${r.added} ticket${r.added === 1 ? '' : 's'}${r.skipped ? `, skipped ${r.skipped} row${r.skipped === 1 ? '' : 's'}` : ''}.`,
     );
     onLinked();
   };
@@ -264,8 +264,10 @@ export function LinkWizard({
               onClick={() => void link()}
             >
               <Icon name="link" />
-              {tr('Link and import')} {preview?.rowCount ?? 0} task
-              {preview?.rowCount === 1 ? '' : 's'}
+              {tr('Link and import')}{' '}
+              {tr(preview?.rowCount === 1 ? '{n} ticket' : '{n} tickets', {
+                n: preview?.rowCount ?? 0,
+              })}
             </button>
           )}
         </>
@@ -293,7 +295,7 @@ export function LinkWizard({
             <p className="muted step-help">
               {tr('No customer file yet?')}{' '}
               <button type="button" className="linkbtn" onClick={onClose}>
-                {tr('Skip this and add tasks by hand')}
+                {tr('Skip this and add tickets by hand')}
               </button>
               . You can link a file later under Files.
             </p>
@@ -301,7 +303,7 @@ export function LinkWizard({
           {info && (
             <>
               <label>
-                {tr('Sheet with the tasks')}
+                {tr('Sheet with the tickets')}
                 <select
                   className="inp"
                   value={sheet}
@@ -408,7 +410,7 @@ export function LinkWizard({
               <Icon name="alert" />
               <span>
                 {tr(
-                  'Without an ID column, tasks are matched between versions by their exact title, which can make mistakes when a title changes.',
+                  'Without an ID column, tickets are matched between versions by their exact title, which can make mistakes when a title changes.',
                 )}
               </span>
             </div>
@@ -560,7 +562,9 @@ export function LinkWizard({
             />
           </label>
           <p className="muted step-help">
-            {preview.rowCount} task{preview.rowCount === 1 ? '' : 's'}{' '}
+            {tr(preview.rowCount === 1 ? '{n} ticket' : '{n} tickets', {
+              n: preview.rowCount,
+            })}{' '}
             {tr('will be added. The first')} {Math.min(20, preview.rowCount)}{' '}
             {tr('are shown as they will appear.')}
           </p>
@@ -682,7 +686,7 @@ export function ColumnMap({
               setColumns({ ...columns, title: columns.customerId })
             }
             title={tr(
-              'Tasks are shown and found by their ID, as you call them in meetings',
+              'Tickets are shown and found by their ID, as you call them in meetings',
             )}
           >
             {tr('Use the ID as the title')}
@@ -692,7 +696,7 @@ export function ColumnMap({
         columns.title === columns.customerId && (
           <p className="muted step-help">
             {tr(
-              'The title is the ID. Tasks show and are found by their ID; the other columns are kept as fields from the file.',
+              'The title is the ID. Tickets show and are found by their ID; the other columns are kept as fields from the file.',
             )}
           </p>
         )}

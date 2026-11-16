@@ -1002,7 +1002,7 @@ const handlers: Omit<WorkSyncApi, 'onSourcesChanged' | 'onOpen'> = {
         .listTasks()
         .some((x) => x.links.some((l) => l.target === t))
     )
-      throw new Error('This link is not saved on a task.');
+      throw new Error('This link is not saved on a ticket.');
     if (kind === 'web') return shell.openExternal(t);
     // A program is never started from a link; its folder is shown instead.
     if (

@@ -147,8 +147,8 @@ export class Publisher {
       }),
     };
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Tasks');
-    wb.Props = { Title: `${project.name} tasks`, Author: 'WorkSync' };
+    XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
+    wb.Props = { Title: `${project.name} tickets`, Author: 'WorkSync' };
     const workbook = XLSX.write(wb, {
       type: 'buffer',
       bookType: 'xlsx',

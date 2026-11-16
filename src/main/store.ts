@@ -431,7 +431,7 @@ export class Store {
     const r = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as
       | Row
       | undefined;
-    if (!r) throw new Error(`Task ${id} not found`);
+    if (!r) throw new Error(`Ticket ${id} not found`);
     return this.toTask(r);
   }
 
@@ -455,7 +455,7 @@ export class Store {
 
   private clean(input: TaskInput): TaskInput {
     const title = input.titleOriginal.trim();
-    if (!title) throw new Error('A task needs a title.');
+    if (!title) throw new Error('A ticket needs a title.');
     const labels = [
       ...new Set(input.labels.map((l) => l.trim()).filter(Boolean)),
     ];
@@ -486,7 +486,7 @@ export class Store {
       .get(projectId, n, self ?? null) as Row | undefined;
     if (other)
       throw new Error(
-        `No. ${n} is already used by another task in this project. Choose another number, or leave it empty for the next one.`,
+        `No. ${n} is already used by another ticket in this project. Choose another number, or leave it empty for the next one.`,
       );
   }
 
@@ -731,7 +731,7 @@ export class Store {
         id,
         'Priority override',
         next
-          ? `Set to ${LEVEL_NAME[next]} for you. The task's own level is ${LEVEL_NAME[t.priority]}.`
+          ? `Set to ${LEVEL_NAME[next]} for you. The ticket's own level is ${LEVEL_NAME[t.priority]}.`
           : 'Removed.',
       );
     });
@@ -886,7 +886,9 @@ export class Store {
     const t = this.getTask(id);
     const s = t.situation;
     if (!s.asOf)
-      throw new Error('This task has no situation yet. Use Update situation.');
+      throw new Error(
+        'This ticket has no situation yet. Use Update situation.',
+      );
     const next = {
       handledBy: input.handledBy?.trim() ?? s.handledBy,
       doingNow: input.doingNow?.trim() ?? s.doingNow,

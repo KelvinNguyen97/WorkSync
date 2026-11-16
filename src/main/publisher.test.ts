@@ -147,7 +147,7 @@ describe('Publisher', () => {
     const wb = XLSX.read(fs.readFileSync(path.join(folder, EXPORT_FILE)));
     expect(
       XLSX.utils
-        .sheet_to_json<string[]>(wb.Sheets.Tasks, { header: 1 })[1]
+        .sheet_to_json<string[]>(wb.Sheets.Tickets, { header: 1 })[1]
         .slice(0, 4),
     ).toEqual([
       '012',

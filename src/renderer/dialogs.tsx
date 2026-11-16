@@ -214,10 +214,10 @@ export function ProjectDialog({
               checked={showNumbers}
               onChange={(e) => setShowNumbers(e.target.checked)}
             />{' '}
-            {tr('Show task numbers (No.) in the views')}
+            {tr('Show ticket numbers (No.) in the views')}
             <span className="hint-text" style={{ display: 'block' }}>
               {tr(
-                'Each task keeps its number as its identity, and search still finds it. Reviews, copies and reports always show it.',
+                'Each ticket keeps its number as its identity, and search still finds it. Reviews, copies and reports always show it.',
               )}
             </span>
           </label>
@@ -229,7 +229,7 @@ export function ProjectDialog({
               <b>{tr('Delete this project')}</b>
               <small>
                 {tr(
-                  'Removes its tasks, history, glossary and people from WorkSync. Files on your PC and the shared drive stay.',
+                  'Removes its tickets, history, glossary and people from WorkSync. Files on your PC and the shared drive stay.',
                 )}
               </small>
             </span>
@@ -274,7 +274,7 @@ function DeleteProject({
     if (!r) return;
     await reloadAll();
     toast(
-      `Deleted ${project.name} and its ${r.tasks} task${r.tasks === 1 ? '' : 's'}. A backup was made first; restore it from Settings if you need it back.`,
+      `Deleted ${project.name} and its ${r.tasks} ticket${r.tasks === 1 ? '' : 's'}. A backup was made first; restore it from Settings if you need it back.`,
     );
     onDeleted();
   };
@@ -309,11 +309,9 @@ function DeleteProject({
       >
         <p>
           {tr('This deletes')}{' '}
-          <b>
-            {tasks} task{tasks === 1 ? '' : 's'}
-          </b>{' '}
+          <b>{tr(tasks === 1 ? '{n} ticket' : '{n} tickets', { n: tasks })}</b>{' '}
           {tr(
-            'with their summaries, situations, history and notes, and the project’s glossary, people, linked files and Tasks table settings.',
+            'with their summaries, situations, history and notes, and the project’s glossary, people, linked files and Tickets table settings.',
           )}
         </p>
         <p className="muted">
@@ -432,7 +430,7 @@ export function TaskDialog({
 
   return (
     <Modal
-      title={task ? tr('Edit {name}', { name: label(task) }) : tr('New task')}
+      title={task ? tr('Edit {name}', { name: label(task) }) : tr('New ticket')}
       subtitle={
         task
           ? p.name
@@ -449,7 +447,7 @@ export function TaskDialog({
           </button>
           <button className="btn primary" form="taskForm" type="submit">
             <Icon name="check" />
-            {task ? tr('Save') : tr('Add task')}
+            {task ? tr('Save') : tr('Add ticket')}
           </button>
         </>
       }
@@ -466,7 +464,7 @@ export function TaskDialog({
               title={
                 fromFile
                   ? tr(
-                      'From the customer’s file, which matches the task by it. It changes when the file does.',
+                      'From the customer’s file, which matches the ticket by it. It changes when the file does.',
                     )
                   : undefined
               }
@@ -531,7 +529,7 @@ export function TaskDialog({
             rows={2}
             value={v.summary}
             onChange={set('summary')}
-            placeholder={tr('What is this task really about?')}
+            placeholder={tr('What is this ticket really about?')}
           />
         </label>
         <div className="three">
@@ -670,7 +668,7 @@ export function TaskDialog({
                 className="inp"
                 value={v.nextAction}
                 onChange={set('nextAction')}
-                placeholder={tr('Your own to-do for this task')}
+                placeholder={tr('Your own to-do for this ticket')}
               />
             </label>
             <label>
@@ -715,14 +713,14 @@ const VIEW_INFO: Record<
   focus: {
     name: 'Focus',
     icon: 'focus',
-    desc: 'Tasks that need attention now. Always on.',
+    desc: 'Tickets that need attention now. Always on.',
   },
   board: {
     name: 'Board',
     icon: 'board',
     desc: 'Columns by status. Drag to change a status.',
   },
-  tasks: { name: 'Tasks', icon: 'menu', desc: 'A table of every task.' },
+  tasks: { name: 'Tickets', icon: 'menu', desc: 'A table of every ticket.' },
   timeline: {
     name: 'Timeline',
     icon: 'timeline',
@@ -731,7 +729,7 @@ const VIEW_INFO: Record<
   calendar: {
     name: 'Calendar',
     icon: 'calendar',
-    desc: 'Tasks on their due dates.',
+    desc: 'Tickets on their due dates.',
   },
   dashboard: {
     name: 'Dashboard',
@@ -829,7 +827,7 @@ export function ViewsDialog({
         <Icon name="shield" />
         <span>
           {tr(
-            'Turning a view off only hides it from this project. Tasks, dates, situations and history stay exactly as they are.',
+            'Turning a view off only hides it from this project. Tickets, dates, situations and history stay exactly as they are.',
           )}
         </span>
       </div>
@@ -863,7 +861,7 @@ export function ConfirmDelete({
     <Modal
       title={tr('Delete {task}?', { task: label(task) })}
       subtitle={tr(
-        'The task, its situation updates and its history are deleted. This cannot be undone.',
+        'The ticket, its situation updates and its history are deleted. This cannot be undone.',
       )}
       onClose={onClose}
       narrow
@@ -874,7 +872,7 @@ export function ConfirmDelete({
           </button>
           <button className="btn danger" onClick={() => void del()}>
             <Icon name="trash" />
-            {tr('Delete task')}
+            {tr('Delete ticket')}
           </button>
         </>
       }
@@ -928,7 +926,7 @@ function ExportCopy({ project }: { project: Project }) {
         <b>{tr('Give a copy to someone')}</b>
         <small>
           {tr(
-            'A .worksync file with the tasks, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.',
+            'A .worksync file with the tickets, situations, history, glossary, people and Board. To bring their changes back, they export their copy and you import it to merge.',
           )}
         </small>
         <label className="check" style={{ marginTop: 6 }}>

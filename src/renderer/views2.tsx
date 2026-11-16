@@ -163,7 +163,7 @@ export function TimelineView({
           >
             <div className="tl-head">
               <div className="tl-row">
-                <div className="tl-label">{tr('Task')}</div>
+                <div className="tl-label">{tr('Ticket')}</div>
                 <div className="tl-weeks">{head}</div>
               </div>
               {zoom !== 'months' && (
@@ -267,7 +267,7 @@ export function TimelineView({
         </div>
       ) : (
         <div className="empty">
-          {tr('No tasks with dates')}
+          {tr('No tickets with dates')}
           {props.query ? tr(' match the search') : tr(' yet')}. Add planned
           dates to a task to see it here.
         </div>
@@ -301,7 +301,9 @@ export function TimelineView({
       {undated.length > 0 && (
         <details className="skipped undated">
           <summary>
-            {undated.length} task{undated.length === 1 ? '' : 's'}{' '}
+            {tr(undated.length === 1 ? '{n} ticket' : '{n} tickets', {
+              n: undated.length,
+            })}{' '}
             {tr('without dates')}
           </summary>
           <ul>
@@ -448,7 +450,7 @@ export function CalendarView({
     <>
       {props.header(
         tr('Calendar'),
-        tr('{name} · tasks on their due date · {label}', {
+        tr('{name} · tickets on their due date · {label}', {
           name: p.name,
           label,
         }),
@@ -668,7 +670,7 @@ export function DashboardView({
       )}
       <div className="tiles">
         {tile(
-          'Open tasks',
+          'Open tickets',
           open.length,
           tr('{n} done or cancelled', { n: all.length - open.length }),
           'focus',
@@ -683,7 +685,7 @@ export function DashboardView({
         {tile(
           'Open difficulties',
           diffCount,
-          tr(withDiff.length === 1 ? 'on {n} task' : 'on {n} tasks', {
+          tr(withDiff.length === 1 ? 'on {n} ticket' : 'on {n} tickets', {
             n: withDiff.length,
           }),
           'alert',
@@ -692,7 +694,7 @@ export function DashboardView({
       <div className="panels">
         <section className="panel">
           <div className="panel-h">
-            <h2>{tr('Tasks by status')}</h2>
+            <h2>{tr('Tickets by status')}</h2>
             <button
               className="btn sm"
               aria-pressed={asTable}
@@ -742,7 +744,7 @@ export function DashboardView({
               </div>
             </>
           ) : (
-            <div className="hint">{tr('No tasks yet.')}</div>
+            <div className="hint">{tr('No tickets yet.')}</div>
           )}
           {asTable && (
             <div className="tbl-wrap">
@@ -750,7 +752,7 @@ export function DashboardView({
                 <thead>
                   <tr>
                     <th>{tr('Status')}</th>
-                    <th className="num">{tr('Tasks')}</th>
+                    <th className="num">{tr('Tickets')}</th>
                     <th className="num">{tr('Share')}</th>
                   </tr>
                 </thead>
@@ -769,7 +771,7 @@ export function DashboardView({
             </div>
           )}
           <div className="panel-h" style={{ marginTop: 22 }}>
-            <h2>{tr('Open tasks by priority')}</h2>
+            <h2>{tr('Open tickets by priority')}</h2>
           </div>
           <div className="pbars">
             {levelCounts.map((x) => (
@@ -781,9 +783,12 @@ export function DashboardView({
                       width: `${(x.n / maxLevel) * 78}%`,
                       background: LEVEL_COLOR[x.k],
                     }}
-                    title={tr(x.n === 1 ? '{n} open task' : '{n} open tasks', {
-                      n: x.n,
-                    })}
+                    title={tr(
+                      x.n === 1 ? '{n} open ticket' : '{n} open tickets',
+                      {
+                        n: x.n,
+                      },
+                    )}
                   />
                   <b>{x.n}</b>
                 </span>

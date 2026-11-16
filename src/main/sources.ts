@@ -266,7 +266,7 @@ export class Sources {
       );
     }
     if (!read.rows.length)
-      throw new Error('No task rows were found with this file format.');
+      throw new Error('No ticket rows were found with this file format.');
     // The same sheet of the same file twice would make every task twice (spec 04 allows
     // another sheet of the same file, which is another source).
     const same = (a: string, b: string) => {
@@ -529,7 +529,7 @@ export class Sources {
     const joins = new Map((sel.join ?? []).map((j) => [j.row, j.taskId]));
     const joined = new Set(joins.values());
     if (joined.size !== joins.size)
-      throw new Error('Join each task to one row only.');
+      throw new Error('Join each ticket to one row only.');
     this.tx(() => {
       for (const r of c.added) {
         const joinTo = joins.get(r.row);
@@ -542,7 +542,7 @@ export class Sources {
               c.removed.some((x) => taskOf.get(x)!.id === t.id));
           if (!before || !t || !free)
             throw new Error(
-              'A row can only be joined to a task of this file that is no longer in it.',
+              'A row can only be joined to a ticket of this file that is no longer in it.',
             );
           // The file's values, except fields the owner changed and has not written yet.
           const changes = rowChanges(before, r).filter(
@@ -609,7 +609,7 @@ export class Sources {
         this.store.log(
           t.id,
           'Import',
-          `No longer in ${fileName}. The task is kept with its history.`,
+          `No longer in ${fileName}. The ticket is kept with its history.`,
         );
         removed++;
       }

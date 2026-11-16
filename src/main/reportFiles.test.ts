@@ -164,7 +164,7 @@ describe('report files', () => {
         opts({ format: 'xlsx', language: 'both' }),
         '2026-11-03',
       ),
-      'Tasks',
+      'Tickets',
     );
     const h = headRow(ws);
     const header = ws.getRow(h).values as string[];
@@ -196,7 +196,7 @@ describe('report files', () => {
     );
     expect(text).toContain('現状 Doing now');
     expect(text).toContain('今後の予定 Next step');
-    expect(text).toContain('Tasks (現状・今後の予定)');
+    expect(text).toContain('Tickets (現状・今後の予定)');
     for (const s of [
       '課題 Difficulties',
       'No access to staging logs',
@@ -221,7 +221,7 @@ describe('report files', () => {
       opts({ format: 'xlsx', parts }),
       '2026-11-03',
     );
-    const ws = await sheet(book, 'Tasks');
+    const ws = await sheet(book, 'Tickets');
     const header = (ws.getRow(headRow(ws)).values as string[]).slice(1);
     expect(header).toEqual([
       'No.',
@@ -246,7 +246,7 @@ describe('report files', () => {
         }),
         '2026-11-03',
       ),
-      'Tasks',
+      'Tickets',
     );
     expect((ws.getRow(headRow(ws)).values as string[]).slice(1)).toEqual([
       'No.',
@@ -264,7 +264,7 @@ describe('report files', () => {
         }),
         '2026-11-03',
       ),
-      'Tasks',
+      'Tickets',
     );
     expect(withNotes.getRow(headRow(withNotes) + 1).getCell(2).value).toBe(
       'Private note',

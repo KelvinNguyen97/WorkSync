@@ -78,9 +78,9 @@ const tr = (h: ReportHead, en: string, ja: string) => (inJapanese(h) ? ja : en);
 
 const REPORT_NAME_JA: Record<ReportOptions['kind'], string> = {
   progress: '進捗報告書',
-  taskList: 'タスク一覧',
+  taskList: 'チケット一覧',
   schedule: 'スケジュール',
-  briefs: 'タスク概要',
+  briefs: 'チケット概要',
 };
 const LEVEL_JA: Record<Level, string> = {
   U: '至急',
@@ -243,7 +243,7 @@ async function xlsxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
       s.getColumn(1).width = 26;
       s.getColumn(2).width = 60;
       const lines: [string, number][] = [
-        ['Open tasks', ov.open],
+        ['Open tickets', ov.open],
         ['Finished in the period', ov.finished],
         ['Started in the period', ov.started],
         ['Overdue', ov.overdue],
@@ -259,7 +259,7 @@ async function xlsxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
       }
       printSetup(s);
     }
-    const t = wb.addWorksheet('Tasks');
+    const t = wb.addWorksheet('Tickets');
     const start = xlsxHead(t, h, title);
     type Col = {
       label: string;
@@ -341,7 +341,7 @@ async function xlsxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
     const cols = COLUMNS.filter(
       (c) => keys.includes(c.key) && (c.key !== 'notes' || o.includeNotes),
     );
-    const s = wb.addWorksheet('Tasks');
+    const s = wb.addWorksheet('Tickets');
     const start = xlsxHead(s, h, title);
     xlsxTable(
       s,
@@ -740,11 +740,11 @@ async function docxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
         para('Overview of the period', { heading: HeadingLevel.HEADING_2 }),
       );
       const facts = [
-        `${ov.open} open task${ov.open === 1 ? '' : 's'}, ${ov.finished} finished and ${ov.started} started in the period.`,
+        `${ov.open} open ticket${ov.open === 1 ? '' : 's'}, ${ov.finished} finished and ${ov.started} started in the period.`,
         hasPart(o, 'difficulties')
           ? `${ov.overdue} overdue, and ${ov.difficulties} open difficult${ov.difficulties === 1 ? 'y' : 'ies'}.`
           : `${ov.overdue} overdue.`,
-        `By status: ${ov.byStatus.map((x) => `${x.status} ${x.count}`).join(', ') || 'no tasks'}.`,
+        `By status: ${ov.byStatus.map((x) => `${x.status} ${x.count}`).join(', ') || 'no tickets'}.`,
       ];
       for (const f of facts)
         children.push(
@@ -766,7 +766,7 @@ async function docxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
       .filter(([k]) => hasPart(o, k))
       .map(([, n]) => n);
     children.push(
-      para(ja && named.length ? `Tasks (${named.join('・')})` : 'Tasks', {
+      para(ja && named.length ? `Tickets (${named.join('・')})` : 'Tickets', {
         heading: HeadingLevel.HEADING_2,
       }),
     );
@@ -796,7 +796,7 @@ async function docxReport(h: ReportHead, tasks: Task[]): Promise<Buffer> {
   }
   if (!tasks.length)
     children.push(
-      para('No tasks match the chosen scope.', { color: '6B7280' }),
+      para('No tickets match the chosen scope.', { color: '6B7280' }),
     );
   const doc = new Document({
     creator: 'WorkSync',

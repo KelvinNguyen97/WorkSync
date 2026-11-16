@@ -98,8 +98,8 @@ export const ERRORS_JA: [string, string][] = [
     '{0} にシート「{1}」がありません。同じお客様ファイルを選んでください。',
   ],
   [
-    'This link is not saved on a task.',
-    'このリンクはタスクに保存されていません。',
+    'This link is not saved on a ticket.',
+    'このリンクはチケットに保存されていません。',
   ],
   [
     '{0} was not found. The shared folder may not be connected.',
@@ -123,6 +123,7 @@ export const ERRORS_JA: [string, string][] = [
     'このタスクが見つかりません。完了した可能性があります。',
   ],
   ['A task needs a title.', 'タスクにはタイトルが必要です。'],
+  ['A ticket needs a title.', 'チケットにはタイトルが必要です。'],
   [
     'The status must be Todo or On-going.',
     '状態は「未着手」か「対応中」にしてください。',
@@ -172,8 +173,8 @@ export const ERRORS_JA: [string, string][] = [
     '意味が決まっていない値があります: {0}。先に対応を決めてください。',
   ],
   [
-    'No task rows were found with this file format.',
-    'このファイル形式ではタスクの行が見つかりませんでした。',
+    'No ticket rows were found with this file format.',
+    'このファイル形式ではチケットの行が見つかりませんでした。',
   ],
   [
     'The sheet “{0}” of {1} is already linked to this project. Review its changes under Files instead, or link another sheet.',
@@ -181,12 +182,12 @@ export const ERRORS_JA: [string, string][] = [
   ],
   ['Map the new values first.', '先に新しい値の対応を決めてください。'],
   [
-    'Join each task to one row only.',
-    '各タスクは 1 つの行だけにつなげてください。',
+    'Join each ticket to one row only.',
+    '各チケットは 1 つの行だけにつなげてください。',
   ],
   [
-    'A row can only be joined to a task of this file that is no longer in it.',
-    '行をつなげられるのは、このファイルから消えたタスクだけです。',
+    'A row can only be joined to a ticket of this file that is no longer in it.',
+    '行をつなげられるのは、このファイルから消えたチケットだけです。',
   ],
   [
     'Due soon must be between 1 and 60 days.',
@@ -212,7 +213,7 @@ export const ERRORS_JA: [string, string][] = [
   ],
   ['That Board column no longer exists.', 'そのボードの列はもうありません。'],
   ['Set the status to {0} first.', '先に状態を {0} にしてください。'],
-  ['Task {0} not found', 'タスク {0} が見つかりません'],
+  ['Ticket {0} not found', 'チケット {0} が見つかりません'],
   [
     'The planned end is before the planned start.',
     '予定終了が予定開始より前です。',
@@ -222,8 +223,8 @@ export const ERRORS_JA: [string, string][] = [
     '実績終了が実績開始より前です。',
   ],
   [
-    'No. {0} is already used by another task in this project. Choose another number, or leave it empty for the next one.',
-    'No. {0} はこのプロジェクトの別のタスクが使っています。別の番号にするか、空にして次の番号を使ってください。',
+    'No. {0} is already used by another ticket in this project. Choose another number, or leave it empty for the next one.',
+    'No. {0} はこのプロジェクトの別のチケットが使っています。別の番号にするか、空にして次の番号を使ってください。',
   ],
   [
     'The No. and description come from the customer’s file. They change when the file does.',
@@ -234,8 +235,8 @@ export const ERRORS_JA: [string, string][] = [
     '{0} はウェブアドレスでもファイルパスでもありません。https://… や \\\\server\\share\\spec.xlsx のように入力してください。',
   ],
   [
-    'This task has no situation yet. Use Update situation.',
-    'このタスクにはまだ状況がありません。「状況を更新」を使ってください。',
+    'This ticket has no situation yet. Use Update situation.',
+    'このチケットにはまだ状況がありません。「状況を更新」を使ってください。',
   ],
   ['This difficulty was not found.', 'この課題が見つかりません。'],
   [
@@ -301,20 +302,20 @@ export const ERRORS_JA: [string, string][] = [
 
   // Toasts built in the screens, translated as they are shown.
   [
-    'Linked {0}. Added {1} task{2}, skipped {3} row{4}.',
-    '{0} をリンクしました。{1} 件のタスクを追加し、{3} 行を飛ばしました。',
+    'Linked {0}. Added {1} ticket{2}, skipped {3} row{4}.',
+    '{0} をリンクしました。{1} 件のチケットを追加し、{3} 行を飛ばしました。',
   ],
   [
-    'Linked {0}. Added {1} task{2}.',
-    '{0} をリンクしました。{1} 件のタスクを追加しました。',
+    'Linked {0}. Added {1} ticket{2}.',
+    '{0} をリンクしました。{1} 件のチケットを追加しました。',
   ],
   [
     'Request {0} of {1} copied. Paste it into Gemini.',
     '依頼文 {0}/{1} をコピーしました。Gemini に貼り付けてください。',
   ],
   [
-    'Filled in {0} task{1}. You can still edit each one.',
-    '{0} 件のタスクに反映しました。それぞれ後から編集できます。',
+    'Filled in {0} ticket{1}. You can still edit each one.',
+    '{0} 件のチケットに反映しました。それぞれ後から編集できます。',
   ],
   ['Added {0} to the glossary.', '{0} を用語集に追加しました。'],
   [
@@ -323,12 +324,12 @@ export const ERRORS_JA: [string, string][] = [
   ],
   ['Added {0} to the Catalog.', '{0} をカタログに追加しました。'],
   [
-    'Deleted {0} and its {1} task{2}. A backup was made first; restore it from Settings if you need it back.',
-    '{0} と {1} 件のタスクを削除しました。先にバックアップしたので、必要なら設定から復元できます。',
+    'Deleted {0} and its {1} ticket{2}. A backup was made first; restore it from Settings if you need it back.',
+    '{0} と {1} 件のチケットを削除しました。先にバックアップしたので、必要なら設定から復元できます。',
   ],
   [
-    'Deleted {0}. Its tasks are back in {1}.',
-    '{0} を削除しました。タスクは「{1}」に戻りました。',
+    'Deleted {0}. Its tickets are back in {1}.',
+    '{0} を削除しました。チケットは「{1}」に戻りました。',
   ],
   ['Deleted {0}.', '{0} を削除しました。'],
   [
@@ -336,10 +337,10 @@ export const ERRORS_JA: [string, string][] = [
     '{0} を保存しました。相手に渡し、「プロジェクトを取り込む」で取り込んでもらってください。',
   ],
   [
-    'Applied: {0} new, {1} changed, {2} removed. Each task’s history records it.',
-    '反映しました: 新規 {0}、変更 {1}、削除 {2}。各タスクの履歴に記録しています。',
+    'Applied: {0} new, {1} changed, {2} removed. Each ticket’s history records it.',
+    '反映しました: 新規 {0}、変更 {1}、削除 {2}。各チケットの履歴に記録しています。',
   ],
-  ['Saved {0} with {1} task{2}.', '{0} を保存しました（タスク {1} 件）。'],
+  ['Saved {0} with {1} ticket{2}.', '{0} を保存しました（チケット {1} 件）。'],
   [
     'Request {0} of {1} copied. Paste it into Gemini, then paste the answer here.',
     '依頼文 {0}/{1} をコピーしました。Gemini に貼り付け、回答をここに貼り付けてください。',
