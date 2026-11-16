@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  nextWorkStatus,
+  startedStatus,
+  tickedStatus,
   parseQuickAdd,
   readQuickDate,
   tagOf,
@@ -84,9 +85,11 @@ describe('dates and status', () => {
     expect(readQuickDate('11/01', '2026-11-16')).toBe('2026-11-01');
     expect(readQuickDate('13/01', '2026-11-16')).toBeNull();
   });
-  it('moves on To do → Doing → Done → To do', () => {
-    expect(nextWorkStatus('todo')).toBe('doing');
-    expect(nextWorkStatus('doing')).toBe('done');
-    expect(nextWorkStatus('done')).toBe('todo');
+  it('ticks a task Done in one click, and the word switches To do and Doing', () => {
+    expect(tickedStatus('todo')).toBe('done');
+    expect(tickedStatus('doing')).toBe('done');
+    expect(tickedStatus('done')).toBe('todo');
+    expect(startedStatus('todo')).toBe('doing');
+    expect(startedStatus('doing')).toBe('todo');
   });
 });

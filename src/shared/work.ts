@@ -16,9 +16,13 @@ export const WORK_STATUS_NAME: Record<WorkStatus, string> = {
   done: 'Done',
 };
 
-/** The next status when the tick is pressed: To do → Doing → Done → To do. */
-export const nextWorkStatus = (s: WorkStatus): WorkStatus =>
-  s === 'todo' ? 'doing' : s === 'doing' ? 'done' : 'todo';
+/** The tick: one click marks a task Done; on a Done task it opens it again. */
+export const tickedStatus = (s: WorkStatus): WorkStatus =>
+  s === 'done' ? 'todo' : 'done';
+
+/** The status word beside the tick switches To do ↔ Doing. */
+export const startedStatus = (s: WorkStatus): WorkStatus =>
+  s === 'doing' ? 'todo' : 'doing';
 
 export interface ProjectTask {
   id: string;

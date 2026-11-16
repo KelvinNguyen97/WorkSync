@@ -10,7 +10,8 @@ import { daysBetween, shortDate, type Task } from '../shared/model';
 import {
   isLate,
   memberLabel,
-  nextWorkStatus,
+  startedStatus,
+  tickedStatus,
   parseQuickAdd,
   WORK_STATUS_NAME,
   type Member,
@@ -127,13 +128,14 @@ function Check({ t, onNext }: { t: ProjectTask; onNext: () => void }) {
   return (
     <button
       className={`wk-check ${t.status}`}
-      aria-label={tr('Move on: {title} ({status})', {
-        title: t.title,
-        status: tr(WORK_STATUS_NAME[t.status]),
-      })}
-      title={tr('{status}. Press to move it on: To do → Doing → Done.', {
-        status: tr(WORK_STATUS_NAME[t.status]),
-      })}
+      role="checkbox"
+      aria-checked={t.status === 'done'}
+      aria-label={tr('Done: {title}', { title: t.title })}
+      title={
+        t.status === 'done'
+          ? tr('Done. Click to open it again.')
+          : tr('Click to mark it Done.')
+      }
       onClick={(e) => {
         e.stopPropagation();
         onNext();
@@ -188,8 +190,7 @@ export function TaskRow({
 }) {
   const { attempt, today, toast } = useApp();
   const due = dueText(t.dueDate, today, t.status === 'done');
-  const next = async () => {
-    const status = nextWorkStatus(t.status);
+  const set = async (status: WorkStatus) => {
     const u = await attempt(() =>
       window.worksync.saveProjectTask(t.projectId, { status }, t.id),
     );
@@ -215,8 +216,25 @@ export function TaskRow({
       className={`wk-row ${t.status} ${isLate(t, today) ? 'late' : ''}`}
       onClick={onOpen}
     >
-      <Check t={t} onNext={() => void next()} />
-      <span className="wk-st">{tr(WORK_STATUS_NAME[t.status])}</span>
+      <Check t={t} onNext={() => void set(tickedStatus(t.status))} />
+      {t.status === 'done' ? (
+        <span className="wk-st">{tr('Done')}</span>
+      ) : (
+        <button
+          className="wk-st"
+          title={
+            t.status === 'doing'
+              ? tr('Doing. Click to set it back to To do.')
+              : tr('To do. Click when you start it (Doing).')
+          }
+          onClick={(e) => {
+            e.stopPropagation();
+            void set(startedStatus(t.status));
+          }}
+        >
+          {tr(WORK_STATUS_NAME[t.status])}
+        </button>
+      )}
       <button
         className="wk-title"
         onClick={(e) => {

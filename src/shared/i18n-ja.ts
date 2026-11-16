@@ -1578,7 +1578,6 @@ export const JA: Record<string, string> = {
   'Mark as decision': '決定にする',
   'Mark as resolved': '解決にする',
   Members: 'メンバー',
-  'Move on: {title} ({status})': '進める: {title}（{status}）',
   'Move to project': 'プロジェクトへ移す',
   'Move to project…': 'プロジェクトへ移す…',
   'Moved “{title}” to {project}. It is assigned to you.':
@@ -1670,7 +1669,6 @@ export const JA: Record<string, string> = {
   '{n} new since the last summary': '前回の要約より後 {n} 件',
   '{n} task': 'タスク {n} 件',
   '{n} tasks': 'タスク {n} 件',
-  '{status}. Press to move it on.': '{status}。押すと次へ進みます。',
   'For a ticket': 'チケットあり',
   Linked: 'リンク済み',
   'New since summary': '要約より後',
@@ -1819,8 +1817,13 @@ export const JA: Record<string, string> = {
   'On. Click to turn it off.': 'オン。クリックでオフにします。',
   'Off. Click to turn it on.': 'オフ。クリックでオンにします。',
   'Password (8+ characters)': 'パスワード（8 文字以上）',
-  '{status}. Press to move it on: To do → Doing → Done.':
-    '{status}。押すと次へ: 未着手 → 対応中 → 完了。',
   'Progress ticket': '進捗チケット',
   'This discussion': 'このディスカッション',
+  'Done: {title}': '完了: {title}',
+  'Done. Click to open it again.': '完了。クリックで未完了に戻します。',
+  'Click to mark it Done.': 'クリックで完了にします。',
+  'Doing. Click to set it back to To do.':
+    '対応中。クリックで未着手に戻します。',
+  'To do. Click when you start it (Doing).':
+    '未着手。始めたらクリック（対応中）。',
 };
