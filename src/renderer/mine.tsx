@@ -499,6 +499,11 @@ function MyTaskEditor({
           className="switch"
           role="switch"
           aria-checked={v.reminders}
+          title={
+            v.reminders
+              ? tr('On. Click to turn it off.')
+              : tr('Off. Click to turn it on.')
+          }
           aria-label={tr('Remind me')}
           onClick={() => setV({ ...v, reminders: !v.reminders })}
         >

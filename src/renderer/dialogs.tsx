@@ -157,7 +157,7 @@ export function ProjectDialog({
                     )
                   }
                 />
-                {LANGUAGES[c]}
+                {tr(LANGUAGES[c])}
               </label>
             ))}
           </div>
@@ -172,7 +172,7 @@ export function ProjectDialog({
             >
               {CODES.map((c) => (
                 <option key={c} value={c}>
-                  {LANGUAGES[c]}
+                  {tr(LANGUAGES[c])}
                 </option>
               ))}
             </select>
@@ -490,7 +490,7 @@ export function TaskDialog({
                 </option>
                 {langOptions.map((l) => (
                   <option key={l} value={l}>
-                    {LANGUAGES[l]}
+                    {tr(LANGUAGES[l])}
                   </option>
                 ))}
               </select>
@@ -824,6 +824,17 @@ export function ViewsDialog({
                 role="switch"
                 aria-checked={on}
                 aria-label={tr('Show {view}', { view: tr(VIEW_INFO[k].name) })}
+                title={
+                  k === 'focus'
+                    ? tr('Focus is always shown')
+                    : on
+                      ? tr('Shown. Click to hide {view}; its data is kept.', {
+                          view: tr(VIEW_INFO[k].name),
+                        })
+                      : tr('Hidden. Click to show {view}.', {
+                          view: tr(VIEW_INFO[k].name),
+                        })
+                }
                 disabled={k === 'focus'}
                 onClick={() => void toggle(k)}
               >

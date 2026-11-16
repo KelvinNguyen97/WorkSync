@@ -811,7 +811,12 @@ function Shell({
           <div className="side-foot">
             <span>
               <Icon name="lock" />
-              {tr('Data stays on this PC')}
+              <span
+                className="side-foot-text"
+                title={tr('Data stays on this PC')}
+              >
+                {tr('Data stays on this PC')}
+              </span>
             </span>
             <span className="path" title={dataFolder}>
               <Icon name="folder" />
@@ -824,6 +829,7 @@ function Shell({
             <button
               className="icon-btn menu-btn"
               aria-label={tr('Open the sidebar')}
+              title={tr('Open the sidebar')}
               onClick={() => setSideOpen(true)}
             >
               <Icon name="menu" />

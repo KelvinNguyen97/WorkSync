@@ -25,7 +25,7 @@ export const JA: Record<string, string> = {
     '受け取った .worksync ファイルからプロジェクトを追加します',
   'Import a project': 'プロジェクトを取り込む',
   Settings: '設定',
-  'Data stays on this PC': 'データはこの PC にだけ保存されます',
+  'Data stays on this PC': 'データはこの PC だけに保存',
   'Open the sidebar': 'サイドバーを開く',
   'Search my tasks': 'マイタスクを検索',
   'Search the Catalog: name, path, tags or note':
@@ -1806,4 +1806,21 @@ export const JA: Record<string, string> = {
   'Choose the workspace folder on the shared drive':
     '共有ドライブのワークスペースフォルダーを選んでください',
   'Share the project': '共有する',
+  'Small jobs for the project, each for one person, with a due date.':
+    'プロジェクトの小さな作業。1 件に担当者 1 人と期限。',
+  'Talk tickets through with comments and files, and summarize them into progress.':
+    'コメントとファイルでチケットを話し合い、要約して進捗に反映します。',
+  'Focus is always shown': 'フォーカスは常に表示されます',
+  'Shown. Click to hide {view}; its data is kept.':
+    '表示中。クリックで {view} を隠します（データは残ります）。',
+  'Hidden. Click to show {view}.': '非表示。クリックで {view} を表示します。',
+  'Add a release first; then you can export.':
+    '先にリリースを追加すると書き出せます。',
+  'On. Click to turn it off.': 'オン。クリックでオフにします。',
+  'Off. Click to turn it on.': 'オフ。クリックでオンにします。',
+  'Password (8+ characters)': 'パスワード（8 文字以上）',
+  '{status}. Press to move it on: To do → Doing → Done.':
+    '{status}。押すと次へ: 未着手 → 対応中 → 完了。',
+  'Progress ticket': '進捗チケット',
+  'This discussion': 'このディスカッション',
 };

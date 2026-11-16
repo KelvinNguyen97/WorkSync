@@ -749,6 +749,11 @@ export function WorkspacesDialog({ onClose }: { onClose: () => void }) {
                     className="switch"
                     role="switch"
                     aria-checked={w.offline}
+                    title={
+                      w.offline
+                        ? tr('On. Click to turn it off.')
+                        : tr('Off. Click to turn it on.')
+                    }
                     aria-label={tr('Work offline')}
                     onClick={() =>
                       void attempt(() =>
@@ -773,7 +778,7 @@ export function WorkspacesDialog({ onClose }: { onClose: () => void }) {
                       className="inp"
                       type="password"
                       aria-label={tr('Password for the recovery file')}
-                      placeholder={tr('Password, 8 characters or more')}
+                      placeholder={tr('Password (8+ characters)')}
                       value={password[w.id] ?? ''}
                       onChange={(e) =>
                         setPassword({ ...password, [w.id]: e.target.value })

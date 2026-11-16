@@ -778,113 +778,131 @@ export function DiscussionWindow({
     >
       <div className="dc-win">
         <div className="dc-bar">
-          {linked ? (
-            <>
-              <button
-                className="dc-linkbar"
-                onClick={() => openTicket(linked.id)}
-              >
-                <Icon name="menu" />
-                {tr('Progress {no}', { no: linked.customerId })} ·{' '}
-                <StatusChip status={linked.status} />
-                <span className="muted">
-                  {d.summarizedAt
-                    ? tr('summarized {date}', {
-                        date: shortDate(d.summarizedAt.slice(0, 10)),
-                      })
-                    : tr('not summarized yet')}
-                </span>
-              </button>
-              <button className="btn primary" onClick={() => onSummarize(d.id)}>
-                <Icon name="spark" />
-                {tr('Summarize into progress')}
-                {d.newSinceSummary > 0 && <b> · {d.newSinceSummary}</b>}
-              </button>
-              <button
-                className="btn"
-                onClick={() =>
-                  void attempt(() =>
-                    window.worksync.unlinkDiscussion(d.id),
-                  ).then((x) => x && workChanged())
-                }
-              >
-                {tr('Unlink')}
-              </button>
-            </>
-          ) : (
-            <>
-              {twin && (
+          <div
+            className="dc-bar-group"
+            role="group"
+            aria-label={tr('Progress ticket')}
+          >
+            {linked ? (
+              <>
+                <button
+                  className="dc-linkbar"
+                  onClick={() => openTicket(linked.id)}
+                >
+                  <Icon name="menu" />
+                  {tr('Progress {no}', { no: linked.customerId })} ·{' '}
+                  <StatusChip status={linked.status} />
+                  <span className="muted">
+                    {d.summarizedAt
+                      ? tr('summarized {date}', {
+                          date: shortDate(d.summarizedAt.slice(0, 10)),
+                        })
+                      : tr('not summarized yet')}
+                  </span>
+                </button>
                 <button
                   className="btn primary"
-                  onClick={() => void link(twin.id)}
+                  onClick={() => onSummarize(d.id)}
                 >
-                  <Icon name="link" />
-                  {tr('Link with {no}?', { no: twin.customerId })}
+                  <Icon name="spark" />
+                  {tr('Summarize into progress')}
+                  {d.newSinceSummary > 0 && <b> · {d.newSinceSummary}</b>}
                 </button>
-              )}
-              <button className="btn" onClick={() => setLinking(true)}>
-                <Icon name="link" />
-                {tr('Link a progress ticket…')}
-              </button>
-              <button className="btn" onClick={() => void makeProgress()}>
-                <Icon name="plus" />
-                {tr('Make a progress ticket')}
-              </button>
-            </>
-          )}
-          <span className="grow" />
-          <button
-            className="btn"
-            onClick={() =>
-              void attempt(() =>
-                window.worksync.saveDiscussion(
-                  d.projectId,
-                  { state: d.state === 'open' ? 'resolved' : 'open' },
-                  d.id,
-                ),
-              ).then((x) => x && workChanged())
-            }
+                <button
+                  className="btn"
+                  onClick={() =>
+                    void attempt(() =>
+                      window.worksync.unlinkDiscussion(d.id),
+                    ).then((x) => x && workChanged())
+                  }
+                >
+                  {tr('Unlink')}
+                </button>
+              </>
+            ) : (
+              <>
+                {twin && (
+                  <button
+                    className="btn primary"
+                    onClick={() => void link(twin.id)}
+                  >
+                    <Icon name="link" />
+                    {tr('Link with {no}?', { no: twin.customerId })}
+                  </button>
+                )}
+                <button className="btn" onClick={() => setLinking(true)}>
+                  <Icon name="link" />
+                  {tr('Link a progress ticket…')}
+                </button>
+                <button className="btn" onClick={() => void makeProgress()}>
+                  <Icon name="plus" />
+                  {tr('Make a progress ticket')}
+                </button>
+              </>
+            )}
+          </div>
+          <div
+            className="dc-bar-group end"
+            role="group"
+            aria-label={tr('This discussion')}
           >
-            <Icon name={d.state === 'open' ? 'check' : 'refresh'} />
-            {d.state === 'open' ? tr('Mark as resolved') : tr('Open again')}
-          </button>
-          <button
-            className="icon-btn"
-            aria-label={tr('Edit')}
-            title={tr('Edit the title, No. and description')}
-            onClick={() =>
-              setEdit({ title: d.title, description: d.description, no: d.no })
-            }
-          >
-            <Icon name="edit" />
-          </button>
-          <button
-            className="icon-btn"
-            aria-label={tr('Delete')}
-            title={tr('Delete')}
-            onClick={() =>
-              void confirmDelete({
-                title: tr('Delete “{title}”?', { title: d.title }),
-                text: tr(
-                  'The discussion is deleted with its comments and files. A linked progress ticket stays.',
-                ),
-                yes: tr('Delete'),
-              }).then(
-                (ok) =>
-                  ok &&
-                  void attempt(() =>
-                    window.worksync.deleteDiscussion(d.id),
-                  ).then((x) => {
-                    if (x) {
-                      workChanged();
-                      onClose();
-                    }
-                  }),
-              )
-            }
-          >
-            <Icon name="trash" />
-          </button>
+            <button
+              className="btn"
+              onClick={() =>
+                void attempt(() =>
+                  window.worksync.saveDiscussion(
+                    d.projectId,
+                    { state: d.state === 'open' ? 'resolved' : 'open' },
+                    d.id,
+                  ),
+                ).then((x) => x && workChanged())
+              }
+            >
+              <Icon name={d.state === 'open' ? 'check' : 'refresh'} />
+              {d.state === 'open' ? tr('Mark as resolved') : tr('Open again')}
+            </button>
+            <button
+              className="icon-btn"
+              aria-label={tr('Edit')}
+              title={tr('Edit the title, No. and description')}
+              onClick={() =>
+                setEdit({
+                  title: d.title,
+                  description: d.description,
+                  no: d.no,
+                })
+              }
+            >
+              <Icon name="edit" />
+            </button>
+            <button
+              className="icon-btn"
+              aria-label={tr('Delete')}
+              title={tr('Delete')}
+              onClick={() =>
+                void confirmDelete({
+                  title: tr('Delete “{title}”?', { title: d.title }),
+                  text: tr(
+                    'The discussion is deleted with its comments and files. A linked progress ticket stays.',
+                  ),
+                  yes: tr('Delete'),
+                }).then(
+                  (ok) =>
+                    ok &&
+                    void attempt(() =>
+                      window.worksync.deleteDiscussion(d.id),
+                    ).then((x) => {
+                      if (x) {
+                        workChanged();
+                        onClose();
+                      }
+                    }),
+                )
+              }
+            >
+              <Icon name="trash" />
+            </button>
+          </div>
         </div>
         {edit ? (
           <div className="form dc-editform">

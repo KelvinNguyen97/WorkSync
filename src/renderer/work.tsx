@@ -131,7 +131,7 @@ function Check({ t, onNext }: { t: ProjectTask; onNext: () => void }) {
         title: t.title,
         status: tr(WORK_STATUS_NAME[t.status]),
       })}
-      title={tr('{status}. Press to move it on.', {
+      title={tr('{status}. Press to move it on: To do → Doing → Done.', {
         status: tr(WORK_STATUS_NAME[t.status]),
       })}
       onClick={(e) => {
@@ -216,6 +216,7 @@ export function TaskRow({
       onClick={onOpen}
     >
       <Check t={t} onNext={() => void next()} />
+      <span className="wk-st">{tr(WORK_STATUS_NAME[t.status])}</span>
       <button
         className="wk-title"
         onClick={(e) => {

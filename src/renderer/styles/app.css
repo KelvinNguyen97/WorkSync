@@ -5297,3 +5297,86 @@ html[data-glass] .mg {
 .ws-open {
   color: var(--st-ip-ink);
 }
+
+/* ---------------------------------------------------------- round 6 fixes */
+/* U2: the remove button sits beside a picture, never on it, and a tiny
+   picture still has a comfortable area to click. */
+.note-img {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.note-img-open {
+  min-width: 56px;
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+}
+.note-img .note-img-x {
+  position: static;
+  flex: none;
+}
+/* U4: no text below 11px */
+.avatar,
+.wk-avatar {
+  font-size: 11.5px;
+}
+.tag-review {
+  font-size: 11.5px;
+}
+/* U6: links used as buttons get a 32px target */
+.ai-pick-head .linkbtn {
+  min-height: 32px;
+  padding: 0 4px;
+}
+/* U12: the sidebar footer stays on one line */
+.side-foot .side-foot-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* U11 */
+.ws-inline input[type='password'] {
+  min-width: 250px;
+}
+/* U9: Delete set apart from Reply and Edit */
+.dc-c-head .danger-text {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line-strong);
+}
+/* U10: the discussion header in two groups */
+.dc-bar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dc-bar-group.end {
+  margin-left: auto;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+/* U8: the task's status in words beside its box */
+.wk-st {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wk-row.doing .wk-st {
+  color: var(--st-ip-ink);
+}
+.wk-row {
+  grid-template-columns: 26px 48px minmax(160px, 1fr) auto minmax(
+      110px,
+      auto
+    ) 92px;
+}
+.wk-in-ticket .wk-row {
+  grid-template-columns: 26px 48px minmax(140px, 1fr) minmax(100px, auto) 84px;
+}
+.side-foot span:has(> .side-foot-text) {
+  min-width: 0;
+}

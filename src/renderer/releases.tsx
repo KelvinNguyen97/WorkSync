@@ -135,6 +135,11 @@ export function ReleasesView({
           <button
             className="btn"
             disabled={!all.length}
+            title={
+              all.length
+                ? undefined
+                : tr('Add a release first; then you can export.')
+            }
             onClick={() => setExportOpen(true)}
           >
             <Icon name="download" />

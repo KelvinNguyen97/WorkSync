@@ -247,6 +247,11 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               className="switch"
               role="switch"
               aria-checked={settings.keepInTray}
+              title={
+                settings.keepInTray
+                  ? tr('On. Click to turn it off.')
+                  : tr('Off. Click to turn it on.')
+              }
               aria-label={tr('Keep running in the tray')}
               onClick={() => void save({ keepInTray: !settings.keepInTray })}
             >
@@ -266,6 +271,11 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               className="switch"
               role="switch"
               aria-checked={settings.reminders}
+              title={
+                settings.reminders
+                  ? tr('On. Click to turn it off.')
+                  : tr('Off. Click to turn it on.')
+              }
               aria-label={tr('Reminders for My tasks')}
               onClick={() => void save({ reminders: !settings.reminders })}
             >
@@ -552,6 +562,11 @@ function QuickSearchSettings({
             className="switch"
             role="switch"
             aria-checked={settings.everything}
+            title={
+              settings.everything
+                ? tr('On. Click to turn it off.')
+                : tr('Off. Click to turn it on.')
+            }
             aria-label={tr('Search files with Everything')}
             onClick={() => void save({ everything: !settings.everything })}
           >
