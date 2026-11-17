@@ -3,6 +3,7 @@
  * straight from the shared folder. It needs no server and no internet
  * connection, because the data, styles and script are all inside the file.
  */
+import { richPlain } from '../shared/rich';
 import {
   LANGUAGES,
   LEVEL_NAME,
@@ -77,7 +78,7 @@ export function pageData(input: PageInput) {
         descTr: t.descriptionTranslation,
         descOrig: t.descriptionOriginal,
         updates: (input.updates[t.id] ?? []).slice(0, 3),
-        notes: input.includeNotes ? t.notes : '',
+        notes: input.includeNotes ? richPlain(t.notes) : '',
       };
     }),
     statuses: STATUSES,

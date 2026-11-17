@@ -1,3 +1,4 @@
+import { richPlain } from '../shared/rich';
 import ExcelJS from 'exceljs';
 import {
   AlignmentType,
@@ -663,7 +664,7 @@ function briefBlock(t: Task, h: ReportHead): Paragraph[] {
             indent: { left: 240 },
             children: [
               new TextRun({ text: 'Notes  ', bold: true, color: '3D4450' }),
-              ...run(t.notes),
+              ...run(richPlain(t.notes)),
             ],
           }),
         ]

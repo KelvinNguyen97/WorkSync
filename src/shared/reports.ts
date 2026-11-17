@@ -18,6 +18,7 @@ import {
   type Status,
   type Task,
 } from './model';
+import { richPlain } from './rich';
 
 export type ReportKind = 'progress' | 'taskList' | 'schedule' | 'briefs';
 export type ReportFormat = 'docx' | 'xlsx';
@@ -260,11 +261,14 @@ export function ownerText(
   o: Pick<ReportOptions, 'language' | 'translations'>,
   originalIsJapanese: boolean,
 ): string {
-  if (!text || o.language === 'working') return text;
-  const tr = o.translations?.[text];
-  if (o.language === 'both') return tr ? `${text}\n${tr}` : text;
+  // Reports are plain text: formatting marks are taken out, lists keep their bullets.
+  const plain = richPlain(text);
+  if (!text || o.language === 'working') return plain;
+  const found = o.translations?.[text];
+  const tr = found ? richPlain(found) : undefined;
+  if (o.language === 'both') return tr ? `${plain}\n${tr}` : plain;
   if (tr) return tr;
-  return `${originalIsJapanese ? '（未翻訳）' : '(not translated) '}${text}`;
+  return `${originalIsJapanese ? '（未翻訳）' : '(not translated) '}${plain}`;
 }
 
 /** The owner's texts a report would show, for checking which need a translation. */
@@ -407,7 +411,7 @@ export const COLUMNS: Column[] = [
     label: 'Notes',
     ja: 'メモ',
     width: 36,
-    value: (t, o) => (o.includeNotes ? t.notes : ''),
+    value: (t, o) => (o.includeNotes ? richPlain(t.notes) : ''),
   },
 ];
 

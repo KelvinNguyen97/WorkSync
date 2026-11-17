@@ -25,6 +25,7 @@ import { useApp } from './appState';
 import { Icon } from './Icon';
 import { tr } from './i18n';
 import { confirmDelete, Modal } from './parts';
+import { RichEditor } from './rich';
 
 /** Tells every list of project tasks to load again. */
 const CHANGED = 'worksync:work-changed';
@@ -555,15 +556,15 @@ export function TaskDialog({
             onChange={(e) => setV({ ...v, title: e.target.value })}
           />
         </label>
-        <label>
-          {tr('Note')}
-          <textarea
-            className="inp"
+        <div className="lbl-block">
+          <span>{tr('Note')}</span>
+          <RichEditor
+            label={tr('Note')}
             rows={3}
             value={v.note}
-            onChange={(e) => setV({ ...v, note: e.target.value })}
+            onChange={(note) => setV({ ...v, note })}
           />
-        </label>
+        </div>
         <div className="two">
           <label>
             {tr('Assignee')}

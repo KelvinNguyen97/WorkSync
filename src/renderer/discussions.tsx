@@ -26,6 +26,7 @@ import { useApp } from './appState';
 import { Icon } from './Icon';
 import { tr } from './i18n';
 import { confirmDelete, Modal, StatusChip } from './parts';
+import { RichEditor, RichText } from './rich';
 import {
   MemberChip,
   TicketTasks,
@@ -177,15 +178,15 @@ function NewDiscussion({
             onChange={(e) => setV({ ...v, no: e.target.value })}
           />
         </label>
-        <label>
-          {tr('Description')}
-          <textarea
-            className="inp"
+        <div className="lbl-block">
+          <span>{tr('Description')}</span>
+          <RichEditor
+            label={tr('Description')}
             rows={5}
             value={v.description}
-            onChange={(e) => setV({ ...v, description: e.target.value })}
+            onChange={(description) => setV({ ...v, description })}
           />
-        </label>
+        </div>
       </form>
       {offer && (
         <Ask
@@ -379,29 +380,6 @@ export function DiscussionsView({
           onClose={() => setUpdating(null)}
         />
       )}
-    </div>
-  );
-}
-
-function Body({ text, members }: { text: string; members: Member[] }) {
-  const parts = text.split(/(@[^\s@,.;:!?]+)/g);
-  return (
-    <div className="dc-body">
-      {parts.map((p, i) => {
-        const m =
-          p.startsWith('@') &&
-          members.find(
-            (x) => x.name.toLowerCase() === p.slice(1).toLowerCase(),
-          );
-        return m ? (
-          <span key={i} className="dc-mention" style={{ borderColor: m.color }}>
-            {p}
-            <span className="wk-tag">·{m.tag}</span>
-          </span>
-        ) : (
-          <span key={i}>{p}</span>
-        );
-      })}
     </div>
   );
 }
@@ -727,11 +705,11 @@ export function DiscussionWindow({
         <div className="dc-body muted">{tr('This comment was deleted.')}</div>
       ) : editing?.id === c.id ? (
         <div className="dc-editing">
-          <textarea
-            className="inp"
+          <RichEditor
+            label={tr('Comment')}
             rows={3}
             value={editing.body}
-            onChange={(e) => setEditing({ ...editing, body: e.target.value })}
+            onChange={(body) => setEditing({ ...editing, body })}
           />
           <div className="row-acts">
             <button className="btn" onClick={() => setEditing(null)}>
@@ -755,7 +733,7 @@ export function DiscussionWindow({
           </div>
         </div>
       ) : (
-        <Body text={c.body} members={members} />
+        <RichText className="dc-body" text={c.body} mentions={members} />
       )}
       {!c.deleted && c.attachments.length > 0 && (
         <div className="dc-files">
@@ -930,17 +908,15 @@ export function DiscussionWindow({
                 onChange={(e) => setEdit({ ...edit, no: e.target.value })}
               />
             </label>
-            <label>
-              {tr('Description')}
-              <textarea
-                className="inp"
+            <div className="lbl-block">
+              <span>{tr('Description')}</span>
+              <RichEditor
+                label={tr('Description')}
                 rows={5}
                 value={edit.description}
-                onChange={(e) =>
-                  setEdit({ ...edit, description: e.target.value })
-                }
+                onChange={(description) => setEdit({ ...edit, description })}
               />
-            </label>
+            </div>
             <div className="row-acts">
               <button className="btn" onClick={() => setEdit(null)}>
                 {tr('Cancel')}
@@ -951,7 +927,11 @@ export function DiscussionWindow({
             </div>
           </div>
         ) : (
-          d.description && <div className="dc-desc">{d.description}</div>
+          d.description && (
+            <div className="dc-desc">
+              <RichText text={d.description} />
+            </div>
+          )
         )}
         <div className="dc-columns">
           <div className="dc-stream">
@@ -1003,16 +983,15 @@ export function DiscussionWindow({
                   </button>
                 </div>
               )}
-              <textarea
-                ref={boxRef}
-                className="inp"
+              <RichEditor
+                inputRef={boxRef}
                 rows={3}
-                aria-label={tr('Comment')}
+                label={tr('Comment')}
                 placeholder={tr(
                   'Write a comment… @name to mention a member. Paste or drop images and files.',
                 )}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={setText}
                 onPaste={(e: ClipboardEvent) => {
                   const f = [...e.clipboardData.files];
                   if (f.length) {

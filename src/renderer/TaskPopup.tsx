@@ -46,6 +46,7 @@ import {
 } from './parts';
 import { tr, uiLanguage } from './i18n';
 import { TicketTasks } from './work';
+import { RichEditor, RichText } from './rich';
 import { DiscussionBar } from './discussions';
 import { isClash } from './parts';
 import { OpenByOthers } from './workspaces';
@@ -1241,22 +1242,19 @@ export function TaskPopup({
                   k={<h3>{tr('Summary')}</h3>}
                   start={() => ({ summary: task.summary })}
                   editor={(d, set) => (
-                    <textarea
-                      className="inp summary-edit"
-                      rows={Math.min(
-                        16,
-                        Math.max(4, d.summary.split('\n').length + 1),
-                      )}
-                      aria-label={tr('Summary')}
+                    <RichEditor
+                      label={tr('Summary')}
                       value={d.summary}
-                      onChange={set('summary')}
+                      onChange={(v) => set('summary')({ target: { value: v } })}
                       autoFocus
                     />
                   )}
                   patch={(d) => ({ summary: d.summary })}
                   v={
                     task.summary ? (
-                      <div className="summary">{task.summary}</div>
+                      <div className="summary">
+                        <RichText text={task.summary} />
+                      </div>
                     ) : (
                       <div className="summary missing">
                         <span>
@@ -1653,21 +1651,17 @@ export function TaskPopup({
                     empty={!task.notes}
                     start={() => ({ notes: task.notes })}
                     editor={(d, set) => (
-                      <textarea
-                        className="inp"
-                        rows={4}
-                        aria-label={tr('Notes')}
+                      <RichEditor
+                        label={tr('Notes')}
                         value={d.notes}
-                        onChange={set('notes')}
+                        onChange={(v) => set('notes')({ target: { value: v } })}
                         autoFocus
                       />
                     )}
                     patch={(d) => ({ notes: d.notes })}
                     v={
                       task.notes ? (
-                        <span style={{ whiteSpace: 'pre-wrap' }}>
-                          {task.notes}
-                        </span>
+                        <RichText text={task.notes} />
                       ) : (
                         <span className="muted">{tr('None')}</span>
                       )

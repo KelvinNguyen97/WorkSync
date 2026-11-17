@@ -1,3 +1,4 @@
+import { richPlain } from '../shared/rich';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as XLSX from 'xlsx';
@@ -129,7 +130,7 @@ export class Publisher {
       fileDate(t.plannedEnd),
       fileDate(t.actualStart),
       fileDate(t.actualEnd),
-      t.summary,
+      richPlain(t.summary),
       t.labels.join(', '),
       t.difficulties
         .filter((d) => d.open)

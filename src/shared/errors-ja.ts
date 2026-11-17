@@ -601,6 +601,10 @@ export const ERRORS_JA: [string, string][] = [
     'The workspace folder cannot be reached. Your changes wait on this PC until it is back.',
     'ワークスペースフォルダーにアクセスできません。変更は、つながるまでこの PC で保留します。',
   ],
+  [
+    'Only web and mail addresses can be opened.',
+    '開けるのは Web とメールのアドレスだけです。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

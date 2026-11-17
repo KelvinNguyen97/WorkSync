@@ -10,6 +10,7 @@ import {
 } from 'electron';
 import os from 'node:os';
 import { Workspaces, type Protector } from './workspace';
+import { safeHref } from '../shared/rich';
 import { WORKSPACE_EVENT } from '../shared/ipc';
 import { buildBatches, readAnswer } from '../shared/aiBatch';
 import {
@@ -419,6 +420,12 @@ const handlers: Omit<
   listProjectTasks: async (projectId) => needWork().listTasks(projectId),
   listWorkspaces: async () => needWorkspaces().list(),
   renumberTicket: async (id, customerId) => need().renumber(id, customerId),
+  openWebLink: async (url) => {
+    // Text can come from another member: only web and mail addresses open, in the system's own app.
+    const href = safeHref(url);
+    if (!href) throw new Error('Only web and mail addresses can be opened.');
+    await shell.openExternal(href);
+  },
   chooseWorkspaceFolder: async () => {
     if (process.env.WORKSYNC_TEST_WORKSPACE_FOLDER)
       return process.env.WORKSYNC_TEST_WORKSPACE_FOLDER;

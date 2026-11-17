@@ -5,6 +5,7 @@
  * Node.js and Electron imports. Dates are plain `YYYY-MM-DD` strings in the
  * owner's local time; timestamps are ISO strings.
  */
+import { richPlain } from './rich';
 
 /** Priority levels: Urgent, High, Normal, Low. */
 export type Level = 'U' | 'H' | 'N' | 'L';
@@ -573,7 +574,7 @@ export function brief(t: Task): Brief {
   const next = s.nextStep
     ? `${s.nextStep}${s.nextDate ? ` by ${shortDate(s.nextDate)}` : ''}`
     : 'Not decided yet';
-  const what = t.summary || 'No summary yet';
+  const what = richPlain(t.summary) || 'No summary yet';
   const title = t.titleTranslation
     ? `${t.titleTranslation} (${t.titleOriginal})`
     : t.titleOriginal;

@@ -410,6 +410,8 @@ export interface WorkSyncApi {
     answer: Partial<SummaryAnswer> & { resolved?: string[] },
   ): Promise<Task>;
 
+  /** Opens a web or mail address from formatted text in the browser or mail app. */
+  openWebLink(url: string): Promise<void>;
   /** Settles a number clash: the number given, or the next free one when empty. */
   renumberTicket(id: string, customerId: string): Promise<Task>;
   /** Shared workspaces (doc 08) this PC is in, or waiting to join. */
@@ -570,6 +572,7 @@ export const API_METHODS = [
   'listProjectTasks',
   'listWorkspaces',
   'renumberTicket',
+  'openWebLink',
   'chooseWorkspaceFolder',
   'createWorkspace',
   'joinWorkspace',

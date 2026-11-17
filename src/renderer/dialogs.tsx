@@ -18,6 +18,7 @@ import {
 import { useApp } from './appState';
 import { Icon, type IconName } from './Icon';
 import { Modal, useTaskLabel } from './parts';
+import { RichEditor } from './rich';
 import { tr } from './i18n';
 
 const CODES = Object.keys(LANGUAGES) as LanguageCode[];
@@ -522,16 +523,16 @@ export function TaskDialog({
             />
           </label>
         )}
-        <label>
-          {tr('Summary, in your own words')}
-          <textarea
-            className="inp"
-            rows={2}
+        <div className="lbl-block">
+          <span>{tr('Summary, in your own words')}</span>
+          <RichEditor
+            label={tr('Summary, in your own words')}
+            rows={3}
             value={v.summary}
-            onChange={set('summary')}
+            onChange={(x) => setV({ ...v, summary: x })}
             placeholder={tr('What is this ticket really about?')}
           />
-        </label>
+        </div>
         <div className="three">
           <label>
             {tr('Status')}
@@ -681,18 +682,18 @@ export function TaskDialog({
               />
             </label>
           </div>
-          <label>
-            {tr('Notes')}
-            <textarea
-              className="inp"
+          <div className="lbl-block">
+            <span>{tr('Notes')}</span>
+            <RichEditor
+              label={tr('Notes')}
               rows={3}
               value={v.notes}
-              onChange={set('notes')}
+              onChange={(x) => setV({ ...v, notes: x })}
               placeholder={tr(
                 'Background: technical context, decisions and links',
               )}
             />
-          </label>
+          </div>
         </fieldset>
       </form>
     </Modal>

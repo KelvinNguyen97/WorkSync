@@ -23,6 +23,8 @@ import { useApp } from './appState';
 import { confirmDelete } from './parts';
 import { Icon } from './Icon';
 import { tr } from './i18n';
+import { RichEditor } from './rich';
+import { richFirstLine } from '../shared/rich';
 
 /** The fixed area above a page, where its title goes. */
 export type HeaderSlot = HTMLElement | null;
@@ -292,7 +294,9 @@ export function MyTasksView({
                   aria-label={tr('Edit {name}', { name: t.title })}
                 >
                   <b>{t.title}</b>
-                  {t.description && <small>{t.description}</small>}
+                  {t.description && (
+                    <small>{richFirstLine(t.description)}</small>
+                  )}
                   <small className="mt-mini">
                     {tr(MY_STATUS_NAME[t.status])} ·{' '}
                     {tr(MY_PRIORITY_NAME[t.priority])}
@@ -448,15 +452,14 @@ function MyTaskEditor({
           onChange={(e) => setV({ ...v, title: e.target.value })}
         />
       </label>
-      <label>
-        {tr('Description')}
-        <textarea
-          className="inp"
-          rows={4}
+      <div className="lbl-block">
+        <span>{tr('Description')}</span>
+        <RichEditor
+          label={tr('Description')}
           value={v.description}
-          onChange={(e) => setV({ ...v, description: e.target.value })}
+          onChange={(description) => setV({ ...v, description })}
         />
-      </label>
+      </div>
       <div className="two">
         <label>
           {tr('Status')}
