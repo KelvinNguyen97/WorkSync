@@ -1826,4 +1826,6 @@ export const JA: Record<string, string> = {
     '対応中。クリックで未着手に戻します。',
   'To do. Click when you start it (Doing).':
     '未着手。始めたらクリック（対応中）。',
+  'Due date (optional)': '期限（任意）',
+  'Priority (optional)': '優先度（任意）',
 };

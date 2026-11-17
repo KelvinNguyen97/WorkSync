@@ -272,7 +272,7 @@ export function MyTasksView({
               <div
                 key={t.id}
                 role="listitem"
-                className={`mt-row ${t.id === sel ? 'sel' : ''}`}
+                className={`mt-row pri-${t.priority} ${t.id === sel ? 'sel' : ''}`}
                 onClick={() => setSel(t.id)}
               >
                 <button

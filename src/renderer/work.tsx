@@ -213,7 +213,9 @@ export function TaskRow({
   return (
     <div
       role="listitem"
-      className={`wk-row ${t.status} ${isLate(t, today) ? 'late' : ''}`}
+      className={`wk-row ${t.status} ${isLate(t, today) ? 'late' : ''} ${
+        t.status === 'done' ? 'is-done' : `pri-${t.priority}`
+      }`}
       onClick={onOpen}
     >
       <Check t={t} onNext={() => void set(tickedStatus(t.status))} />
@@ -242,7 +244,14 @@ export function TaskRow({
           onOpen();
         }}
       >
-        <span>{t.title}</span>
+        <span className="wk-title-line">
+          <span>{t.title}</span>
+          {t.status !== 'done' && t.priority !== 'N' && (
+            <span className={`ptag ${t.priority}`}>
+              {tr(t.priority === 'U' ? 'Urgent' : 'Low')}
+            </span>
+          )}
+        </span>
         {from && <small>{from}</small>}
       </button>
       {showTicket && (
@@ -311,6 +320,9 @@ export function QuickAdd({
   const { attempt, tasks, today } = useApp();
   const discussions = useDiscussionRefs(projectId);
   const [text, setText] = useState('');
+  // Both optional: a task can have no date, and Normal means no special priority.
+  const [date, setDate] = useState('');
+  const [priority, setPriority] = useState<MyPriority>('N');
   const ref = useRef<HTMLInputElement>(null);
   const tickets = useMemo(
     () =>
@@ -342,13 +354,17 @@ export function QuickAdd({
       window.worksync.saveProjectTask(projectId, {
         title: parsed.title,
         assignee: parsed.assignee,
-        dueDate: parsed.dueDate,
+        // A date typed in the line wins over the date box.
+        dueDate: parsed.dueDate ?? (date || null),
+        priority,
         ticketId: inTicket ? (ticketId ?? null) : parsed.ticketId,
         discussionId: inTicket ? (discussionId ?? null) : parsed.discussionId,
       }),
     );
     if (t) {
       setText('');
+      setDate('');
+      setPriority('N');
       workChanged();
       ref.current?.focus();
     }
@@ -368,6 +384,25 @@ export function QuickAdd({
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+        <input
+          className="inp"
+          type="date"
+          aria-label={tr('Due date (optional)')}
+          title={tr('Due date (optional)')}
+          value={parsed.dueDate ?? date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+        <select
+          className="inp"
+          aria-label={tr('Priority (optional)')}
+          title={tr('Priority (optional)')}
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as MyPriority)}
+        >
+          <option value="U">{tr('Urgent')}</option>
+          <option value="N">{tr('Normal')}</option>
+          <option value="L">{tr('Low')}</option>
+        </select>
         <button className="btn primary" type="submit">
           <Icon name="plus" />
           {tr('Add')}
@@ -396,7 +431,9 @@ export function QuickAdd({
         <div className="wk-parse muted" aria-live="polite">
           {parsed.title || '…'}
           {who && ` · ${who.me ? tr('You') : who.name}`}
-          {parsed.dueDate && ` · ${shortDate(parsed.dueDate)}`}
+          {(parsed.dueDate ?? date) &&
+            ` · ${shortDate(parsed.dueDate ?? date)}`}
+          {priority !== 'N' && ` · ${tr(priority === 'U' ? 'Urgent' : 'Low')}`}
           {parsed.ticketNo &&
             !ticketId &&
             !discussionId &&
@@ -736,8 +773,10 @@ export function WorkView({
   const shown = list.filter(passes);
   const open_ = shown.filter((t) => t.status !== 'done');
   const done = shown.filter((t) => t.status === 'done');
+  const rank = { U: 0, N: 1, L: 2 };
   const sortDue = (a: ProjectTask, b: ProjectTask) =>
     (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999') ||
+    rank[a.priority] - rank[b.priority] ||
     a.createdAt.localeCompare(b.createdAt);
   const groups: { key: string; name: string; items: ProjectTask[] }[] =
     group === 'status'

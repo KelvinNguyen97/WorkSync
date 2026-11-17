@@ -5429,3 +5429,58 @@ button.wk-st:hover {
 .tm-top .tc-id {
   flex: none;
 }
+
+/* The summary keeps the line breaks, lists and indents it was written with. */
+.summary {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+}
+.summary-edit {
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+/* Tasks carry their priority like ticket cards: Urgent tinted red, Low dimmed. */
+.wk-row,
+.mt-row:not(.mt-headrow) {
+  background:
+    var(--tint, linear-gradient(transparent, transparent)), var(--surface);
+  border-color: var(--edge, var(--line));
+}
+.wk-row.pri-U,
+.mt-row.pri-U {
+  box-shadow: 0 10px 24px -18px rgba(240, 82, 79, 0.7);
+}
+.wk-row:hover {
+  background:
+    var(--tint, linear-gradient(transparent, transparent)), var(--raised);
+}
+.wk-row.late {
+  border-color: var(--edge, var(--line));
+}
+.mt-row.sel {
+  border-color: rgb(var(--acc) / 0.6);
+}
+.wk-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.wk-title .ptag {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  text-decoration: none;
+}
+.wk-add-line input[type='date'],
+.wk-add-line select {
+  width: auto;
+  flex: none;
+}
+.wk-add-line {
+  flex-wrap: wrap;
+}
+.wk-add-line .grow {
+  flex: 1 1 220px;
+}

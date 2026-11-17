@@ -1242,8 +1242,11 @@ export function TaskPopup({
                   start={() => ({ summary: task.summary })}
                   editor={(d, set) => (
                     <textarea
-                      className="inp"
-                      rows={3}
+                      className="inp summary-edit"
+                      rows={Math.min(
+                        16,
+                        Math.max(4, d.summary.split('\n').length + 1),
+                      )}
                       aria-label={tr('Summary')}
                       value={d.summary}
                       onChange={set('summary')}
