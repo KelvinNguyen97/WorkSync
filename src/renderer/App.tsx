@@ -621,16 +621,27 @@ function Shell({
                 <span className="grow">{tr('Catalog')}</span>
                 <span className="count">{catalog.length}</span>
               </button>
-              <NoticesBell onOpen={(n) => void openNotice(n)} />
+              <NoticesBell
+                onOpen={(n) => void openNotice(n)}
+                onShow={() => setSideOpen(false)}
+              />
             </div>
           </div>
           <div>
             <div className="nav-label">{tr('Workspaces')}</div>
             <div className="nav">
-              <WorkspacesNav onOpen={() => setDialog({ kind: 'workspaces' })} />
+              <WorkspacesNav
+                onOpen={() => {
+                  setSideOpen(false);
+                  setDialog({ kind: 'workspaces' });
+                }}
+              />
               <button
                 className="nav-item custom"
-                onClick={() => setDialog({ kind: 'workspaces' })}
+                onClick={() => {
+                  setSideOpen(false);
+                  setDialog({ kind: 'workspaces' });
+                }}
               >
                 <Icon name="users" />
                 <span className="grow">{tr('Workspaces…')}</span>

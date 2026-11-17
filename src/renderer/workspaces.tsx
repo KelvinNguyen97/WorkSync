@@ -221,7 +221,14 @@ export function JoinRequests() {
 }
 
 /** The bell: assigned to you, mentions, watched discussions, removals (doc 08, 3.9). */
-export function NoticesBell({ onOpen }: { onOpen: (n: Notice) => void }) {
+export function NoticesBell({
+  onOpen,
+  onShow,
+}: {
+  onOpen: (n: Notice) => void;
+  /** Called when the list opens, to close the narrow window's sidebar under it. */
+  onShow?: () => void;
+}) {
   const [list, setList] = useState<Notice[]>([]);
   const [open, setOpen] = useState(false);
   const load = useCallback(async () => {
@@ -246,7 +253,10 @@ export function NoticesBell({ onOpen }: { onOpen: (n: Notice) => void }) {
       <button
         className="nav-item"
         aria-label={tr('Notices')}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          onShow?.();
+          setOpen(true);
+        }}
       >
         <Icon name="bell" />
         <span className="grow">{tr('Notices')}</span>

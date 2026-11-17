@@ -5399,3 +5399,33 @@ button.wk-st:hover {
   background: var(--raised);
   color: var(--fg);
 }
+/* A late date ("11月15日 期限切れ") stays on one line; the column takes the room it needs. */
+.wk-due {
+  white-space: nowrap;
+}
+.wk-row {
+  grid-template-columns: 26px 48px minmax(120px, 1fr) auto minmax(
+      110px,
+      auto
+    ) minmax(64px, auto);
+}
+.wk-in-ticket .wk-row {
+  grid-template-columns: 26px 48px minmax(120px, 1fr) minmax(
+      100px,
+      auto
+    ) minmax(64px, auto);
+}
+/* The Number clash tag sits beside the number, or cleanly on its own line on a narrow card. */
+.tc-id:has(.clash) {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 4px;
+}
+.tc-id .clash {
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.tm-top .tc-id {
+  flex: none;
+}

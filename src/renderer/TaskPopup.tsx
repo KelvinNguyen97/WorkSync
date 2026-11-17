@@ -1188,7 +1188,7 @@ export function TaskPopup({
               />
               {flagChips.map((x) => (
                 <span key={x} className="chip over">
-                  {x}
+                  {tr(x)}
                 </span>
               ))}
               {task.labels.map((l) => (
