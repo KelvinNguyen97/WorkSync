@@ -117,8 +117,8 @@ server and no account. Your data stays on your PC.
 - Daily backups, with restore from Settings.
 - English, Japanese and Vietnamese as ticket languages.
 
-| Task details                                                                   | Board                                  |
-| ------------------------------------------------------------------------------ | -------------------------------------- |
+| Task details                                                                     | Board                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------- |
 | ![A ticket with its summary, situation and description](.github/images/task.png) | ![The board](.github/images/board.png) |
 
 ![The dashboard in dark mode](.github/images/dashboard-dark.png)
