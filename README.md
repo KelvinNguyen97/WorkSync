@@ -5,7 +5,7 @@ as Excel files in another language.**
 
 Some customers keep the task list in a spreadsheet written in Japanese. They
 update it every few days and expect you to follow along. WorkSync reads that
-file, keeps your translation, summary and current situation next to each task,
+file, keeps your translation, summary and current situation next to each ticket,
 and shows the work as cards, a board, a timeline and a dashboard. When
 something changes, it writes your updates back into **your own copy** of the
 customer's file. The original is never touched.
@@ -38,10 +38,10 @@ server and no account. Your data stays on your PC.
 - Write your changes back into your own copy of the file, cell by cell, so
   the layout and formatting stay as they were.
 
-**Your understanding of each task**
+**Your understanding of each ticket**
 
 - A translation, a short summary and the current situation (who handles it,
-  what is happening, difficulties, the next step) for every task.
+  what is happening, difficulties, the next step) for every ticket.
 - Private notes and a next action that only you see.
 - A glossary per project, so product names and terms translate the same way
   every time. A people list matches the names used in the file to the people
@@ -52,12 +52,33 @@ server and no account. Your data stays on your PC.
 - **Focus**: what needs attention today, sorted by priority and due date.
 - **Board**: drag cards between statuses. You can hide status columns or add
   your own.
-- **Tasks** table, **Timeline**, **Calendar** and **Dashboard**. Filters work
-  in every view.
+- **Tickets** table, **Timeline**, **Calendar** and **Dashboard**. Filters
+  work in every view.
+
+**Tasks and discussions**
+
+- **Tasks**: small jobs in a project, each for one person, with a due date.
+  Add one in a line, such as `Test on Stg @Suzuki 11/21 #025`. A ticket shows
+  its tasks and how many are done.
+- **Discussions**: tickets to talk a topic through, with comments, replies,
+  @mentions, files and pasted images, and comments marked as decisions.
+- A discussion links to the progress ticket with the same number.
+  **Summarize into progress** builds a request for your AI chat from the new
+  comments, and shows each proposed change for you to accept.
+
+**Working together, without a server**
+
+- **Workspaces**: share projects with colleagues through a folder on the
+  shared drive. Changes appear on the others' screens in a few seconds, and
+  everyone keeps working offline when the folder can't be reached.
+- No accounts or passwords: each PC has its own key, and a member lets a new
+  PC in after checking a 6-digit code. Everything in the folder is encrypted.
+- Assign tasks to members, get notices when you are assigned or mentioned, and
+  see who is online.
 
 **Translation with AI, without an API key**
 
-- **Copy for AI** builds one request for many tasks, with your glossary. Paste
+- **Copy for AI** builds one request for many tickets, with your glossary. Paste
   it into an AI chat such as Gemini, paste the answer back, and WorkSync checks
   it before filling in translations and summaries.
 
@@ -77,9 +98,10 @@ server and no account. Your data stays on your PC.
 
 **Your own things, next to the projects**
 
-- **My tasks**: personal to-dos that belong to no project, with Windows
-  reminders by status and priority (urgent ones every 3 hours, others in the
-  morning or afternoon). Completing one removes it, with Undo.
+- **My tasks**: personal to-dos that belong to no project, plus the project
+  tasks assigned to you, with Windows reminders by status and priority (urgent
+  ones every 3 hours, others in the morning or afternoon). Completing a
+  personal to-do removes it, with Undo.
 - **Notes**: notes on their own or attached to a project, with tags,
   favorites, search and clickable links. They save as you type.
 - **Catalog**: the apps, files and folders you open often. On Windows it also
@@ -93,11 +115,11 @@ server and no account. Your data stays on your PC.
 - Keeps running in the tray when you close the window, for reminders and the
   shortcut. It never starts with your computer.
 - Daily backups, with restore from Settings.
-- English, Japanese and Vietnamese as task languages.
+- English, Japanese and Vietnamese as ticket languages.
 
 | Task details                                                                   | Board                                  |
 | ------------------------------------------------------------------------------ | -------------------------------------- |
-| ![A task with its summary, situation and description](.github/images/task.png) | ![The board](.github/images/board.png) |
+| ![A ticket with its summary, situation and description](.github/images/task.png) | ![The board](.github/images/board.png) |
 
 ![The dashboard in dark mode](.github/images/dashboard-dark.png)
 
@@ -147,7 +169,7 @@ app (beside its folder on Windows), so it carries over.
 ## First steps
 
 1. **Try the sample project** from the welcome screen. It's a made-up project
-   with Japanese tasks, so you can explore before linking real files. Delete it
+   with Japanese tickets, so you can explore before linking real files. Delete it
    whenever you like.
 2. **Create a project.** Choose the customer's language and the language you
    work in.
@@ -158,7 +180,7 @@ app (beside its folder on Windows), so it carries over.
    check what changed, and accept it.
 5. **Translate and summarise** with **Copy for AI** and **Paste from AI**, or
    type your own.
-6. **Keep the situation current.** Open a task, choose **Update situation**,
+6. **Keep the situation current.** Open a ticket, choose **Update situation**,
    and the brief is ready to copy into chat or email.
 7. **Share.** Publish to a shared folder, make a report, or write your changes
    into your copy of the customer's file.
@@ -178,15 +200,24 @@ app (beside its folder on Windows), so it carries over.
 - **What leaves your PC**: nothing, unless you choose to.
   - WorkSync makes no network requests.
   - It writes outside its data folder only when you publish, export, make a
-    report or write your copy of a customer file.
+    report, write your copy of a customer file, or share a project in a
+    workspace (then it reads and writes that workspace's folder).
   - The AI step is copy and paste: you decide what goes into the chat.
 - **The customer's file is never edited.** WorkSync reads it, and writes only
   into a separate copy you choose.
 
 ## Sharing with others
 
-There are two ways to share, depending on whether the other person uses
-WorkSync.
+There are three ways to share, depending on how you work with the other
+person.
+
+- **Work on the same project: a workspace.** Choose **Workspaces…** in the
+  sidebar and create a workspace in a folder on the shared drive. A colleague
+  chooses **Join a workspace**, picks the same folder, and tells you the
+  6-digit code on their screen; you let them in. Share a project and every
+  member has it, kept in sync. Your notes on a ticket, your next action, My
+  tasks and settings stay on your PC, and so does the link to the customer's
+  file: one person links it, and what WorkSync reads from it is shared.
 
 - **For anyone: publish.** Choose a shared folder (a network drive, Box,
   OneDrive and so on) in **Publish**. WorkSync writes a read-only `index.html`
@@ -199,7 +230,7 @@ WorkSync.
   with the same name, they choose whether to import it as a copy or to replace
   theirs. Each person then edits their own copy.
 - **Bring their changes back: merge.** When they send their copy back, choose
-  **Import a project** and then **Merge**. WorkSync matches tasks, notes, terms
+  **Import a project** and then **Merge**. WorkSync matches tickets, notes, terms
   and people by their own ids (the customer's file isn't needed), adds what only
   one of you changed, and asks you, one question at a time, only where you both
   changed the same thing. A backup is made first.
@@ -302,6 +333,9 @@ A few conventions:
 - **No automatic updates.** Download new versions from the Releases page.
 - **macOS builds are for Apple silicon only.** Intel Macs aren't built yet.
 - **No app icon yet.**
+- **Workspaces are new.** Try one with a test project first. Deleted tickets
+  have no Trash yet, a `.worksync` export doesn't carry tasks or discussions
+  yet, and old change files in the workspace folder aren't cleaned up yet.
 
 ## License
 
