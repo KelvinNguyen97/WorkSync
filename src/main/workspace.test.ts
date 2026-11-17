@@ -8,6 +8,7 @@ import { Store } from './store';
 import { Work, myMemberId, setMyMemberId } from './work';
 import { Discussions } from './discussions';
 import { Workspaces } from './workspace';
+import { Mine } from './mine';
 import { EMPTY_TASK_INPUT } from '../shared/model';
 
 let folder: string;
@@ -19,6 +20,7 @@ interface Pc {
   work: Work;
   dis: Discussions;
   ws: Workspaces;
+  mine: Mine;
   name: string;
 }
 
@@ -26,6 +28,7 @@ function pc(
   name: string,
   account = `CORP\\${name.toLowerCase()}`,
   file = ':memory:',
+  keepChangeFilesMs = 30 * 86_400_000,
 ): Pc {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA foreign_keys = ON');
@@ -44,8 +47,10 @@ function pc(
     myMemberId: () => myMemberId(db),
     setMyMemberId: (id) => setMyMemberId(db, id),
     limit: 4000,
+    onTicketRemoved: (id, by) => store.captureTrash(id, by),
+    keepChangeFilesMs,
   });
-  return { db, store, work, dis, ws, name };
+  return { db, store, work, dis, ws, mine: new Mine(db, now), name };
 }
 
 async function join(a: Pc, b: Pc, wsId: string, as?: string) {
@@ -486,6 +491,253 @@ describe('shared workspaces', () => {
     expect(a.store.listTasks().map((x) => x.titleOriginal)).toEqual([
       'Made offline',
     ]);
+  });
+
+  it('shares a project note with its picture when its switch is on, and only then', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    const png = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3,
+    ]);
+    const img = a.mine.addNoteImage(png);
+    const me = myMemberId(a.db);
+    const priv = a.mine.saveNote({
+      projectId: p.id,
+      title: 'Private',
+      body: 'mine',
+      tags: [],
+    });
+    const note = a.mine.saveNote(
+      {
+        projectId: p.id,
+        title: 'Server list',
+        body: `Hosts\n![image](image:${img})`,
+        tags: ['infra'],
+        shared: true,
+      },
+      undefined,
+      me,
+    );
+    expect(note).toMatchObject({ shared: true, sharedBy: me });
+    expect(
+      a.mine.saveNote({
+        projectId: null,
+        title: 'Loose',
+        body: '',
+        tags: [],
+        shared: true,
+      }).shared,
+    ).toBe(false);
+    await round(a, b);
+    expect(b.mine.listNotes().map((n) => [n.title, n.shared])).toEqual([
+      ['Server list', true],
+    ]);
+    expect([...b.mine.getNoteImage(img).data]).toEqual([...png]);
+    // B edits it; A gets the edit. A's private note never left.
+    b.mine.saveNote({ body: 'Hosts, updated' }, note.id);
+    await round(b, a);
+    expect(a.mine.getNote(note.id).body).toBe('Hosts, updated');
+    expect(b.mine.listNotes().some((n) => n.id === priv.id)).toBe(false);
+    // B stops sharing: B keeps it for itself, A (who shared it) keeps it too, as a private note.
+    b.mine.saveNote({ shared: false }, note.id);
+    await round(b, a);
+    expect(b.mine.getNote(note.id).shared).toBe(false);
+    expect(a.mine.getNote(note.id)).toMatchObject({
+      shared: false,
+      body: 'Hosts, updated',
+    });
+    expect(
+      a.ws.notices().some((n) => /stopped sharing your note/.test(n.text)),
+    ).toBe(true);
+    // A shares it again and then deletes it: gone for B this time.
+    a.mine.saveNote({ shared: true }, note.id, me);
+    await round(a, b);
+    expect(b.mine.getNote(note.id).shared).toBe(true);
+  });
+
+  it('keeps a ticket another member deleted in the Trash, and a restore brings it back for all', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      customerId: '015',
+      titleOriginal: 'Batch stops',
+    });
+    a.store.addSituationUpdate(t.id, {
+      doingNow: 'Looking',
+      newDifficulty: { text: 'No logs', resolver: '' },
+    });
+    const job = a.work.saveTask(p.id, {
+      title: 'Collect logs',
+      ticketId: t.id,
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    a.store.deleteTask(t.id);
+    await round(a, b);
+    expect(b.store.listTasks()).toHaveLength(0);
+    expect(b.store.listTrash(p.id)).toMatchObject([
+      {
+        no: '015',
+        title: 'Batch stops',
+        deletedBy: expect.stringMatching(/^Tanaka/),
+      },
+    ]);
+    expect(a.store.listTrash(p.id)).toMatchObject([
+      { no: '015', deletedBy: '' },
+    ]);
+    expect(b.ws.notices().some((n) => /deleted ticket 015/.test(n.text))).toBe(
+      true,
+    );
+    // B puts it back: whole again on both, and the task points at it again.
+    const back = b.store.restoreTicket(t.id);
+    expect(back.situation.doingNow).toBe('Looking');
+    expect(back.difficulties.map((d) => d.text)).toEqual(['No logs']);
+    expect(b.store.listTrash(p.id)).toHaveLength(0);
+    await round(b, a);
+    expect(a.store.getTask(t.id)).toMatchObject({ customerId: '015' });
+    expect(a.store.getTask(t.id).difficulties).toHaveLength(1);
+    expect(a.work.getTask(job.id).ticketId).toBe(t.id);
+    expect(a.store.listTrash(p.id)).toHaveLength(0);
+  });
+
+  it('asks you to settle a field you and someone else both changed while you were offline', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      customerId: '015',
+      titleOriginal: 'Batch stops',
+    });
+    const u = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      customerId: '016',
+      titleOriginal: 'Other',
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    // B goes offline and changes the status; A changes it too, later, and another ticket only A touches.
+    b.ws.setOffline(w.id, true);
+    b.store.updateTask(t.id, { status: 'On hold' });
+    await round(b);
+    wall += 60_000;
+    a.store.updateTask(t.id, { status: 'Done' });
+    a.store.updateTask(u.id, { status: 'In review' });
+    await round(a);
+    b.ws.setOffline(w.id, false);
+    await round(b, a);
+    // The later change is in place for now, on both.
+    expect(a.store.getTask(t.id).status).toBe('Done');
+    expect(b.store.getTask(t.id).status).toBe('Done');
+    // Only B is asked, and only about the field both changed.
+    expect(a.ws.conflicts()).toHaveLength(0);
+    const c = b.ws.conflicts();
+    expect(c).toMatchObject([
+      {
+        field: 'status',
+        mine: 'On hold',
+        theirs: 'Done',
+        where: 'Ticket 015 · Batch stops',
+        theirName: expect.stringMatching(/^Tanaka/),
+      },
+    ]);
+    expect(b.ws.resolveConflict(c[0].id, 'mine')).toMatchObject({
+      value: 'On hold',
+    });
+    expect(b.ws.conflicts()).toHaveLength(0);
+    await round(b, a);
+    expect(a.store.getTask(t.id).status).toBe('On hold');
+  });
+
+  it('starts a new member from a snapshot once old change files are removed, and catches a lagging one up', async () => {
+    const a = pc('Tanaka', undefined, undefined, 0);
+    const b = pc('Yamada');
+    const c = pc('Suzuki');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      customerId: '015',
+      titleOriginal: 'Batch stops',
+    });
+    const d = a.dis.save(p.id, { title: 'Talk' });
+    a.dis.addComment(d.id, {
+      body: 'see file',
+      files: [
+        {
+          name: 'log.txt',
+          type: 'text/plain',
+          bytes: new Uint8Array([5, 6, 7]),
+        },
+      ],
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    // B is away; A keeps working, then a snapshot is written and A's old files go.
+    a.store.updateTask(t.id, { status: 'In review' });
+    await round(a);
+    const gone = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      titleOriginal: 'Made and deleted',
+    });
+    await round(a);
+    a.store.deleteTask(gone.id);
+    await round(a);
+    await a.ws.snapshotNow(w.id, p.id);
+    const log = path.join(folder, 'projects', p.id, 'log');
+    const mine = fs
+      .readdirSync(log)
+      .find((x) => fs.readdirSync(path.join(log, x)).length === 1)!;
+    expect(fs.readdirSync(path.join(log, mine))).toEqual(['head.wsh']);
+    // A new member gets everything from the snapshot, the attachment too.
+    await join(a, c, w.id);
+    await round(c);
+    expect(c.store.listTasks().map((x) => [x.customerId, x.status])).toEqual([
+      ['015', 'In review'],
+    ]);
+    const cc = c.dis.comments(c.dis.list(p.id)[0].id)[0];
+    expect([...c.dis.attachment(cc.attachments[0].id).data]).toEqual([5, 6, 7]);
+    // The member who was away catches up from it as well.
+    await round(b);
+    expect(b.store.getTask(t.id).status).toBe('In review');
+    expect(b.store.listTasks()).toHaveLength(1);
+    // And everything after the snapshot still flows as changes.
+    c.store.updateTask(t.id, { status: 'Done' });
+    await round(c, a, b);
+    expect(a.store.getTask(t.id).status).toBe('Done');
+    expect(b.store.getTask(t.id).status).toBe('Done');
   });
 
   it('ignores files nobody in the workspace signed', async () => {

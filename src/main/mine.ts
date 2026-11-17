@@ -190,6 +190,9 @@ export class Mine {
       createdAt: str(r.created_at),
       updatedAt: str(r.updated_at),
       viewedAt: r.viewed_at == null ? null : str(r.viewed_at),
+      // Only a note of a project can be shared.
+      shared: Number(r.shared) === 1 && r.project_id != null,
+      sharedBy: str(r.shared_by),
     };
   }
 
@@ -219,7 +222,7 @@ export class Mine {
   }
 
   /** Adds a note, or changes one when id is given. Only the parts given change. */
-  saveNote(input: Partial<NoteInput>, id?: string): Note {
+  saveNote(input: Partial<NoteInput>, id?: string, me = ''): Note {
     const now = this.now();
     const before = id ? this.getNote(id) : null;
     const v: NoteInput = {
@@ -231,12 +234,19 @@ export class Mine {
       body: input.body ?? before?.body ?? '',
       tags: parseTags((input.tags ?? before?.tags ?? []).join(',')),
       favorite: input.favorite ?? before?.favorite ?? false,
+      shared: false,
     };
+    // Sharing belongs to the project: a note moved out of it is yours alone again.
+    const sameProject = !before || before.projectId === v.projectId;
+    v.shared =
+      v.projectId !== null &&
+      (input.shared ?? (sameProject ? (before?.shared ?? false) : false));
+    const sharedBy = v.shared ? (before?.shared ? before.sharedBy : me) : '';
     this.checkProject(v.projectId);
     if (before && id) {
       this.db
         .prepare(
-          'UPDATE notes SET project_id = ?, title = ?, body = ?, tags = ?, favorite = ?, updated_at = ? WHERE id = ?',
+          'UPDATE notes SET project_id = ?, title = ?, body = ?, tags = ?, favorite = ?, shared = ?, shared_by = ?, updated_at = ? WHERE id = ?',
         )
         .run(
           v.projectId,
@@ -244,6 +254,8 @@ export class Mine {
           v.body,
           JSON.stringify(v.tags),
           v.favorite ? 1 : 0,
+          v.shared ? 1 : 0,
+          sharedBy,
           now,
           id,
         );
@@ -252,7 +264,7 @@ export class Mine {
     const newId = randomUUID();
     this.db
       .prepare(
-        'INSERT INTO notes (id, project_id, title, body, tags, favorite, created_at, updated_at, viewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO notes (id, project_id, title, body, tags, favorite, shared, shared_by, created_at, updated_at, viewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
       .run(
         newId,
@@ -261,6 +273,8 @@ export class Mine {
         v.body,
         JSON.stringify(v.tags),
         v.favorite ? 1 : 0,
+        v.shared ? 1 : 0,
+        sharedBy,
         now,
         now,
         now,
@@ -343,7 +357,7 @@ export class Mine {
         : null;
     this.db
       .prepare(
-        'INSERT OR REPLACE INTO notes (id, project_id, title, body, tags, favorite, created_at, updated_at, viewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT OR REPLACE INTO notes (id, project_id, title, body, tags, favorite, shared, shared_by, created_at, updated_at, viewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
       .run(
         n.id,
@@ -352,6 +366,8 @@ export class Mine {
         n.body,
         JSON.stringify(parseTags(n.tags.join(','))),
         n.favorite ? 1 : 0,
+        n.shared && projectId ? 1 : 0,
+        n.shared && projectId ? n.sharedBy : '',
         n.createdAt,
         n.updatedAt,
         n.viewedAt,

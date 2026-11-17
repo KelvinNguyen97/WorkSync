@@ -96,6 +96,21 @@ export interface Notice {
   read: boolean;
 }
 
+/** A change both of you made, waiting for you to choose. */
+export interface WsConflict {
+  id: string;
+  projectId: string;
+  table: string;
+  rowId: string;
+  field: string;
+  mine: string;
+  theirs: string;
+  theirName: string;
+  /** What the row is, such as "Ticket 015 · Batch stops". */
+  where: string;
+  at: string;
+}
+
 /**
  * A hybrid clock (doc 08, 3.4): the wall clock plus a counter and the PC,
  * so a PC with a wrong clock cannot win forever and two changes never tie.

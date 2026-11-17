@@ -16,6 +16,7 @@ import {
   REFS,
   recordExchange,
   toUidSpace,
+  ITEM_TABLES,
   WITH_ID,
 } from './exchanges';
 import {
@@ -93,9 +94,19 @@ const ORDER = [
   'notes',
   'releases',
   'release_modules',
+  'discussions',
+  'comments',
+  'attachments',
+  'project_tasks',
+  'work_history',
 ];
 /** Rows a merge adds but never removes. */
-const NEVER_REMOVED = new Set(['source_files', 'file_versions', 'activity']);
+const NEVER_REMOVED = new Set([
+  'source_files',
+  'file_versions',
+  'activity',
+  'work_history',
+]);
 
 /**
  * Writes the merged project. Rows keep their ids here; new rows get new ids
@@ -138,6 +149,11 @@ export function applyMerge(
         row[col] = idHere(target, s(row[col]));
     if (t === 'owner_translations' && s(row.field).startsWith('difficulty:'))
       row.field = `difficulty:${idHere('difficulties', s(row.field).slice(11))}`;
+    if (t === 'work_history' && row.item_id) {
+      const uid = s(row.item_id);
+      const at = ITEM_TABLES.find((x) => local[x]?.has(uid)) ?? 'project_tasks';
+      row.item_id = idHere(at, uid);
+    }
     return row;
   };
   const differs = (a: Row, b: Row, cols: Set<string>) =>
@@ -179,8 +195,16 @@ export function applyMerge(
         const uid = s(r.id);
         const old = before.get(uid);
         if (old && !differs(r, old, cols)) continue;
+        // A file never changes: one already here stays as it is.
+        if (t === 'attachments' && old) continue;
         const row = toLocal(t, r);
         row.id = idHere(t, uid);
+        if (t === 'attachments') {
+          const bytes = m.x.files[`attachments/${s(r._fileId)}`];
+          // A file the other copy left out: the comment comes without it.
+          if (!bytes) continue;
+          row.data = bytes;
+        }
         if (cols.has('uid')) row.uid = uid;
         if (t === 'tasks' && old) row.updated_at = o.now;
         if (t === 'source_files' && !old) {

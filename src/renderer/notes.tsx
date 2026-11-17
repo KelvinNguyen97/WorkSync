@@ -19,6 +19,7 @@ import { confirmDelete } from './parts';
 import { Icon } from './Icon';
 import type { HeaderSlot } from './mine';
 import { tr } from './i18n';
+import { useWorkspaces } from './workspaces';
 
 const when = (iso: string | null) => {
   if (!iso) return '';
@@ -230,6 +231,14 @@ export function NotesView({
               <span className="note-item-top">
                 <b>{n.title || tr('Untitled note')}</b>
                 {n.favorite && <Icon name="star" className="fav" />}
+                {n.shared && (
+                  <span
+                    className="note-shared"
+                    title={tr('Shared with the workspace')}
+                  >
+                    <Icon name="users" />
+                  </span>
+                )}
               </span>
               {preview(n) && <small>{preview(n)}</small>}
               <span className="note-item-meta">
@@ -291,7 +300,16 @@ function NoteEditor({
   onDelete: () => void;
   fixedProject: boolean;
 }) {
-  const { attempt, projects } = useApp();
+  const { attempt, projects, toast } = useApp();
+  const { list: workspaces } = useWorkspaces();
+  // The switch is there only for a note of a project shared in a workspace.
+  const sharedIn = note.projectId
+    ? workspaces.find(
+        (w) =>
+          w.state === 'member' &&
+          w.projects.some((p) => p.id === note.projectId),
+      )
+    : undefined;
   const [title, setTitle] = useState(note.title);
   const [body, setBody] = useState(note.body);
   const [tagText, setTagText] = useState('');
@@ -330,6 +348,7 @@ function NoteEditor({
   ) => {
     const n = await attempt(() => window.worksync.saveNote(patch, note.id));
     if (n) onSaved(n);
+    return n;
   };
   const addTags = () => {
     const more = parseTags(tagText);
@@ -405,6 +424,40 @@ function NoteEditor({
               ))}
             </select>
           </label>
+        )}
+        {sharedIn && (
+          <span
+            className="note-share"
+            title={tr(
+              'Shared notes are seen and edited by every member of {name}, with their pictures. Off: only you see it.',
+              { name: sharedIn.name },
+            )}
+          >
+            <button
+              type="button"
+              className="switch"
+              role="switch"
+              aria-checked={note.shared}
+              aria-label={tr('Share with the workspace')}
+              onClick={() =>
+                void save({ shared: !note.shared }).then(() =>
+                  toast(
+                    note.shared
+                      ? tr(
+                          'Only you see this note now. It is taken off the other members’ PCs.',
+                        )
+                      : tr('Shared with everyone in {name}.', {
+                          name: sharedIn.name,
+                        }),
+                  ),
+                )
+              }
+            >
+              <span />
+            </button>
+            <Icon name="users" />
+            {tr('Share with the workspace')}
+          </span>
         )}
         <span className="note-tags">
           {note.tags.map((t) => (

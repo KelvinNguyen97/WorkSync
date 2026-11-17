@@ -26,6 +26,8 @@ import {
   type Status,
   type Task,
   type TaskInput,
+  TRASH_DAYS,
+  type TrashedTicket,
   type TaskLink,
   type ViewKey,
 } from '../shared/model';
@@ -162,6 +164,7 @@ export class Store {
       publishOnClose: Number(r.publish_on_close) === 1,
       board: cleanBoard(r.board ? JSON.parse(str(r.board)) : null),
       showNumbers: Number(r.show_numbers ?? 1) === 1,
+      fileKeeper: r.file_keeper ? str(r.file_keeper) : null,
       dateFormat: (DATE_FORMATS as readonly string[]).includes(
         str(r.date_format),
       )
@@ -1030,8 +1033,164 @@ export class Store {
     return this.getTask(taskId);
   }
 
+  /** In a shared project: who links the customer's file (a member id), or nobody. */
+  setFileKeeper(projectId: string, memberId: string | null): void {
+    this.db
+      .prepare('UPDATE projects SET file_keeper = ? WHERE id = ?')
+      .run(memberId, projectId);
+  }
+
+  // ------------------------------------------------------------ Trash
+
+  /**
+   * Keeps a ticket with its situation, difficulties and history, so it can be
+   * put back for 30 days. `by` names who deleted it when it was not you.
+   */
+  captureTrash(id: string, by = '', replace = true): void {
+    const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as
+      | Row
+      | undefined;
+    if (!row) return;
+    const q = (sql: string) => this.db.prepare(sql).all(id) as Row[];
+    const data = {
+      task: row,
+      situation_updates: q('SELECT * FROM situation_updates WHERE task_id = ?'),
+      difficulties: q('SELECT * FROM difficulties WHERE task_id = ?'),
+      activity: q('SELECT * FROM activity WHERE task_id = ?'),
+      owner_translations: q(
+        'SELECT * FROM owner_translations WHERE task_id = ?',
+      ),
+      // What pointed at it, to point at it again when it comes back.
+      projectTasks: q('SELECT id FROM project_tasks WHERE ticket_id = ?').map(
+        (r) => str(r.id),
+      ),
+      discussion:
+        q('SELECT id FROM discussions WHERE linked_task_id = ?').map((r) =>
+          str(r.id),
+        )[0] ?? null,
+    };
+    this.db
+      .prepare(
+        `INSERT OR ${replace ? 'REPLACE' : 'IGNORE'} INTO trash (id, project_id, no, title, deleted_at, deleted_by, data) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        str(row.project_id),
+        str(row.customer_id),
+        str(row.title_translation) || str(row.title_original),
+        this.now(),
+        by,
+        JSON.stringify(data),
+      );
+  }
+
+  /** The project's Trash, newest first. Tickets older than 30 days are gone. */
+  listTrash(projectId: string): TrashedTicket[] {
+    const limit = new Date(
+      Date.parse(this.now()) - TRASH_DAYS * 86_400_000,
+    ).toISOString();
+    this.db.prepare('DELETE FROM trash WHERE deleted_at < ?').run(limit);
+    // A ticket that is here after all (its removal did not hold) is not in the Trash.
+    this.db
+      .prepare('DELETE FROM trash WHERE id IN (SELECT id FROM tasks)')
+      .run();
+    return (
+      this.db
+        .prepare(
+          'SELECT id, project_id, no, title, deleted_at, deleted_by FROM trash WHERE project_id = ? ORDER BY deleted_at DESC',
+        )
+        .all(projectId) as Row[]
+    ).map((r) => ({
+      id: str(r.id),
+      projectId: str(r.project_id),
+      no: str(r.no),
+      title: str(r.title),
+      deletedAt: str(r.deleted_at),
+      deletedBy: str(r.deleted_by),
+    }));
+  }
+
+  /** Puts a ticket back from the Trash, with everything it had. */
+  restoreTicket(id: string): Task {
+    const r = this.db.prepare('SELECT * FROM trash WHERE id = ?').get(id) as
+      | Row
+      | undefined;
+    if (!r) throw new Error('This ticket is no longer in the Trash.');
+    if (this.db.prepare('SELECT 1 FROM tasks WHERE id = ?').get(id)) {
+      this.db.prepare('DELETE FROM trash WHERE id = ?').run(id);
+      return this.getTask(id);
+    }
+    const d = JSON.parse(str(r.data)) as {
+      task: Row;
+      situation_updates: Row[];
+      difficulties: Row[];
+      activity: Row[];
+      owner_translations: Row[];
+      projectTasks: string[];
+      discussion: string | null;
+    };
+    const put = (table: string, row: Row) => {
+      const known = new Set(
+        (this.db.prepare(`PRAGMA table_info(${table})`).all() as Row[]).map(
+          (c) => str(c.name),
+        ),
+      );
+      const cols = Object.keys(row).filter((c) => known.has(c));
+      this.db
+        .prepare(
+          `INSERT OR IGNORE INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+        )
+        .run(...(cols.map((c) => row[c] ?? null) as never[]));
+    };
+    this.tx(() => {
+      const task = { ...d.task };
+      // The linked file may be gone since; the ticket comes back without it.
+      if (
+        task.source_file_id &&
+        !this.db
+          .prepare('SELECT 1 FROM source_files WHERE id = ?')
+          .get(str(task.source_file_id))
+      )
+        task.source_file_id = null;
+      task.updated_at = this.now();
+      put('tasks', task);
+      for (const x of d.situation_updates) put('situation_updates', x);
+      for (const x of d.difficulties) put('difficulties', x);
+      for (const x of d.activity) put('activity', x);
+      for (const x of d.owner_translations) put('owner_translations', x);
+      for (const taskId of d.projectTasks ?? [])
+        this.db
+          .prepare(
+            'UPDATE project_tasks SET ticket_id = ? WHERE id = ? AND ticket_id IS NULL',
+          )
+          .run(id, taskId);
+      if (d.discussion)
+        this.db
+          .prepare(
+            "UPDATE discussions SET linked_task_id = ?, customer_id = ? WHERE id = ? AND linked_task_id IS NULL AND customer_id = '' AND NOT EXISTS (SELECT 1 FROM discussions x WHERE x.linked_task_id = ?)",
+          )
+          .run(id, str(task.customer_id), d.discussion, id);
+      if (task.source_file_id)
+        this.db
+          .prepare(
+            'DELETE FROM deleted_rows WHERE source_id = ? AND customer_id = ?',
+          )
+          .run(str(task.source_file_id), str(task.customer_id));
+      this.db.prepare('DELETE FROM trash WHERE id = ?').run(id);
+      this.log(id, 'Created', 'Restored from the Trash.');
+    });
+    return this.getTask(id);
+  }
+
+  /** Deletes a ticket in the Trash for good. */
+  purgeTrash(id: string): void {
+    this.db.prepare('DELETE FROM trash WHERE id = ?').run(id);
+  }
+
+  /** Deleting moves the ticket to the project's Trash for 30 days. */
   deleteTask(id: string): void {
     const t = this.getTask(id);
+    this.captureTrash(id, '', false);
     this.tx(() => {
       // A task from a file is still in the file; remember it so a review leaves it out unless asked.
       if (t.sourceFileId && t.fileState === 'in_file')

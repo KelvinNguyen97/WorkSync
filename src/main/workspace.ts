@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
@@ -6,6 +6,7 @@ import {
   Hlc,
   WORKSPACE_FORMAT,
   type JoinRequest,
+  type WsConflict,
   type Notice,
   type NoticeKind,
   type WorkspaceInfo,
@@ -59,6 +60,54 @@ export interface WorkspaceDeps {
   appVersion?: string;
   /** Folder work slower than this counts as unreachable (ms). */
   limit?: number;
+  /** Called before a ticket is deleted because another member deleted it, to keep it in the Trash. */
+  onTicketRemoved?: (ticketId: string, byName: string) => void;
+  /** How old a change file must be before a snapshot lets it be removed (ms; 30 days). */
+  keepChangeFilesMs?: number;
+  /** How old the newest snapshot may get before this PC writes one (ms; a day). */
+  snapshotEveryMs?: number;
+}
+
+/**
+ * Fields where a change made on this PC and not yet sent, and a different
+ * change by someone else, is put to the person to settle (doc 08, 3.4).
+ */
+const ASK: Record<string, string[]> = {
+  tasks: [
+    'customer_id',
+    'title_translation',
+    'summary',
+    'status',
+    'priority',
+    'assignee',
+    'category',
+    'planned_start',
+    'planned_end',
+    'actual_start',
+    'actual_end',
+    'handled_by',
+    'doing_now',
+    'next_step',
+    'next_date',
+  ],
+  project_tasks: [
+    'title',
+    'note',
+    'assignee',
+    'due_date',
+    'priority',
+    'status',
+  ],
+  discussions: ['title', 'description', 'state'],
+  notes: ['title', 'body'],
+};
+
+interface SnapRow {
+  t: string;
+  id: string;
+  d: Row;
+  c: Record<string, string>;
+  x: boolean;
 }
 
 /** What a member file says. */
@@ -179,6 +228,10 @@ export class Workspaces {
    */
   private cleanAt = new Map<string, number>();
   private quietDepth = 0;
+  /** Changes made here and not sent yet, while changes that came in are applied. */
+  private unsent: Map<string, unknown> | null = null;
+  /** When each project's snapshots and old change files were last looked at. */
+  private keptAt = new Map<string, number>();
   /** When each workspace last synced (written to the database now and then). */
   private syncedAt = new Map<string, { at: string; saved: number }>();
   /** When you last edited a shared field here, by table:id:field. */
@@ -1525,6 +1578,18 @@ export class Workspaces {
     const base = path.join(str(ctx.ws.folder), 'projects', projectId, 'log');
     const incoming: { pc: string; ch: Change }[] = [];
     const cursors: [string, number][] = [];
+    let fromSnapshot = 0;
+    // A project not on this PC yet starts from the newest snapshot, if there is one.
+    if (
+      !this.db.prepare('SELECT 1 FROM projects WHERE id = ?').get(projectId) &&
+      !this.db
+        .prepare(
+          'SELECT 1 FROM ws_cursors WHERE workspace_id = ? AND project_id = ?',
+        )
+        .get(wsId, projectId)
+    )
+      fromSnapshot += await this.loadSnapshot(ctx, projectId, null);
+    const gaps: [string, number][] = [];
     for (const pc of await this.ls(base)) {
       // This PC's own log is read too: after a restored backup, or a stop
       // right after writing, it holds changes this database has not got.
@@ -1554,7 +1619,11 @@ export class Workspaces {
         const text = await this.read(
           path.join(base, pc, `${String(at + 1).padStart(6, '0')}.wsc`),
         );
-        if (!text) break; // a gap: not arrived yet
+        if (!text) {
+          // Not arrived yet, or removed after a snapshot that covers it.
+          gaps.push([pc, at]);
+          break;
+        }
         let data: { project: string; seq: number; changes: Change[] };
         try {
           data = open<{ project: string; seq: number; changes: Change[] }>(
@@ -1616,7 +1685,10 @@ export class Workspaces {
         if (pc !== me) fromOthers.add(pc);
       }),
     );
-    return { applied, fromOthers };
+    // Change files removed after a snapshot: the snapshot brings this PC up to date.
+    if (gaps.length)
+      fromSnapshot += await this.loadSnapshot(ctx, projectId, gaps);
+    return { applied: applied + fromSnapshot, fromOthers };
   }
 
   private applyAll(
@@ -1627,6 +1699,34 @@ export class Workspaces {
     onApplied: (pc: string) => void,
   ): void {
     const wsId = str(ctx.ws.id);
+    const me = this.pcKeys().pcId;
+    // What you changed and have not sent, to notice when someone changed the same thing.
+    this.unsent = new Map();
+    for (const r of this.db
+      .prepare('SELECT change FROM ws_outbox WHERE project_id = ? ORDER BY n')
+      .all(projectId) as Row[]) {
+      const ch = JSON.parse(str(r.change)) as Change;
+      for (const [k, v] of Object.entries(ch.f ?? {}))
+        this.unsent.set(`${ch.t}:${ch.id}:${k}`, v);
+    }
+    // Tickets another member deleted go to the Trash here too, while they are whole.
+    const removed: { id: string; no: string; title: string; pc: string }[] = [];
+    for (const x of all) {
+      if (!x.ch.del || x.ch.t !== 'tasks' || x.pc === me) continue;
+      const t = this.db
+        .prepare(
+          'SELECT customer_id, title_translation, title_original FROM tasks WHERE id = ?',
+        )
+        .get(x.ch.id) as Row | undefined;
+      if (!t) continue;
+      this.d.onTicketRemoved?.(x.ch.id, this.nameOf(ctx, x.pc));
+      removed.push({
+        id: x.ch.id,
+        no: str(t.customer_id),
+        title: str(t.title_translation) || str(t.title_original),
+        pc: x.pc,
+      });
+    }
     this.db.exec('BEGIN');
     try {
       for (const x of all) {
@@ -1661,11 +1761,503 @@ export class Workspaces {
           projectId,
           new Date(this.now().getTime() - 30 * DAY).toISOString(),
         );
+      for (const r of removed)
+        if (!this.db.prepare('SELECT 1 FROM tasks WHERE id = ?').get(r.id))
+          this.notice(
+            wsId,
+            'removed',
+            `${this.nameOf(ctx, r.pc)} deleted ticket ${r.no} “${r.title}”. It is in the project’s Trash for 30 days.`,
+            projectId,
+          );
       this.db.exec('COMMIT');
     } catch (e) {
       this.db.exec('ROLLBACK');
       throw e;
+    } finally {
+      this.unsent = null;
     }
+  }
+
+  // ------------------------------------------------------------ changes to settle
+
+  private addConflict(
+    ctx: Ctx,
+    projectId: string,
+    ch: Change,
+    field: string,
+    mine: unknown,
+    theirs: unknown,
+    fromPc: string,
+  ): void {
+    this.quiet(() => {
+      this.db
+        .prepare(
+          'DELETE FROM ws_conflicts WHERE tbl = ? AND row_id = ? AND field = ?',
+        )
+        .run(ch.t, ch.id, field);
+      this.db
+        .prepare(
+          'INSERT INTO ws_conflicts (id, workspace_id, project_id, tbl, row_id, field, mine, theirs, their_name, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        )
+        .run(
+          randomUUID(),
+          str(ctx.ws.id),
+          projectId,
+          ch.t,
+          ch.id,
+          field,
+          JSON.stringify(mine ?? null),
+          JSON.stringify(theirs ?? null),
+          this.nameOf(ctx, fromPc),
+          this.iso(),
+        );
+    });
+  }
+
+  /** The changes both you and someone else made, for you to choose. */
+  conflicts(): WsConflict[] {
+    const out: WsConflict[] = [];
+    const text = (v: unknown) => {
+      try {
+        const x = JSON.parse(str(v)) as unknown;
+        return x === null || x === undefined ? '' : String(x);
+      } catch {
+        return '';
+      }
+    };
+    for (const r of this.db
+      .prepare('SELECT * FROM ws_conflicts ORDER BY at')
+      .all() as Row[]) {
+      const t = str(r.tbl);
+      if (!ASK[t]?.includes(str(r.field))) continue;
+      const row = this.db
+        .prepare(`SELECT * FROM ${t} WHERE id = ?`)
+        .get(str(r.row_id)) as Row | undefined;
+      // The row is gone, or the choice no longer exists: nothing left to settle.
+      if (!row || text(r.mine) === text(r.theirs)) {
+        this.quiet(() =>
+          this.db
+            .prepare('DELETE FROM ws_conflicts WHERE id = ?')
+            .run(str(r.id)),
+        );
+        continue;
+      }
+      const where =
+        t === 'tasks'
+          ? `Ticket ${str(row.customer_id)} · ${str(row.title_translation) || str(row.title_original)}`
+          : t === 'project_tasks'
+            ? `Task · ${str(row.title)}`
+            : t === 'discussions'
+              ? `Discussion ${str(row.customer_id)} · ${str(row.title)}`
+              : `Note · ${str(row.title)}`;
+      out.push({
+        id: str(r.id),
+        projectId: str(r.project_id),
+        table: t,
+        rowId: str(r.row_id),
+        field: str(r.field),
+        mine: text(r.mine),
+        theirs: text(r.theirs),
+        theirName: str(r.their_name),
+        where,
+        at: str(r.at),
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Settles one: the value chosen is written like any other change of yours,
+   * so everyone gets it. Returns what was changed, or null when nothing was.
+   */
+  resolveConflict(
+    id: string,
+    pick: 'mine' | 'theirs',
+  ): { table: string; rowId: string; field: string; value: string } | null {
+    const c = this.conflicts().find((x) => x.id === id);
+    this.db.prepare('DELETE FROM ws_conflicts WHERE id = ?').run(id);
+    if (!c) return null;
+    const raw = this.db
+      .prepare(`SELECT ${c.field} AS v FROM ${c.table} WHERE id = ?`)
+      .get(c.rowId) as Row | undefined;
+    if (!raw) return null;
+    const want = pick === 'mine' ? c.mine : c.theirs;
+    if (str(raw.v) === want) return null;
+    const cols = columns(this.db, c.table);
+    // Empty stands for "nothing set" where the field allows it.
+    const value = want === '' && raw.v === null ? null : want;
+    this.db
+      .prepare(
+        `UPDATE ${c.table} SET ${c.field} = ?${cols.has('updated_at') ? ', updated_at = ?' : ''} WHERE id = ?`,
+      )
+      .run(
+        ...([
+          value,
+          ...(cols.has('updated_at') ? [this.iso()] : []),
+          c.rowId,
+        ] as never[]),
+      );
+    return { table: c.table, rowId: c.rowId, field: c.field, value: want };
+  }
+
+  // ------------------------------------------------------------ snapshots
+
+  private blobFile(ctx: Ctx, projectId: string, t: string, id: string) {
+    return path.join(
+      str(ctx.ws.folder),
+      'projects',
+      projectId,
+      'snapshot',
+      'files',
+      `${createHash('sha256').update(`${t}\n${id}`).digest('hex').slice(0, 32)}.wsb`,
+    );
+  }
+
+  private async snapshotHeads(
+    ctx: Ctx,
+    projectId: string,
+  ): Promise<{ pc: string; at: string; cursors: Record<string, number> }[]> {
+    const dir = path.join(
+      str(ctx.ws.folder),
+      'projects',
+      projectId,
+      'snapshot',
+    );
+    const out: { pc: string; at: string; cursors: Record<string, number> }[] =
+      [];
+    for (const f of await this.ls(dir)) {
+      const m = /^([0-9a-f]{16})\.wsn$/.exec(f);
+      if (!m || ctx.removals.get(m[1])?.effective) continue;
+      const text = await this.read(path.join(dir, f));
+      if (!text) continue;
+      try {
+        const o = open<{ at: string; cursors: Record<string, number> }>(
+          text,
+          'snaphead',
+          this.keyOf(ctx),
+          this.signer(ctx),
+        );
+        if (o.pc === m[1]) out.push({ pc: m[1], ...o.data });
+      } catch {
+        // An older key, or not a member's: not used.
+      }
+    }
+    return out.sort((a, b) => b.at.localeCompare(a.at));
+  }
+
+  /**
+   * Writes this PC's full copy of a project into the folder, so a new member
+   * starts from it instead of every change ever made (doc 08, 3.4).
+   */
+  private async writeSnapshot(ctx: Ctx, projectId: string): Promise<boolean> {
+    // Changes still waiting for their parent are not in the copy yet.
+    if (
+      this.db
+        .prepare('SELECT 1 FROM ws_pending WHERE project_id = ?')
+        .get(projectId)
+    )
+      return false;
+    this.stage(projectId);
+    const rows: SnapRow[] = (
+      this.db
+        .prepare(
+          'SELECT tbl, id, data, clocks, deleted FROM ws_rows WHERE project_id = ?',
+        )
+        .all(projectId) as Row[]
+    ).map((r) => ({
+      t: str(r.tbl),
+      id: str(r.id),
+      d: JSON.parse(str(r.data) || '{}') as Row,
+      c: JSON.parse(str(r.clocks) || '{}') as Record<string, string>,
+      x: Number(r.deleted) === 1,
+    }));
+    if (!rows.length) return false;
+    const cursors: Record<string, number> = {};
+    for (const r of this.db
+      .prepare(
+        'SELECT pc_id, seq FROM ws_cursors WHERE workspace_id = ? AND project_id = ?',
+      )
+      .all(str(ctx.ws.id), projectId) as Row[])
+      cursors[str(r.pc_id)] = Number(r.seq);
+    // Files (attachments, pictures) are written once each, beside the snapshot.
+    for (const r of rows) {
+      const t = TABLE[r.t];
+      if (!t?.blob || r.x) continue;
+      const file = this.blobFile(ctx, projectId, r.t, r.id);
+      if (await this.read(file)) continue;
+      const b = this.db
+        .prepare(`SELECT ${t.blob} AS b FROM ${t.name} WHERE id = ?`)
+        .get(r.id) as Row | undefined;
+      if (b)
+        await this.write(
+          file,
+          this.sealFor(ctx, 'snapfile', { t: r.t, id: r.id, b: toWire(b.b) }),
+        );
+    }
+    const me = this.pcKeys().pcId;
+    const dir = path.join(
+      str(ctx.ws.folder),
+      'projects',
+      projectId,
+      'snapshot',
+    );
+    const at = this.iso();
+    await this.write(
+      path.join(dir, `${me}.wss`),
+      this.sealFor(ctx, 'snapshot', { project: projectId, at, cursors, rows }),
+    );
+    await this.write(
+      path.join(dir, `${me}.wsn`),
+      this.sealFor(ctx, 'snaphead', { project: projectId, at, cursors }),
+    );
+    return true;
+  }
+
+  /**
+   * Takes in the newest snapshot. `need` names change files that are missing
+   * (removed after a snapshot): only a snapshot that covers them helps. Null
+   * for a project not on this PC yet.
+   */
+  private async loadSnapshot(
+    ctx: Ctx,
+    projectId: string,
+    need: [string, number][] | null,
+  ): Promise<number> {
+    const heads = await this.snapshotHeads(ctx, projectId);
+    const pick = heads.find(
+      (h) =>
+        need === null || need.some(([pc, at]) => (h.cursors[pc] ?? 0) > at),
+    );
+    if (!pick) return 0;
+    const dir = path.join(
+      str(ctx.ws.folder),
+      'projects',
+      projectId,
+      'snapshot',
+    );
+    const text = await this.read(path.join(dir, `${pick.pc}.wss`));
+    if (!text) return 0;
+    let snap: {
+      project: string;
+      cursors: Record<string, number>;
+      rows: SnapRow[];
+    };
+    try {
+      const o = open<typeof snap>(
+        text,
+        'snapshot',
+        this.keyOf(ctx),
+        this.signer(ctx),
+      );
+      if (o.pc !== pick.pc || o.data.project !== projectId) return 0;
+      snap = o.data;
+    } catch {
+      ctx.problems.push(`projects/${projectId}/snapshot/${pick.pc}.wss`);
+      return 0;
+    }
+    // The files of rows this PC does not have yet.
+    const blobs = new Map<string, unknown>();
+    for (const r of snap.rows) {
+      const t = TABLE[r.t];
+      if (!t?.blob || r.x) continue;
+      if (this.db.prepare(`SELECT 1 FROM ${t.name} WHERE id = ?`).get(r.id))
+        continue;
+      const b = await this.read(this.blobFile(ctx, projectId, r.t, r.id));
+      if (!b) continue;
+      try {
+        const o = open<{ t: string; id: string; b: unknown }>(
+          b,
+          'snapfile',
+          this.keyOf(ctx),
+          this.signer(ctx),
+        );
+        if (o.data.t === r.t && o.data.id === r.id)
+          blobs.set(`${r.t}\n${r.id}`, o.data.b);
+      } catch {
+        // Left out; the row comes without its file.
+      }
+    }
+    if (this.db.prepare('SELECT 1 FROM projects WHERE id = ?').get(projectId))
+      this.stage(projectId);
+    const order = new Map(SHARED_TABLES.map((t, i) => [t.name, i]));
+    const rows = [...snap.rows].sort(
+      (a, b) =>
+        Number(a.x) - Number(b.x) ||
+        (a.x
+          ? (order.get(b.t) ?? 0) - (order.get(a.t) ?? 0)
+          : (order.get(a.t) ?? 0) - (order.get(b.t) ?? 0)),
+    );
+    let n = 0;
+    this.quiet(() => {
+      this.db.exec('BEGIN');
+      try {
+        for (const r of rows) if (this.mergeRow(ctx, projectId, r, blobs)) n++;
+        for (const [pc, seq] of Object.entries(snap.cursors))
+          if (seq > this.cursor(str(ctx.ws.id), projectId, pc))
+            this.setCursor(str(ctx.ws.id), projectId, pc, seq);
+        this.db.exec('COMMIT');
+      } catch (e) {
+        this.db.exec('ROLLBACK');
+        throw e;
+      }
+    });
+    return n;
+  }
+
+  /** One row of a snapshot: each field is taken where the snapshot's is newer. */
+  private mergeRow(
+    ctx: Ctx,
+    projectId: string,
+    r: SnapRow,
+    blobs: Map<string, unknown>,
+  ): boolean {
+    const t = TABLE[r.t];
+    if (!t) return false;
+    for (const c of Object.values(r.c)) this.clock().see(c);
+    const me = this.pcKeys().pcId;
+    if (r.x)
+      return r.c._del
+        ? this.apply(
+            ctx,
+            projectId,
+            { t: r.t, id: r.id, del: true, c: r.c._del },
+            me,
+          )
+        : false;
+    const snapRow = this.db
+      .prepare(
+        'SELECT * FROM ws_rows WHERE project_id = ? AND tbl = ? AND id = ?',
+      )
+      .get(projectId, r.t, r.id) as Row | undefined;
+    const clocks = snapRow
+      ? (JSON.parse(str(snapRow.clocks) || '{}') as Record<string, string>)
+      : {};
+    const data =
+      snapRow && Number(snapRow.deleted) === 0
+        ? (JSON.parse(str(snapRow.data)) as Row)
+        : {};
+    const cols = columns(this.db, t.name);
+    const theirs = Object.entries(r.c).filter(([k]) => k !== '_del');
+    const put = () =>
+      this.db
+        .prepare(
+          'INSERT OR REPLACE INTO ws_rows (project_id, tbl, id, data, clocks, deleted) VALUES (?, ?, ?, ?, ?, 0)',
+        )
+        .run(
+          projectId,
+          r.t,
+          r.id,
+          JSON.stringify(data),
+          JSON.stringify(clocks),
+        );
+    const exists = !!this.db
+      .prepare(`SELECT 1 FROM ${t.name} WHERE id = ?`)
+      .get(r.id);
+    try {
+      if (!exists) {
+        // Removed here after everything the snapshot knows: it stays removed.
+        if (clocks._del && theirs.every(([, c]) => c <= clocks._del))
+          return false;
+        const full = new Map<string, unknown>(Object.entries(r.d));
+        if (t.blob) {
+          const b = blobs.get(`${r.t}\n${r.id}`);
+          if (b === undefined) return false;
+          full.set(t.blob, b);
+        }
+        for (const [k, v] of Object.entries(t.defaults ?? {}))
+          if (!full.has(k)) full.set(k, v);
+        full.set('id', r.id);
+        const keys = [...full.keys()].filter(
+          (k) =>
+            (cols.has(k) && !t.private.includes(k)) || k in (t.defaults ?? {}),
+        );
+        this.db
+          .prepare(
+            `INSERT INTO ${t.name} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`,
+          )
+          .run(...(keys.map((k) => fromWire(full.get(k))) as never[]));
+        for (const k of Object.keys(data)) delete data[k];
+        Object.assign(data, r.d);
+        for (const k of Object.keys(clocks)) delete clocks[k];
+        for (const [k, c] of theirs) clocks[k] = c;
+        put();
+        return true;
+      }
+      const take = theirs.filter(
+        ([k, c]) =>
+          k in r.d &&
+          cols.has(k) &&
+          !t.private.includes(k) &&
+          k !== t.blob &&
+          (!clocks[k] || c > clocks[k]),
+      );
+      if (!take.length) return false;
+      this.db
+        .prepare(
+          `UPDATE ${t.name} SET ${take.map(([k]) => `${k} = ?`).join(', ')} WHERE id = ?`,
+        )
+        .run(...(take.map(([k]) => fromWire(r.d[k])) as never[]), r.id);
+      for (const [k, c] of take) {
+        data[k] = r.d[k];
+        clocks[k] = c;
+      }
+      put();
+      return true;
+    } catch (e) {
+      ctx.problems.push(
+        `snapshot ${r.t}/${r.id}: ${String((e as Error).message).slice(0, 80)}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Now and then: writes a snapshot when the newest is a day old, and removes
+   * this PC's change files that a snapshot covers and that are 30 days old.
+   */
+  private async keepHouse(
+    ctx: Ctx,
+    projectId: string,
+    force = false,
+  ): Promise<void> {
+    const last = this.keptAt.get(projectId) ?? 0;
+    if (!force && Date.now() - last < 10 * 60_000) return;
+    this.keptAt.set(projectId, Date.now());
+    let heads = await this.snapshotHeads(ctx, projectId);
+    const every = this.d.snapshotEveryMs ?? DAY;
+    if (
+      force ||
+      !heads.length ||
+      this.now().getTime() - Date.parse(heads[0].at) > every
+    ) {
+      if (await this.writeSnapshot(ctx, projectId))
+        heads = await this.snapshotHeads(ctx, projectId);
+    }
+    const me = this.pcKeys().pcId;
+    const cover = Math.max(0, ...heads.map((h) => h.cursors[me] ?? 0));
+    if (!cover) return;
+    const keep = this.d.keepChangeFilesMs ?? 30 * DAY;
+    const dir = path.join(str(ctx.ws.folder), 'projects', projectId, 'log', me);
+    for (const f of await this.ls(dir)) {
+      const m = /^(\d{6})\.wsc$/.exec(f);
+      if (!m || Number(m[1]) > cover) continue;
+      try {
+        const st = await limited(() => fsp.stat(path.join(dir, f)), this.limit);
+        if (Date.now() - st.mtimeMs >= keep)
+          await limited(
+            () => fsp.rm(path.join(dir, f), { force: true }),
+            this.limit,
+          );
+      } catch {
+        // Tried again next time.
+      }
+    }
+  }
+
+  /** Writes a snapshot of a shared project now and tidies this PC's old change files. */
+  async snapshotNow(workspaceId: string, projectId: string): Promise<void> {
+    const ctx = await this.load(this.row(workspaceId));
+    await this.keepHouse(ctx, projectId, true);
   }
 
   /** Applies one change: the later change of each field wins. True when something changed. */
@@ -1714,7 +2306,24 @@ export class Workspaces {
       if (fieldClocks.length && fieldClocks.every(([, c]) => c > ch.c))
         return false;
       if (clocks._del && clocks._del >= ch.c && !exists) return false;
-      if (exists)
+      if (exists && t.name === 'notes') {
+        // A note you shared stays yours when someone stops sharing or deletes it.
+        const n = this.db
+          .prepare('SELECT title, shared_by FROM notes WHERE id = ?')
+          .get(ch.id) as Row;
+        if (str(n.shared_by) === this.d.myMemberId()) {
+          this.db
+            .prepare("UPDATE notes SET shared = 0, shared_by = '' WHERE id = ?")
+            .run(ch.id);
+          if (fromPc !== this.pcKeys().pcId)
+            this.notice(
+              str(ctx.ws.id),
+              'removed',
+              `${this.nameOf(ctx, fromPc)} stopped sharing your note “${str(n.title)}”. It is still on this PC, only for you.`,
+              projectId,
+            );
+        } else this.db.prepare('DELETE FROM notes WHERE id = ?').run(ch.id);
+      } else if (exists && !t.noRemoteDelete)
         this.db.prepare(`DELETE FROM ${t.name} WHERE id = ?`).run(ch.id);
       for (const k of Object.keys(data)) delete data[k];
       clocks._del = ch.c;
@@ -1734,6 +2343,23 @@ export class Workspaces {
     const mine = this.pcKeys().pcId;
     for (const [k, v] of Object.entries(ch.f ?? {})) {
       if (!cols.has(k) || t.private.includes(k)) continue;
+      // You changed this too and have not sent it yet: it is put to you to settle.
+      const key = `${ch.t}:${ch.id}:${k}`;
+      if (
+        fromPc !== mine &&
+        this.unsent?.has(key) &&
+        ASK[ch.t]?.includes(k) &&
+        JSON.stringify(this.unsent.get(key)) !== JSON.stringify(v)
+      )
+        this.addConflict(
+          ctx,
+          projectId,
+          ch,
+          k,
+          this.unsent.get(key),
+          v,
+          fromPc,
+        );
       if (clocks[k] && clocks[k] >= ch.c) continue;
       // Someone overwrote a field you set in the last few minutes (doc 08, 3.4).
       if (
@@ -2120,6 +2746,15 @@ export class Workspaces {
           this.db.prepare('SELECT 1 FROM projects WHERE id = ?').get(pid)
         )
           sent += await this.push(ctx, pid);
+        if (this.db.prepare('SELECT 1 FROM projects WHERE id = ?').get(pid)) {
+          // Whoever links the customer's file is known to all, so nobody links it twice.
+          this.db
+            .prepare(
+              "UPDATE projects SET file_keeper = ? WHERE id = ? AND (file_keeper IS NULL OR file_keeper = '') AND EXISTS (SELECT 1 FROM source_files WHERE project_id = ?)",
+            )
+            .run(this.d.myMemberId(), pid, pid);
+          if (!this.readOnly(ctx)) await this.keepHouse(ctx, pid);
+        }
       }
       if (this.now().getTime() - this.lastPresence > 15_000) {
         this.lastPresence = this.now().getTime();

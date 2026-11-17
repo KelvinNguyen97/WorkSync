@@ -866,7 +866,7 @@ export function ConfirmDelete({
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const { removeTask, attempt, toast } = useApp();
+  const { removeTask, attempt, toast, putTask } = useApp();
   const label = useTaskLabel();
   const del = async () => {
     const ok = await attempt(async () => {
@@ -875,7 +875,18 @@ export function ConfirmDelete({
     });
     if (ok) {
       removeTask(task.id);
-      toast(`Deleted ${label(task)}.`);
+      toast(tr('Moved {task} to the Trash.', { task: label(task) }), {
+        label: tr('Undo'),
+        run: () =>
+          void attempt(() => window.worksync.restoreTicket(task.id)).then(
+            (t) => {
+              if (t) {
+                putTask(t);
+                window.dispatchEvent(new Event('worksync:work-changed'));
+              }
+            },
+          ),
+      });
       onDeleted();
     }
   };
@@ -883,7 +894,7 @@ export function ConfirmDelete({
     <Modal
       title={tr('Delete {task}?', { task: label(task) })}
       subtitle={tr(
-        'The ticket, its situation updates and its history are deleted. This cannot be undone.',
+        'The ticket goes to the project’s Trash with its situation updates and history. You can put it back from there for 30 days.',
       )}
       onClose={onClose}
       narrow

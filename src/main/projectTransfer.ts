@@ -11,6 +11,7 @@ import {
   receivedIds,
   recordExchange,
   toUidSpace,
+  ITEM_TABLES,
   WITH_ID,
 } from './exchanges';
 
@@ -97,6 +98,37 @@ const TABLES: {
     refs: { project_id: 'projects' },
   },
   {
+    name: 'discussions',
+    where: 'project_id = :p',
+    refs: { project_id: 'projects', linked_task_id: 'tasks' },
+  },
+  {
+    name: 'comments',
+    where:
+      'discussion_id IN (SELECT id FROM discussions WHERE project_id = :p)',
+    refs: { discussion_id: 'discussions', parent_id: 'comments' },
+  },
+  {
+    name: 'attachments',
+    where:
+      'discussion_id IN (SELECT id FROM discussions WHERE project_id = :p)',
+    refs: { discussion_id: 'discussions', comment_id: 'comments' },
+  },
+  {
+    name: 'project_tasks',
+    where: 'project_id = :p',
+    refs: {
+      project_id: 'projects',
+      ticket_id: 'tasks',
+      discussion_id: 'discussions',
+    },
+  },
+  {
+    name: 'work_history',
+    where: 'project_id = :p',
+    refs: { project_id: 'projects' },
+  },
+  {
     name: 'deleted_rows',
     where: 'source_id IN (SELECT id FROM source_files WHERE project_id = :p)',
     refs: { source_id: 'source_files' },
@@ -134,6 +166,11 @@ export function exportProject(
       t.next_action_date = null;
     }
   const files: Record<string, Uint8Array> = {};
+  // Files attached to discussions travel beside the data.
+  for (const a of tables.attachments ?? []) {
+    files[`attachments/${String(a.id)}`] = new Uint8Array(a.data as Uint8Array);
+    delete a.data;
+  }
   // Images pasted into the project's notes go along with them.
   const image = db.prepare('SELECT data FROM note_images WHERE id = ?');
   for (const n of tables.notes)
@@ -388,6 +425,18 @@ export function importProject(
           r.state_detail = '';
         }
         if (t.name === 'notes') putNoteImages(db, r.body, x.files, now);
+        if (t.name === 'attachments') {
+          const bytes = x.files[`attachments/${String(raw.id)}`];
+          // A file the export left out: the comment stays, without it.
+          if (!bytes) continue;
+          r.data = bytes;
+        }
+        if (t.name === 'work_history' && raw.item_id != null) {
+          const k = String(raw.item_id);
+          const hit = ITEM_TABLES.map((x) => newIds[x]?.get(k)).find(Boolean);
+          if (!hit) continue;
+          r.item_id = hit;
+        }
         if (t.name === 'file_versions') {
           const old = String(raw.id);
           const bytes = x.files[`snapshots/${old}`];

@@ -27,7 +27,20 @@ export const REFS: Record<string, Record<string, string>> = {
   releases: { project_id: 'projects' },
   release_modules: { release_id: 'releases' },
   deleted_rows: { source_id: 'source_files' },
+  discussions: { project_id: 'projects', linked_task_id: 'tasks' },
+  comments: { discussion_id: 'discussions', parent_id: 'comments' },
+  attachments: { discussion_id: 'discussions', comment_id: 'comments' },
+  project_tasks: {
+    project_id: 'projects',
+    ticket_id: 'tasks',
+    discussion_id: 'discussions',
+  },
+  // item_id points at a project task or a discussion: see itemRef.
+  work_history: { project_id: 'projects' },
 };
+
+/** work_history.item_id points at a project task or a discussion. */
+export const ITEM_TABLES = ['project_tasks', 'discussions'];
 /** Tables whose rows have their own id (and so a uid). */
 export const WITH_ID = [
   'projects',
@@ -42,6 +55,11 @@ export const WITH_ID = [
   'notes',
   'releases',
   'release_modules',
+  'discussions',
+  'comments',
+  'attachments',
+  'project_tasks',
+  'work_history',
 ];
 
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
@@ -102,6 +120,10 @@ export function toUidSpace(tables: Tables): Tables {
       for (const [col, target] of Object.entries(refs))
         if (row[col] !== null && row[col] !== undefined)
           row[col] = uidOf[target].get(s(row[col])) ?? row[col];
+      if (t === 'work_history' && row.item_id != null)
+        row.item_id =
+          ITEM_TABLES.map((x) => uidOf[x].get(s(row.item_id))).find(Boolean) ??
+          row.item_id;
       if (t === 'owner_translations' && s(row.field).startsWith('difficulty:'))
         row.field = `difficulty:${uidOf.difficulties.get(s(row.field).slice(11)) ?? s(row.field).slice(11)}`;
       return row;
@@ -142,6 +164,16 @@ export function projectRows(db: DatabaseSync, projectId: string): Tables {
     deleted_rows: q(
       'SELECT * FROM deleted_rows WHERE source_id IN (SELECT id FROM source_files WHERE project_id = :p)',
     ),
+    discussions: q('SELECT * FROM discussions WHERE project_id = :p'),
+    comments: q(
+      'SELECT * FROM comments WHERE discussion_id IN (SELECT id FROM discussions WHERE project_id = :p)',
+    ),
+    // The files themselves travel beside the data (attachments/<id>), not in it.
+    attachments: q(
+      'SELECT id, discussion_id, comment_id, name, type, size, hash, created_at FROM attachments WHERE discussion_id IN (SELECT id FROM discussions WHERE project_id = :p)',
+    ),
+    project_tasks: q('SELECT * FROM project_tasks WHERE project_id = :p'),
+    work_history: q('SELECT * FROM work_history WHERE project_id = :p'),
   };
 }
 

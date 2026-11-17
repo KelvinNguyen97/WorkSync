@@ -3,8 +3,12 @@ import type {
   JoinRequest,
   Notice,
   WorkspaceInfo,
+  WsConflict,
   WsMember,
 } from '../shared/workspace';
+import type { TrashedTicket } from '../shared/model';
+import { fieldLabel } from '../shared/merge';
+import { WORK_STATUS_NAME } from '../shared/work';
 import { useApp } from './appState';
 import { Icon } from './Icon';
 import { tr, uiLanguage } from './i18n';
@@ -916,5 +920,185 @@ export function OpenByOthers({
       <Icon name="eye" />
       {tr('{who} has this ticket open', { who: names.join(', ') })}
     </span>
+  );
+}
+
+/** The project's Trash: deleted tickets, kept 30 days. */
+export function TrashDialog({
+  projectId,
+  onClose,
+}: {
+  projectId: string;
+  onClose: () => void;
+}) {
+  const { attempt, toast, putTask, project } = useApp();
+  const [list, setList] = useState<TrashedTicket[] | null>(null);
+  const load = useCallback(async () => {
+    setList(await window.worksync.listTrash(projectId).catch(() => []));
+  }, [projectId]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  return (
+    <Modal
+      title={tr('Trash')}
+      subtitle={tr(
+        '{name} · deleted tickets, with their situation, difficulties and history. Each is kept 30 days.',
+        { name: project(projectId)?.name ?? '' },
+      )}
+      onClose={onClose}
+      narrow
+    >
+      <div className="trash-list" role="list">
+        {list?.map((t) => (
+          <div key={t.id} role="listitem" className="trash-row">
+            <span className="mono">{t.no || '—'}</span>
+            <span className="grow">
+              <b>{t.title}</b>
+              <small className="muted">
+                {t.deletedBy
+                  ? tr('Deleted by {who} on {date}', {
+                      who: t.deletedBy,
+                      date: t.deletedAt.slice(0, 16).replace('T', ' '),
+                    })
+                  : tr('Deleted on {date}', {
+                      date: t.deletedAt.slice(0, 16).replace('T', ' '),
+                    })}
+              </small>
+            </span>
+            <button
+              className="btn sm primary"
+              onClick={() =>
+                void attempt(() => window.worksync.restoreTicket(t.id)).then(
+                  (x) => {
+                    if (!x) return;
+                    putTask(x);
+                    window.dispatchEvent(new Event('worksync:work-changed'));
+                    toast(tr('Put back {no}.', { no: x.customerId }));
+                    void load();
+                  },
+                )
+              }
+            >
+              {tr('Put back')}
+            </button>
+            <button
+              className="btn sm"
+              onClick={() =>
+                void confirmDelete({
+                  title: tr('Delete {no} for good?', { no: t.no || t.title }),
+                  text: tr('It cannot be put back after this.'),
+                  yes: tr('Delete for good'),
+                }).then(
+                  (ok) =>
+                    ok &&
+                    void attempt(() => window.worksync.purgeTrash(t.id)).then(
+                      () => void load(),
+                    ),
+                )
+              }
+            >
+              {tr('Delete for good')}
+            </button>
+          </div>
+        ))}
+        {list && !list.length && (
+          <p className="muted">{tr('The Trash is empty.')}</p>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Changes you and another member both made while one of you was offline: you choose. */
+export function ConflictCards() {
+  const { attempt, reloadAll } = useApp();
+  const [list, setList] = useState<WsConflict[]>([]);
+  const load = useCallback(async () => {
+    setList(await window.worksync.listConflicts().catch(() => []));
+  }, []);
+  useEffect(() => {
+    void load();
+    const off = window.worksync.onWorkspaceChanged(() => void load());
+    return off;
+  }, [load]);
+  if (!list.length) return null;
+  const LEVEL: Record<string, string> = {
+    U: 'Urgent',
+    H: 'High',
+    N: 'Normal',
+    L: 'Low',
+  };
+  const show = (v: string, field: string) =>
+    v === ''
+      ? tr('(empty)')
+      : field === 'status' || field === 'state'
+        ? tr(
+            WORK_STATUS_NAME[v as keyof typeof WORK_STATUS_NAME] ??
+              (v === 'open' ? 'Open' : v === 'resolved' ? 'Resolved' : v),
+          )
+        : field === 'priority'
+          ? tr(LEVEL[v] ?? v)
+          : v.length > 160
+            ? `${v.slice(0, 159)}…`
+            : v;
+  return (
+    <div className="ws-reqs" role="region" aria-label={tr('Changes to settle')}>
+      {list.map((c) => (
+        <div key={c.id} className="ws-req ws-conflict">
+          <Icon name="alert" />
+          <span className="grow">
+            <b>
+              {tr('You and {who} both changed {field} of {where}', {
+                who: c.theirName,
+                field: tr(fieldLabel(c.field)),
+                where: c.where.replace(
+                  /^(Ticket|Task|Discussion|Note)\b/,
+                  (w) => tr(w),
+                ),
+              })}
+            </b>
+            <small>
+              {tr(
+                '{who}’s change is in place for now. Choose which one stays; everyone gets your choice.',
+                { who: c.theirName },
+              )}
+            </small>
+            <span className="ws-conflict-vals">
+              <span>
+                <em>{tr('Yours')}</em> {show(c.mine, c.field)}
+              </span>
+              <span>
+                <em>{tr('Theirs')}</em> {show(c.theirs, c.field)}
+              </span>
+            </span>
+          </span>
+          <button
+            className="btn"
+            onClick={() =>
+              void attempt(() =>
+                window.worksync.resolveConflict(c.id, 'mine'),
+              ).then(async () => {
+                await reloadAll();
+                window.dispatchEvent(new Event('worksync:work-changed'));
+                void load();
+              })
+            }
+          >
+            {tr('Keep mine')}
+          </button>
+          <button
+            className="btn primary"
+            onClick={() =>
+              void attempt(() =>
+                window.worksync.resolveConflict(c.id, 'theirs'),
+              ).then(() => void load())
+            }
+          >
+            {tr('Keep theirs')}
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -52,7 +52,9 @@ import { ImportChoice, MergeWizard } from './importMerge';
 import { ReleasesView } from './releases';
 import { FromProjects, WorkView, workChanged } from './work';
 import {
+  ConflictCards,
   JoinRequests,
+  TrashDialog,
   NoticesBell,
   useWorkspaces,
   WorkspacesDialog,
@@ -106,6 +108,7 @@ type Dialog =
   | { kind: 'write' }
   | { kind: 'settings' }
   | { kind: 'workspaces' }
+  | { kind: 'trash'; projectId: string }
   | {
       kind: 'importClash';
       info: NonNullable<
@@ -733,6 +736,15 @@ function Shell({
                               ''}
                           </span>
                         </button>
+                        <button
+                          className="nav-item"
+                          onClick={() =>
+                            setDialog({ kind: 'trash', projectId: p.id })
+                          }
+                        >
+                          <Icon name="trash" />
+                          <span className="grow">{tr('Trash')}</span>
+                        </button>
                         <div className="subnav-sep" role="separator" />
                         <button
                           className="nav-item custom"
@@ -1075,7 +1087,10 @@ function Shell({
               </div>
             )}
           </div>
-          <JoinRequests />
+          <div className="main-cards">
+            <JoinRequests />
+            <ConflictCards />
+          </div>
           <div
             className={`vhead ${scrolled ? 'scrolled' : ''}`}
             ref={setHeadEl}
@@ -1266,6 +1281,12 @@ function Shell({
       {dialog?.kind === 'glossary' && project(dialog.projectId) && (
         <GlossaryDialog
           project={project(dialog.projectId)!}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.kind === 'trash' && (
+        <TrashDialog
+          projectId={dialog.projectId}
           onClose={() => setDialog(null)}
         />
       )}

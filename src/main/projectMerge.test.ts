@@ -193,3 +193,127 @@ describe('merging a copy back into the project', () => {
     expect(() => startMerge(a.db, file, q.id)).toThrow(/not a copy/);
   });
 });
+
+describe('tasks and discussions travel with the project', () => {
+  it('exports, imports and merges them, with their files and history', async () => {
+    const { DatabaseSync } = await import('node:sqlite');
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { migrate } = await import('./db');
+    const { Store } = await import('./store');
+    const { Work, meAsMember } = await import('./work');
+    const { Discussions } = await import('./discussions');
+    const { exportProject, importProject, readExport } =
+      await import('./projectTransfer');
+    const { startMerge, planMerge, applyMerge } =
+      await import('./projectMerge');
+    const { EMPTY_TASK_INPUT } = await import('../shared/model');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'merge-work-'));
+    let clock = '2026-11-17T09:00:00.000Z';
+    const mk = () => {
+      const db = new DatabaseSync(':memory:');
+      db.exec('PRAGMA foreign_keys = ON');
+      migrate(db);
+      const store = new Store(db, () => clock);
+      const work = new Work(
+        db,
+        () => [meAsMember(db)],
+        () => clock,
+      );
+      return {
+        db,
+        store,
+        work,
+        dis: new Discussions(db, store, work, () => clock),
+      };
+    };
+    const a = mk();
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      customerId: '015',
+      titleOriginal: 'Batch',
+    });
+    const d = a.dis.link(a.dis.save(p.id, { title: 'Why it stops' }).id, t.id);
+    const c = a.dis.addComment(d.id, {
+      body: 'Look',
+      files: [
+        {
+          name: 'log.txt',
+          type: 'text/plain',
+          bytes: new Uint8Array([1, 2, 3]),
+        },
+      ],
+    });
+    clock = '2026-11-17T09:01:00.000Z';
+    a.dis.addComment(d.id, { body: 'Agreed', parentId: c.id });
+    const job = a.work.saveTask(p.id, {
+      title: 'Collect logs',
+      ticketId: t.id,
+      discussionId: null,
+    });
+    a.work.saveTask(p.id, { status: 'doing' }, job.id);
+    const file = exportProject(a.db, p.id, { includeNotes: true }, clock);
+
+    // A colleague imports it: everything is there, pointing at the right rows.
+    const b = mk();
+    const got = importProject(b.db, file, path.join(tmp, 'b'), clock);
+    const bd = b.dis.list(got.projectId)[0];
+    expect(bd).toMatchObject({
+      title: 'Why it stops',
+      no: '015',
+      commentCount: 2,
+    });
+    const bc = b.dis.comments(bd.id);
+    expect([...b.dis.attachment(bc[0].attachments[0].id).data]).toEqual([
+      1, 2, 3,
+    ]);
+    expect(bc[1].parentId).toBe(bc[0].id);
+    const bj = b.work.listTasks(got.projectId)[0];
+    expect(bj).toMatchObject({ title: 'Collect logs', status: 'doing' });
+    expect(bj.ticketId).toBe(b.store.listTasks()[0].id);
+    expect(b.work.history(bj.id).length).toBe(2);
+
+    // They add a comment and finish the task; the owner merges their copy back.
+    clock = '2026-11-17T10:00:00.000Z';
+    b.dis.addComment(bd.id, { body: 'Fixed on Stg' });
+    b.work.saveTask(got.projectId, { status: 'done' }, bj.id);
+    b.work.saveTask(got.projectId, { title: 'Their new task' });
+    const back = exportProject(
+      b.db,
+      got.projectId,
+      { includeNotes: true },
+      clock,
+    );
+    const x = readExport(back);
+    const m = startMerge(a.db, x, p.id);
+    const plan = planMerge(m);
+    expect(plan.questions).toEqual([]);
+    expect(plan.auto.map((i) => i.tag).sort()).toEqual(
+      expect.arrayContaining(['Changes', 'Task']),
+    );
+    applyMerge(a.db, m, {}, { snapshotRoot: path.join(tmp, 'a'), now: clock });
+    expect(a.dis.comments(d.id).map((x) => x.body)).toEqual([
+      'Look',
+      'Agreed',
+      'Fixed on Stg',
+    ]);
+    expect([
+      ...a.dis.attachment(a.dis.comments(d.id)[0].attachments[0].id).data,
+    ]).toEqual([1, 2, 3]);
+    expect(a.work.getTask(job.id).status).toBe('done');
+    expect(
+      a.work
+        .listTasks(p.id)
+        .map((x) => x.title)
+        .sort(),
+    ).toEqual(['Collect logs', 'Their new task']);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+});

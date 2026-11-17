@@ -23,6 +23,8 @@ const n = (o: Partial<Note>): Note => ({
   createdAt: '2026-11-01T00:00:00Z',
   updatedAt: '2026-11-01T00:00:00Z',
   viewedAt: null,
+  shared: false,
+  sharedBy: '',
   ...o,
 });
 
@@ -112,6 +114,8 @@ describe('images in notes', () => {
       createdAt: '2026-11-01T00:00:00Z',
       updatedAt: '2026-11-01T00:00:00Z',
       viewedAt: null,
+      shared: false,
+      sharedBy: '',
     };
     expect(filterNotes([n], 'all', 'image', new Date())).toHaveLength(0);
     expect(filterNotes([n], 'all', 'done', new Date())).toHaveLength(1);

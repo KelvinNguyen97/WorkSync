@@ -104,6 +104,12 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
     (no) => `ディスカッション ${no} から更新しました。`,
   ],
   [/^Removed\.$/, () => '解除しました。'],
+  [/^Restored from the Trash\.$/, () => 'ごみ箱から戻しました。'],
+  [
+    /^Settled after you and another member both changed it: (.+?) is (.*)\.$/,
+    (f, v) =>
+      `あなたと別のメンバーが両方変更したため決定しました：${words(f)} は ${v}。`,
+  ],
   [/^Confirmed the situation\.$/, () => '状況を確認しました。'],
   [/^Reopened: (.+)\.$/, (t) => `再開：${t}。`],
   [/^Resolved: (.+)\.$/, (t) => `解決：${t}。`],

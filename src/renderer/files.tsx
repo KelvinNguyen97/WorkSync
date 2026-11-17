@@ -24,6 +24,7 @@ import { Icon } from './Icon';
 import { Modal } from './parts';
 import type { ViewProps } from './views';
 import { tr } from './i18n';
+import { useMembers } from './work';
 
 const STATE_CLASS = {
   ok: 'ok',
@@ -53,6 +54,8 @@ export function FilesView({
   onLink: () => void;
   onReview: (s: SourceFile) => void;
 }) {
+  const members = useMembers(projectId);
+  const me = members.find((m) => m.me)?.id ?? '';
   const { sources, project, attempt, toast, setSources, reloadTasks } =
     useApp();
   const [columnsOf, setColumnsOf] = useState<SourceFile | null>(null);
@@ -85,6 +88,19 @@ export function FilesView({
             <span className="lbl">{tr('Link a file')}</span>
           </button>
         </div>,
+      )}
+      {!list.length && p.fileKeeper && p.fileKeeper !== me && (
+        <div className="keepnote files-keeper">
+          <Icon name="users" />
+          {tr(
+            '{who} links the customer’s file for this shared project. Its tickets reach you through the workspace, so there is nothing to link here.',
+            {
+              who:
+                members.find((m) => m.id === p.fileKeeper)?.name ??
+                tr('Another member'),
+            },
+          )}
+        </div>
       )}
       {list.length ? (
         <div className="panel">

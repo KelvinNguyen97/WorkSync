@@ -18,6 +18,7 @@ import type {
   TableSettings,
   TaskInput,
   TaskLink,
+  TrashedTicket,
   ViewKey,
 } from './model';
 import type { FileFormat } from './importRules';
@@ -36,7 +37,13 @@ import type {
   SummaryBatch,
 } from './discussions';
 import type { Member, ProjectTask, ProjectTaskInput, WorkEvent } from './work';
-import type { JoinRequest, Notice, WorkspaceInfo, WsMember } from './workspace';
+import type {
+  JoinRequest,
+  Notice,
+  WorkspaceInfo,
+  WsConflict,
+  WsMember,
+} from './workspace';
 import type { Note, NoteInput } from './notes';
 import type { AutoItem, MergeChoices, Question } from './merge';
 import type { Release, ReleaseInput, ReleaseLists } from './releases';
@@ -412,6 +419,15 @@ export interface WorkSyncApi {
 
   /** Opens a web or mail address from formatted text in the browser or mail app. */
   openWebLink(url: string): Promise<void>;
+  /** The project's Trash: tickets deleted in the last 30 days. */
+  listTrash(projectId: string): Promise<TrashedTicket[]>;
+  /** Puts a ticket back from the Trash, with its situation, difficulties and history. */
+  restoreTicket(id: string): Promise<Task>;
+  /** Deletes a ticket in the Trash for good. */
+  purgeTrash(id: string): Promise<void>;
+  /** Changes both you and another member made, waiting for your choice. */
+  listConflicts(): Promise<WsConflict[]>;
+  resolveConflict(id: string, pick: 'mine' | 'theirs'): Promise<void>;
   /** Settles a number clash: the number given, or the next free one when empty. */
   renumberTicket(id: string, customerId: string): Promise<Task>;
   /** Shared workspaces (doc 08) this PC is in, or waiting to join. */
@@ -572,6 +588,11 @@ export const API_METHODS = [
   'listProjectTasks',
   'listWorkspaces',
   'renumberTicket',
+  'listTrash',
+  'restoreTicket',
+  'purgeTrash',
+  'listConflicts',
+  'resolveConflict',
   'openWebLink',
   'chooseWorkspaceFolder',
   'createWorkspace',

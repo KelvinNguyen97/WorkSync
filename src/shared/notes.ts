@@ -12,11 +12,15 @@ export interface Note {
   updatedAt: string;
   /** When it was last opened, for Recent. */
   viewedAt: string | null;
+  /** A project note every member of the project's workspace has. */
+  shared: boolean;
+  /** The member who shared it. */
+  sharedBy: string;
 }
 
 export type NoteInput = Pick<
   Note,
-  'projectId' | 'title' | 'body' | 'tags' | 'favorite'
+  'projectId' | 'title' | 'body' | 'tags' | 'favorite' | 'shared'
 >;
 
 export type NoteFilter = 'all' | 'favorites' | 'recent' | 'tagged';

@@ -233,7 +233,11 @@ const whereText = (w: Where) =>
     ? `${w.no ? `No. ${w.no} ` : ''}${w.name}`
     : w.kind === 'project'
       ? tr('The project')
-      : w.name;
+      : w.kind === 'discussion'
+        ? `${tr('Discussion')} ${w.no ? `${w.no} · ` : ''}${w.name}`
+        : w.kind === 'work'
+          ? `${tr('Task')} · ${w.name}`
+          : w.name;
 
 function Marked({
   text,
@@ -358,6 +362,10 @@ export function MergeWizard({
         return a.detail
           ? tr('{who} added the module {text}', { who, text: a.detail })
           : tr('{who} added this release', { who });
+      case 'Discussion':
+        return tr('{who} added this discussion', { who });
+      case 'Task':
+        return tr('{who} added this task', { who });
       case 'Note':
         return a.fields.length
           ? tr('{who} changed: {fields}', { who, fields })

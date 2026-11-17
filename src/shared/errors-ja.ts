@@ -605,6 +605,30 @@ export const ERRORS_JA: [string, string][] = [
     'Only web and mail addresses can be opened.',
     '開けるのは Web とメールのアドレスだけです。',
   ],
+  [
+    'Only a note of a project shared in a workspace can be shared.',
+    '共有できるのは、ワークスペースで共有しているプロジェクトのノートだけです。',
+  ],
+  [
+    '{0} already links the customer’s file for this project, and its tickets reach you through the workspace. Linking it here too would add every ticket twice.',
+    '{0} がこのプロジェクトのお客様ファイルをすでにリンクしていて、そのチケットはワークスペースから届きます。ここでもリンクすると、すべてのチケットが二重になります。',
+  ],
+  [
+    'This ticket is no longer in the Trash.',
+    'このチケットはもうごみ箱にありません。',
+  ],
+  [
+    '{0} deleted ticket {1} “{2}”. It is in the project’s Trash for 30 days.',
+    '{0} がチケット {1}「{2}」を削除しました。30 日間はプロジェクトのごみ箱にあります。',
+  ],
+  [
+    '{0} stopped sharing your note “{1}”. It is still on this PC, only for you.',
+    '{0} があなたのノート「{1}」の共有をやめました。ノートはこの PC に、あなただけのものとして残っています。',
+  ],
+  [
+    'Settled after you and another member both changed it: {0} is {1}.',
+    'あなたと別のメンバーが両方変更したため決定しました: {0} は {1} です。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

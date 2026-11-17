@@ -1,5 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { DEFAULT_VIEWS } from '../shared/model';
+import { noteImageIds } from '../shared/notes';
+
+type Row = Record<string, unknown>;
 
 /**
  * What a shared project shares, table by table (doc 08, 3.6). Rows are
@@ -20,6 +23,13 @@ export interface SharedTable {
    * It is sent once with the new row and left out of the change check.
    */
   blob?: string;
+  /** The rows, when one query cannot say it (replaces `rows`). */
+  rowsFn?: (db: DatabaseSync, projectId: string) => Row[];
+  /**
+   * A removal by someone else does not delete the row here (it may still be
+   * used by something of yours); it only stops being shared.
+   */
+  noRemoteDelete?: boolean;
   /** The column that points at the parent row, and the parent table. */
   parent?: { column: string; table: string };
 }
@@ -119,6 +129,38 @@ export const SHARED_TABLES: SharedTable[] = [
     parent: { column: 'discussion_id', table: 'discussions' },
   },
   {
+    // Only the project notes someone chose to share (the switch on the note).
+    name: 'notes',
+    rows: 'SELECT * FROM notes WHERE project_id = :p AND shared = 1',
+    private: ['favorite', 'viewed_at'],
+    parent: { column: 'project_id', table: 'projects' },
+  },
+  {
+    // The pictures those notes show.
+    name: 'note_images',
+    rows: '',
+    rowsFn: (db, projectId) => {
+      const ids = new Set(
+        (
+          db
+            .prepare(
+              'SELECT body FROM notes WHERE project_id = ? AND shared = 1',
+            )
+            .all(projectId) as Row[]
+        ).flatMap((r) => noteImageIds(String(r.body ?? ''))),
+      );
+      const get = db.prepare(
+        'SELECT id, mime, created_at FROM note_images WHERE id = ?',
+      );
+      return [...ids]
+        .map((id) => get.get(id) as Row | undefined)
+        .filter((r): r is Row => !!r);
+    },
+    private: [],
+    blob: 'data',
+    noRemoteDelete: true,
+  },
+  {
     name: 'project_tasks',
     rows: 'SELECT * FROM project_tasks WHERE project_id = :p',
     private: ['reminders', 'last_reminder_key'],
@@ -133,8 +175,6 @@ export const SHARED_TABLES: SharedTable[] = [
 ];
 
 export const TABLE = Object.fromEntries(SHARED_TABLES.map((t) => [t.name, t]));
-
-type Row = Record<string, unknown>;
 
 /** A value as it goes into a change file: bytes become base64. */
 export function toWire(v: unknown): unknown {
@@ -176,7 +216,10 @@ export function sharedRows(
   const out = new Map<string, Map<string, Row>>();
   for (const t of SHARED_TABLES) {
     const m = new Map<string, Row>();
-    for (const r of db.prepare(t.rows).all({ p: projectId }) as Row[]) {
+    const rows = t.rowsFn
+      ? t.rowsFn(db, projectId)
+      : (db.prepare(t.rows).all({ p: projectId }) as Row[]);
+    for (const r of rows) {
       const row: Row = {};
       for (const [k, v] of Object.entries(r))
         if (!t.private.includes(k)) row[k] = toWire(v);

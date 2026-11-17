@@ -11,6 +11,7 @@ import {
 import os from 'node:os';
 import { Workspaces, type Protector } from './workspace';
 import { safeHref } from '../shared/rich';
+import { fieldLabel } from '../shared/merge';
 import { WORKSPACE_EVENT } from '../shared/ipc';
 import { buildBatches, readAnswer } from '../shared/aiBatch';
 import {
@@ -202,6 +203,8 @@ function open(): Startup {
       myMemberId: () => myMemberId(database),
       setMyMemberId: (id) => setMyMemberId(database, id),
       appVersion: app.getVersion(),
+      // A ticket another member deleted goes to this PC's Trash too.
+      onTicketRemoved: (id, by) => store?.captureTrash(id, by),
     });
     setMembersProvider(
       (projectId) =>
@@ -613,7 +616,22 @@ const handlers: Omit<
     return t;
   },
   listNotes: async () => needMine().listNotes(),
-  saveNote: async (input, id) => needMine().saveNote(input, id),
+  saveNote: async (input, id) => {
+    const m = needMine();
+    if (input.shared) {
+      const projectId =
+        input.projectId === undefined
+          ? id
+            ? m.getNote(id).projectId
+            : null
+          : input.projectId;
+      if (!projectId || !workspaces?.workspaceOf(projectId))
+        throw new Error(
+          'Only a note of a project shared in a workspace can be shared.',
+        );
+    }
+    return m.saveNote(input, id, needWork().me());
+  },
   viewNote: async (id) => needMine().viewNote(id),
   deleteNote: async (id) => needMine().deleteNote(id),
   restoreNote: async (n) => needMine().restoreNote(n),
@@ -1304,8 +1322,24 @@ const handlers: Omit<
   setDifficultyOpen: async (taskId, difficultyId, isOpen) =>
     need().setDifficultyOpen(taskId, difficultyId, isOpen),
   deleteTask: async (id) => {
+    // Kept whole in the Trash first, with what points at it.
+    need().captureTrash(id);
     needDiscussions().ticketDeleted(id);
     need().deleteTask(id);
+  },
+  listTrash: async (projectId) => need().listTrash(projectId),
+  restoreTicket: async (id) => need().restoreTicket(id),
+  purgeTrash: async (id) => need().purgeTrash(id),
+  listConflicts: async () => workspaces?.conflicts() ?? [],
+  resolveConflict: async (id, pick) => {
+    const r = needWorkspaces().resolveConflict(id, pick);
+    if (r?.table === 'tasks')
+      need().log(
+        r.rowId,
+        'Changes',
+        `Settled after you and another member both changed it: ${fieldLabel(r.field)} is ${r.value || 'empty'}.`,
+      );
+    notifyWorkspace();
   },
   listActivity: async (taskId) => need().listActivity(taskId),
   addNote: async (taskId, text) => need().addNote(taskId, text),
@@ -1338,6 +1372,31 @@ const handlers: Omit<
   linkFile: async (input) => {
     const { sources: s, links: l } = needLinks();
     allowed(input.file);
+    // In a shared project one member links the customer's file; a second link
+    // would add every ticket again for everyone.
+    const sharedIn = workspaces?.workspaceOf(input.projectId);
+    const project = need().getProject(input.projectId);
+    const me = needWork().me();
+    if (sharedIn) {
+      const keeper =
+        project.fileKeeper && project.fileKeeper !== me
+          ? project.fileKeeper
+          : null;
+      const fromOthers =
+        !s.list().some((x) => x.projectId === input.projectId) &&
+        need()
+          .listTasks()
+          .some((t) => t.projectId === input.projectId && t.source === 'file');
+      if (keeper || (!project.fileKeeper && fromOthers)) {
+        const name =
+          needWork()
+            .membersOf(input.projectId)
+            .find((m) => m.id === keeper)?.name ?? 'Another member';
+        throw new Error(
+          `${name} already links the customer’s file for this project, and its tickets reach you through the workspace. Linking it here too would add every ticket twice.`,
+        );
+      }
+    }
     const id = randomUUID();
     const v = l.readVersion(
       {
@@ -1350,6 +1409,8 @@ const handlers: Omit<
       input.file,
     );
     const r = s.link(input, v, id);
+    if (sharedIn && !project.fileKeeper)
+      need().setFileKeeper(input.projectId, me);
     notifySources();
     return r;
   },
@@ -1387,7 +1448,16 @@ const handlers: Omit<
   updateSourceFormat: async (id, format) =>
     needLinks().sources.updateFormat(id, format),
   unlinkSource: async (id) => {
-    needLinks().sources.remove(id);
+    const { sources: s } = needLinks();
+    const projectId = s.list().find((x) => x.id === id)?.projectId;
+    s.remove(id);
+    // With no file linked here any more, another member can link it.
+    if (
+      projectId &&
+      !s.list().some((x) => x.projectId === projectId) &&
+      need().getProject(projectId).fileKeeper === needWork().me()
+    )
+      need().setFileKeeper(projectId, null);
     notifySources();
   },
   listGlossary: async (projectId) => need().listGlossary(projectId),

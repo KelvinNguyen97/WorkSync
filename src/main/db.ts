@@ -481,6 +481,35 @@ const MIGRATIONS: string[] = [
     at TEXT NOT NULL
   );
   `,
+  // 26: project notes shared in a workspace, who links the customer's file,
+  // the Trash for deleted tickets, and offline changes to settle
+  `
+  ALTER TABLE notes ADD COLUMN shared INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE notes ADD COLUMN shared_by TEXT NOT NULL DEFAULT '';
+  ALTER TABLE projects ADD COLUMN file_keeper TEXT;
+  CREATE TABLE trash (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    no TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    deleted_at TEXT NOT NULL,
+    deleted_by TEXT NOT NULL DEFAULT '',
+    data TEXT NOT NULL
+  );
+  CREATE INDEX trash_project ON trash(project_id, deleted_at);
+  CREATE TABLE ws_conflicts (
+    id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    tbl TEXT NOT NULL,
+    row_id TEXT NOT NULL,
+    field TEXT NOT NULL,
+    mine TEXT,
+    theirs TEXT,
+    their_name TEXT NOT NULL DEFAULT '',
+    at TEXT NOT NULL
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

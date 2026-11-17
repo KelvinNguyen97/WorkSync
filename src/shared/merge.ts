@@ -37,7 +37,15 @@ export interface MergeChoices {
 
 /** Where a question or item is: a task, the project, a note… */
 export interface Where {
-  kind: 'project' | 'task' | 'term' | 'person' | 'note' | 'release';
+  kind:
+    | 'project'
+    | 'task'
+    | 'term'
+    | 'person'
+    | 'note'
+    | 'release'
+    | 'discussion'
+    | 'work';
   /** The task number, if any. */
   no: string;
   name: string;
@@ -56,6 +64,8 @@ export interface AutoItem {
     | 'Person'
     | 'Note'
     | 'Release'
+    | 'Discussion'
+    | 'Task'
     | 'Project';
   where: Where;
   /** The fields that change, as English labels. */
@@ -206,6 +216,10 @@ const LABELS: Record<string, string> = {
   doing_now: 'Doing now',
   next_step: 'Next step',
   next_date: 'Next step date',
+  description: 'Description',
+  state: 'Open or resolved',
+  linked_task_id: 'Linked progress ticket',
+  due_date: 'Due date',
   product: 'Product',
   target: 'Edition',
   released_on: 'Release date',
@@ -862,6 +876,111 @@ export function mergeProject(
           }
         : null,
   }).filter((r) => releaseIds.has(text(r.release_id)));
+
+  // Discussions, their comments and files, and project tasks: what only one
+  // side changed comes in by itself; where both changed a title or a state,
+  // you choose. Comments and files are added from both sides.
+  const discWhere = (r: Row): Where => ({
+    kind: 'discussion',
+    no: text(r.customer_id),
+    name: text(r.title),
+  });
+  out.discussions = mergeTable({
+    table: 'discussions',
+    asked: ['title', 'description', 'state', 'customer_id', 'linked_task_id'],
+    quiet: ['labels', 'watchers', 'summarized_at', 'summarized_upto'],
+    where: discWhere,
+    at: (r) => text(r.updated_at) || null,
+    added: (r) => ({
+      id: `add:discussions:${text(r.id)}`,
+      tag: 'Discussion',
+      where: discWhere(r),
+      fields: [],
+      detail: '',
+      count: 0,
+    }),
+  }).map((r) =>
+    // A link to a ticket that is not in the merged project is dropped.
+    r.linked_task_id && !taskIds.has(text(r.linked_task_id))
+      ? { ...r, linked_task_id: null }
+      : r,
+  );
+  const discIds = new Set(out.discussions.map((r) => text(r.id)));
+  const discOf = (r: Row) =>
+    out.discussions.find((d) => text(d.id) === text(r.discussion_id));
+  out.comments = mergeTable({
+    table: 'comments',
+    asked: [],
+    quiet: ['body', 'decision', 'deleted', 'edited_at'],
+    where: (r) => {
+      const d = discOf(r);
+      return d ? discWhere(d) : { kind: 'discussion', no: '', name: '' };
+    },
+    keep: (r) => discIds.has(text(r.discussion_id)),
+  }).filter((r) => discIds.has(text(r.discussion_id)));
+  const commentIds = new Set(out.comments.map((r) => text(r.id)));
+  out.attachments = mergeTable({
+    table: 'attachments',
+    asked: [],
+    quiet: [],
+    where: (r) => {
+      const d = discOf(r);
+      return d ? discWhere(d) : { kind: 'discussion', no: '', name: '' };
+    },
+  }).filter(
+    (r) =>
+      discIds.has(text(r.discussion_id)) &&
+      (!r.comment_id || commentIds.has(text(r.comment_id))),
+  );
+  const workWhere = (r: Row): Where => ({
+    kind: 'work',
+    no: '',
+    name: text(r.title),
+  });
+  out.project_tasks = mergeTable({
+    table: 'project_tasks',
+    asked: ['title', 'status', 'assignee', 'due_date', 'priority'],
+    quiet: [
+      'note',
+      'ticket_id',
+      'discussion_id',
+      'done_by',
+      'done_at',
+      'reminders',
+      'last_reminder_key',
+    ],
+    where: workWhere,
+    at: (r) => text(r.updated_at) || null,
+    added: (r) => ({
+      id: `add:project_tasks:${text(r.id)}`,
+      tag: 'Task',
+      where: workWhere(r),
+      fields: [],
+      detail: '',
+      count: 0,
+    }),
+  }).map((r) => ({
+    ...r,
+    ticket_id:
+      r.ticket_id && taskIds.has(text(r.ticket_id)) ? r.ticket_id : null,
+    discussion_id:
+      r.discussion_id && discIds.has(text(r.discussion_id))
+        ? r.discussion_id
+        : null,
+  }));
+  // History: every entry from both, for what is still there.
+  const items = new Set([
+    ...discIds,
+    ...out.project_tasks.map((r) => text(r.id)),
+  ]);
+  const hist = new Map<string, Row>();
+  for (const r of [
+    ...(input.mine.work_history ?? []),
+    ...(input.theirs.work_history ?? []),
+  ])
+    if (items.has(text(r.item_id)) && !hist.has(text(r.id)))
+      hist.set(text(r.id), r);
+  out.work_history = [...hist.values()];
 
   // Notes: the text merges line by line.
   if (input.theirsHasNotes) {

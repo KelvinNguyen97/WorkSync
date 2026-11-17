@@ -1840,4 +1840,40 @@ export const JA: Record<string, string> = {
   'See it as it will look': '表示のされ方を確認',
   'Nothing to preview yet.': 'まだプレビューするものがありません。',
   'link text': 'リンクの文字',
+  'Linked progress ticket': 'リンクした進捗チケット',
+  '{who} added this discussion': '{who} がこのディスカッションを追加しました',
+  '{who} added this task': '{who} がこのタスクを追加しました',
+  Trash: 'ごみ箱',
+  'Moved {task} to the Trash.': '{task} をごみ箱に移しました。',
+  'The ticket goes to the project’s Trash with its situation updates and history. You can put it back from there for 30 days.':
+    'チケットは状況の更新と履歴ごとプロジェクトのごみ箱に移ります。30 日間はそこから戻せます。',
+  '{who} links the customer’s file for this shared project. Its tickets reach you through the workspace, so there is nothing to link here.':
+    'この共有プロジェクトのお客様ファイルは {who} がリンクしています。チケットはワークスペースから届くので、ここでリンクする必要はありません。',
+  'Another member': '別のメンバー',
+  'Shared with the workspace': 'ワークスペースで共有中',
+  'Shared notes are seen and edited by every member of {name}, with their pictures. Off: only you see it.':
+    '共有したノートは {name} の全メンバーが画像ごと見て編集できます。オフにすると自分だけが見られます。',
+  'Share with the workspace': 'ワークスペースで共有',
+  'Only you see this note now. It is taken off the other members’ PCs.':
+    'このノートは自分だけのものになりました。他のメンバーの PC からは消えます。',
+  'Shared with everyone in {name}.': '{name} の全員と共有しました。',
+  '{name} · deleted tickets, with their situation, difficulties and history. Each is kept 30 days.':
+    '{name} · 削除したチケット（状況、課題、履歴つき）。それぞれ 30 日間保管します。',
+  'Deleted by {who} on {date}': '{date} に {who} が削除',
+  'Deleted on {date}': '{date} に削除',
+  'Put back {no}.': '{no} を戻しました。',
+  'Put back': '戻す',
+  'Delete {no} for good?': '{no} を完全に削除しますか？',
+  'It cannot be put back after this.': 'この後は戻せません。',
+  'Delete for good': '完全に削除',
+  'The Trash is empty.': 'ごみ箱は空です。',
+  'Changes to settle': '決める必要がある変更',
+  'You and {who} both changed {field} of {where}':
+    'あなたと {who} が {where} の {field} を両方変更しました',
+  '{who}’s change is in place for now. Choose which one stays; everyone gets your choice.':
+    '今は {who} の変更が反映されています。どちらを残すか選んでください。選んだ内容は全員に届きます。',
+  Yours: '自分',
+  Theirs: '相手',
+  'Keep mine': '自分の変更を残す',
+  'Keep theirs': '相手の変更を残す',
 };

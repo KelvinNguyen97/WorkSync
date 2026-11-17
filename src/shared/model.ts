@@ -102,6 +102,8 @@ export interface Project {
   board: BoardSettings;
   /** Whether views show each task's No.; it stays the task's identity either way. */
   showNumbers: boolean;
+  /** In a shared project: the member whose WorkSync links the customer's file, or null. */
+  fileKeeper: string | null;
   /** The Tasks table's columns, sort and filters, or null for the defaults. */
   tableSettings: TableSettings | null;
   /** How reports write dates (spec 05). */
@@ -245,6 +247,18 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 }
+
+/** A deleted ticket, kept in the project's Trash for 30 days. */
+export interface TrashedTicket {
+  id: string;
+  projectId: string;
+  no: string;
+  title: string;
+  deletedAt: string;
+  /** Who deleted it, as a name; empty when it was you. */
+  deletedBy: string;
+}
+export const TRASH_DAYS = 30;
 
 export interface ActivityEntry {
   id: string;

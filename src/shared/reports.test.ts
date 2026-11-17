@@ -27,6 +27,7 @@ const project: Project = {
   publishOnClose: false,
   board: { hidden: [], columns: [] },
   showNumbers: true,
+  fileKeeper: null,
   tableSettings: null,
   dateFormat: 'YYYY/MM/DD',
 };
