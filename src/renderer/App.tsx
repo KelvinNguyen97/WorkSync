@@ -1064,6 +1064,7 @@ function Shell({
               </div>
             )}
           </div>
+          <JoinRequests />
           <div
             className={`vhead ${scrolled ? 'scrolled' : ''}`}
             ref={setHeadEl}
@@ -1074,7 +1075,6 @@ function Shell({
             tabIndex={-1}
             onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 2)}
           >
-            <JoinRequests />
             <div className={`v-${route.view}`}>{body}</div>
           </main>
         </div>
