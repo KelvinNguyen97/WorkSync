@@ -43,6 +43,8 @@ server and no account. Your data stays on your PC.
 - A translation, a short summary and the current situation (who handles it,
   what is happening, difficulties, the next step) for every ticket.
 - Private notes and a next action that only you see.
+- Rich formatting for long text such as the summary, your notes and
+  discussion comments: headings, bold, lists and links, from a formatting bar.
 - A glossary per project, so product names and terms translate the same way
   every time. A people list matches the names used in the file to the people
   you mean.
@@ -59,7 +61,7 @@ server and no account. Your data stays on your PC.
 
 - **Tasks**: small jobs in a project, each for one person, with a due date.
   Add one in a line, such as `Test on Stg @Suzuki 11/21 #025`. A ticket shows
-  its tasks and how many are done.
+  its tasks and how many are done. Urgent tasks are tinted, like ticket cards.
 - **Discussions**: tickets to talk a topic through, with comments, replies,
   @mentions, files and pasted images, and comments marked as decisions.
 - A discussion links to the progress ticket with the same number.
