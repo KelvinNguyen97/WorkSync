@@ -36,6 +36,7 @@ import {
   SHARED_TABLES,
   sharedRows,
   TABLE,
+  toWire,
 } from './wsTables';
 
 type Row = Record<string, unknown>;
@@ -171,6 +172,15 @@ export class Workspaces {
     }
   >();
   private lastPresence = 0;
+  /**
+   * For each shared project, the database's change count when its rows were
+   * last known to match what was sent; while the count stays there, nothing
+   * needs comparing.
+   */
+  private cleanAt = new Map<string, number>();
+  private quietDepth = 0;
+  /** When each workspace last synced (written to the database now and then). */
+  private syncedAt = new Map<string, { at: string; saved: number }>();
   /** When you last edited a shared field here, by table:id:field. */
   private editedHere = new Map<string, number>();
   viewing = '';
@@ -180,6 +190,30 @@ export class Workspaces {
     private d: WorkspaceDeps,
   ) {}
 
+  private totalChanges(): number {
+    return Number(
+      (this.db.prepare('SELECT total_changes() AS n').get() as Row).n,
+    );
+  }
+  /**
+   * Runs the workspace's own bookkeeping writes (cursors, notices, changes
+   * that came in): projects that had nothing to compare before still have
+   * nothing to compare after.
+   */
+  private quiet<T>(fn: () => T): T {
+    if (this.quietDepth) return fn();
+    const before = this.totalChanges();
+    this.quietDepth++;
+    try {
+      return fn();
+    } finally {
+      this.quietDepth--;
+      const after = this.totalChanges();
+      if (after !== before)
+        for (const [p, n] of this.cleanAt)
+          if (n === before) this.cleanAt.set(p, after);
+    }
+  }
   private now() {
     return this.d.now ? this.d.now() : new Date();
   }
@@ -207,8 +241,13 @@ export class Workspaces {
       this.limit,
     );
     const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
-    await limited(() => fsp.writeFile(tmp, text), this.limit);
-    await limited(() => fsp.rename(tmp, file), this.limit);
+    try {
+      await limited(() => fsp.writeFile(tmp, text), this.limit);
+      await limited(() => fsp.rename(tmp, file), this.limit);
+    } catch (e) {
+      void fsp.rm(tmp, { force: true }).catch(() => undefined);
+      throw e;
+    }
   }
   private async ls(dir: string): Promise<string[]> {
     try {
@@ -260,11 +299,13 @@ export class Workspaces {
   }
   private tick(): string {
     const c = this.clock().next();
-    this.db
-      .prepare(
-        "INSERT OR REPLACE INTO settings (key, value) VALUES ('wsClock', ?)",
-      )
-      .run(JSON.stringify(c));
+    this.quiet(() =>
+      this.db
+        .prepare(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('wsClock', ?)",
+        )
+        .run(JSON.stringify(c)),
+    );
     return c;
   }
 
@@ -306,9 +347,11 @@ export class Workspaces {
   private saveKeys(id: string, keys: Record<string, string>) {
     const o: Record<string, string> = {};
     for (const [e, v] of Object.entries(keys)) o[e] = this.d.protector.seal(v);
-    this.db
-      .prepare('UPDATE workspaces SET keys = ? WHERE id = ?')
-      .run(JSON.stringify(o), id);
+    this.quiet(() =>
+      this.db
+        .prepare('UPDATE workspaces SET keys = ? WHERE id = ?')
+        .run(JSON.stringify(o), id),
+    );
   }
   private currentEpoch(keys: Record<string, string>): number {
     return Math.max(0, ...Object.keys(keys).map(Number));
@@ -323,19 +366,21 @@ export class Workspaces {
     projectId: string | null = null,
     itemId: string | null = null,
   ): void {
-    this.db
-      .prepare(
-        'INSERT INTO ws_notices (id, workspace_id, project_id, item_id, at, kind, text) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      )
-      .run(
-        randomUUID(),
-        workspaceId,
-        projectId,
-        itemId,
-        this.iso(),
-        kind,
-        text,
-      );
+    this.quiet(() =>
+      this.db
+        .prepare(
+          'INSERT INTO ws_notices (id, workspace_id, project_id, item_id, at, kind, text) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .run(
+          randomUUID(),
+          workspaceId,
+          projectId,
+          itemId,
+          this.iso(),
+          kind,
+          text,
+        ),
+    );
   }
 
   notices(limit = 100): Notice[] {
@@ -397,8 +442,16 @@ export class Workspaces {
   private async load(ws: Row): Promise<Ctx> {
     const folder = str(ws.folder);
     const me = this.pcKeys();
+    try {
+      await limited(() => fsp.access(folder), this.limit);
+    } catch {
+      throw new Error(
+        'The workspace folder cannot be reached. Your changes wait on this PC until it is back.',
+      );
+    }
     const file = await this.readWorkspaceFile(folder);
     const keys = this.keysOf(ws);
+    let newKey = false;
     // My locked keys: new ones after a member is removed.
     for (const f of await this.ls(path.join(folder, 'keys'))) {
       const m = /^([0-9a-f]{16})\.(\d+)\.wsk$/.exec(f);
@@ -407,11 +460,12 @@ export class Workspaces {
       if (!text) continue;
       try {
         keys[m[2]] = unlockKey(text, me);
+        newKey = true;
       } catch {
         // Not for this PC's key.
       }
     }
-    this.saveKeys(str(ws.id), keys);
+    if (newKey) this.saveKeys(str(ws.id), keys);
     const problems: string[] = [];
     const members = new Map<string, MemberRec>([
       [file.creator.pcId, file.creator],
@@ -512,9 +566,81 @@ export class Workspaces {
         problems.push(`removals/${f}`);
       }
     }
+    // A PC that a removed PC let in afterwards is not trusted: only PCs this
+    // PC already knew, or that a member still in the workspace let in.
+    const known = this.knownPcs(str(ws.id));
+    if (known) {
+      let dropped = true;
+      while (dropped) {
+        dropped = false;
+        for (const m of members.values()) {
+          if (m.pcId === file.creator.pcId || known.has(m.pcId)) continue;
+          if (
+            !members.has(m.approvedBy) ||
+            removals.get(m.approvedBy)?.effective
+          ) {
+            members.delete(m.pcId);
+            problems.push(`members/${m.pcId}.wsm`);
+            dropped = true;
+          }
+        }
+      }
+    }
     const ctx: Ctx = { ws, file, keys, members, removals, problems };
     this.ctxs.set(str(ws.id), ctx);
+    this.rememberMembers(ctx);
     return ctx;
+  }
+
+  private knownPcs(workspaceId: string): Set<string> | null {
+    const r = this.db
+      .prepare('SELECT value FROM settings WHERE key = ?')
+      .get(`wsKnown:${workspaceId}`) as Row | undefined;
+    return r ? new Set(JSON.parse(str(r.value)) as string[]) : null;
+  }
+
+  /** The members as last read from the folder, kept for when it cannot be reached. */
+  private rememberMembers(ctx: Ctx): void {
+    const key = `wsMembers:${str(ctx.ws.id)}`;
+    const list = this.memberList(ctx);
+    const text = JSON.stringify(list);
+    const r = this.db
+      .prepare('SELECT value FROM settings WHERE key = ?')
+      .get(key) as Row | undefined;
+    if (r && str(r.value) === text) return;
+    this.quiet(() =>
+      this.db
+        .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+        .run(key, text),
+    );
+  }
+
+  /** The members still in the workspace, one entry each. */
+  private memberList(ctx: Ctx): Member[] {
+    const me = this.pcKeys().pcId;
+    const out = new Map<string, Member>();
+    for (const m of ctx.members.values()) {
+      if (
+        m.memberId.startsWith('recovery-') ||
+        ctx.removals.get(m.pcId)?.effective
+      )
+        continue;
+      const x = out.get(m.memberId);
+      if (x) {
+        if (m.pcId === me) x.me = true;
+        continue;
+      }
+      out.set(m.memberId, {
+        id: m.memberId,
+        name: m.name,
+        tag: tagOf(m.memberId),
+        account: m.account,
+        pc: m.pc,
+        color: colorOf(m.memberId),
+        me: m.pcId === me,
+      });
+    }
+    return [...out.values()];
   }
 
   private signer(ctx: Ctx) {
@@ -865,34 +991,23 @@ export class Workspaces {
       .get(projectId) as Row | undefined;
     if (!r) return null;
     const ctx = this.ctxs.get(str(r.workspace_id));
-    if (!ctx) return null;
-    const me = this.pcKeys().pcId;
-    const out = new Map<string, Member>();
-    for (const m of ctx.members.values()) {
-      if (
-        m.memberId.startsWith('recovery-') ||
-        ctx.removals.get(m.pcId)?.effective
-      )
-        continue;
-      const x = out.get(m.memberId);
-      if (x) {
-        if (m.pcId === me) x.me = true;
-        continue;
+    let list: Member[] = [];
+    if (ctx) list = this.memberList(ctx);
+    else {
+      // The folder was not read yet (offline since WorkSync started): the members as last seen.
+      const saved = this.db
+        .prepare('SELECT value FROM settings WHERE key = ?')
+        .get(`wsMembers:${str(r.workspace_id)}`) as Row | undefined;
+      try {
+        if (saved) list = JSON.parse(str(saved.value)) as Member[];
+      } catch {
+        list = [];
       }
-      out.set(m.memberId, {
-        id: m.memberId,
-        name: m.name,
-        tag: tagOf(m.memberId),
-        account: m.account,
-        pc: m.pc,
-        color: colorOf(m.memberId),
-        me: m.pcId === me,
-      });
     }
-    // Your own member even before the folder was read.
+    // Your own member even before the folder was ever read.
     const mine = this.d.myMemberId();
-    if (!out.has(mine))
-      out.set(mine, {
+    if (!list.some((m) => m.id === mine))
+      list.push({
         id: mine,
         name: this.d.myName(),
         tag: tagOf(mine),
@@ -901,7 +1016,7 @@ export class Workspaces {
         color: colorOf(mine),
         me: true,
       });
-    return [...out.values()];
+    return list;
   }
 
   /** The member name a PC writes as, for notices and history. */
@@ -1225,6 +1340,13 @@ export class Workspaces {
         for (const [k, v] of Object.entries(row))
           if (!before || JSON.stringify(before[k]) !== JSON.stringify(v))
             f[k] = v;
+        // A new row's file goes along once; it is not kept in the comparison copy.
+        if (!before && t.blob) {
+          const b = this.db
+            .prepare(`SELECT ${t.blob} AS b FROM ${t.name} WHERE id = ?`)
+            .get(id) as Row | undefined;
+          if (b) f[t.blob] = toWire(b.b);
+        }
         if (Object.keys(f).length) changes.push({ t: t.name, id, f, c: '' });
       }
     }
@@ -1264,7 +1386,7 @@ export class Workspaces {
         continue;
       }
       for (const [k, v] of Object.entries(ch.f ?? {})) {
-        data[k] = v;
+        if (k !== TABLE[ch.t]?.blob) data[k] = v;
         clocks[k] = ch.c;
       }
       delete clocks._del;
@@ -1293,11 +1415,14 @@ export class Workspaces {
     pcId: string,
     seq: number,
   ) {
-    this.db
-      .prepare(
-        'INSERT OR REPLACE INTO ws_cursors (workspace_id, project_id, pc_id, seq) VALUES (?, ?, ?, ?)',
-      )
-      .run(workspaceId, projectId, pcId, seq);
+    if (this.cursor(workspaceId, projectId, pcId) === seq) return;
+    this.quiet(() =>
+      this.db
+        .prepare(
+          'INSERT OR REPLACE INTO ws_cursors (workspace_id, project_id, pc_id, seq) VALUES (?, ?, ?, ?)',
+        )
+        .run(workspaceId, projectId, pcId, seq),
+    );
   }
 
   /** Changes waiting to be written, per workspace. */
@@ -1315,8 +1440,14 @@ export class Workspaces {
    * seen, so a change made offline keeps its own time (doc 08, 3.4).
    */
   stage(projectId: string): number {
+    // Nothing was written to the database since the last look: nothing to compare.
+    const count = this.totalChanges();
+    if (this.cleanAt.get(projectId) === count) return 0;
     const { changes, snap } = this.localChanges(projectId);
-    if (!changes.length) return 0;
+    if (!changes.length) {
+      this.cleanAt.set(projectId, count);
+      return 0;
+    }
     for (const ch of changes) {
       ch.c = this.tick();
       // Fields you edited (not rows you only shared), for "changed what you set" notices.
@@ -1337,6 +1468,8 @@ export class Workspaces {
       this.db.exec('ROLLBACK');
       throw e;
     }
+    // Compared and recorded in one go, so the rows match what is recorded now.
+    this.cleanAt.set(projectId, this.totalChanges());
     return changes.length;
   }
 
@@ -1375,9 +1508,11 @@ export class Workspaces {
       this.sealFor(ctx, 'head', { project: projectId, seq }),
     );
     this.setCursor(wsId, projectId, me, seq);
-    this.db
-      .prepare('DELETE FROM ws_outbox WHERE project_id = ? AND n <= ?')
-      .run(projectId, Number(rows[rows.length - 1].n));
+    this.quiet(() =>
+      this.db
+        .prepare('DELETE FROM ws_outbox WHERE project_id = ? AND n <= ?')
+        .run(projectId, Number(rows[rows.length - 1].n)),
+    );
     return changes.length;
   }
 
@@ -1391,7 +1526,9 @@ export class Workspaces {
     const incoming: { pc: string; ch: Change }[] = [];
     const cursors: [string, number][] = [];
     for (const pc of await this.ls(base)) {
-      if (pc === me || !/^[0-9a-f]{16}$/.test(pc)) continue;
+      // This PC's own log is read too: after a restored backup, or a stop
+      // right after writing, it holds changes this database has not got.
+      if (!/^[0-9a-f]{16}$/.test(pc)) continue;
       const signerOk = ctx.members.has(pc);
       if (!signerOk) {
         ctx.problems.push(`projects/${projectId}/log/${pc}`);
@@ -1470,15 +1607,32 @@ export class Workspaces {
         a.ch.c.localeCompare(b.ch.c),
     );
     let applied = 0;
+    // What was edited here while the folder was being read is noted first, so
+    // a change that comes in is compared with it instead of replacing it unseen.
+    if (all.length) this.stage(projectId);
+    this.quiet(() =>
+      this.applyAll(ctx, projectId, all, cursors, (pc) => {
+        applied++;
+        if (pc !== me) fromOthers.add(pc);
+      }),
+    );
+    return { applied, fromOthers };
+  }
+
+  private applyAll(
+    ctx: Ctx,
+    projectId: string,
+    all: { pending: string; pc: string; ch: Change }[],
+    cursors: [string, number][],
+    onApplied: (pc: string) => void,
+  ): void {
+    const wsId = str(ctx.ws.id);
     this.db.exec('BEGIN');
     try {
       for (const x of all) {
         this.clock().see(x.ch.c);
         try {
-          if (this.apply(ctx, projectId, x.ch, x.pc)) {
-            applied++;
-            fromOthers.add(x.pc);
-          }
+          if (this.apply(ctx, projectId, x.ch, x.pc)) onApplied(x.pc);
           if (x.pending)
             this.db
               .prepare('DELETE FROM ws_pending WHERE id = ?')
@@ -1500,12 +1654,18 @@ export class Workspaces {
         }
       }
       for (const [pc, seq] of cursors) this.setCursor(wsId, projectId, pc, seq);
+      // A change whose parent never came (it was deleted meanwhile) is given up after 30 days.
+      this.db
+        .prepare('DELETE FROM ws_pending WHERE project_id = ? AND at < ?')
+        .run(
+          projectId,
+          new Date(this.now().getTime() - 30 * DAY).toISOString(),
+        );
       this.db.exec('COMMIT');
     } catch (e) {
       this.db.exec('ROLLBACK');
       throw e;
     }
-    return { applied, fromOthers };
   }
 
   /** Applies one change: the later change of each field wins. True when something changed. */
@@ -1545,12 +1705,15 @@ export class Workspaces {
     const exists = !!this.db
       .prepare(`SELECT 1 FROM ${t.name} WHERE id = ?`)
       .get(ch.id);
+    const fieldClocks = Object.entries(clocks).filter(([k]) => k !== '_del');
     if (ch.del) {
-      const newest = Object.values(clocks).reduce(
-        (m, c) => (c > m ? c : m),
-        '',
-      );
-      if (newest > ch.c) return false;
+      // A project is taken off a PC, never deleted for everyone.
+      if (ch.t === 'projects') return false;
+      // A removal wins over edits made around the same time. Only a row made
+      // again afterwards (Undo: every field is newer) stays.
+      if (fieldClocks.length && fieldClocks.every(([, c]) => c > ch.c))
+        return false;
+      if (clocks._del && clocks._del >= ch.c && !exists) return false;
       if (exists)
         this.db.prepare(`DELETE FROM ${t.name} WHERE id = ?`).run(ch.id);
       for (const k of Object.keys(data)) delete data[k];
@@ -1559,6 +1722,13 @@ export class Workspaces {
       return exists;
     }
     if (clocks._del && clocks._del >= ch.c) return false;
+    // An edit of a row removed here does not bring it back; only the whole row does.
+    if (
+      !exists &&
+      clocks._del &&
+      !fieldClocks.every(([k]) => k in (ch.f ?? {}))
+    )
+      return false;
     const cols = columns(this.db, t.name);
     const take: [string, unknown][] = [];
     const mine = this.pcKeys().pcId;
@@ -1569,6 +1739,7 @@ export class Workspaces {
       if (
         clocks[k] &&
         Hlc.parse(clocks[k]).pc === mine &&
+        fromPc !== mine &&
         this.now().getTime() -
           (this.editedHere.get(`${ch.t}:${ch.id}:${k}`) ?? 0) <
           10 * 60_000 &&
@@ -1626,14 +1797,17 @@ export class Workspaces {
     } catch (e) {
       const msg = String((e as Error).message);
       if (/NOT NULL|FOREIGN KEY/i.test(msg)) throw new Pending(msg);
-      throw e;
+      // One change the database refuses must not stop every other change.
+      ctx.problems.push(`change ${ch.t}/${ch.id}: ${msg.slice(0, 80)}`);
+      return false;
     }
     for (const [k, v] of take) {
-      data[k] = v;
+      if (k !== t.blob) data[k] = v;
       clocks[k] = ch.c;
     }
     put(0);
-    this.noticesFor(ctx, projectId, ch, take, fromPc, exists);
+    if (fromPc !== mine)
+      this.noticesFor(ctx, projectId, ch, take, fromPc, exists);
     return true;
   }
 
@@ -1823,9 +1997,11 @@ export class Workspaces {
     const known = new Set(r ? (JSON.parse(str(r.value)) as string[]) : []);
     const first = !r;
     const me = this.pcKeys().pcId;
+    let grew = false;
     for (const m of ctx.members.values()) {
       if (known.has(m.pcId)) continue;
       known.add(m.pcId);
+      grew = true;
       if (
         !first &&
         m.pcId !== me &&
@@ -1838,9 +2014,12 @@ export class Workspaces {
           `${this.nameOf(ctx, m.approvedBy)} let ${m.name} (${m.account} · ${m.pc}) in.`,
         );
     }
-    this.db
-      .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
-      .run(key, JSON.stringify([...known]));
+    if (grew || first)
+      this.quiet(() =>
+        this.db
+          .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+          .run(key, JSON.stringify([...known])),
+      );
   }
 
   /** A removed member's tasks become Unassigned (doc 10, 4). */
@@ -1953,11 +2132,22 @@ export class Workspaces {
         );
       }
       st.update = await this.findUpdate(str(ws.folder));
-      this.db
-        .prepare(
-          'UPDATE workspaces SET last_sync = ?, last_error = NULL WHERE id = ?',
-        )
-        .run(this.iso(), workspaceId);
+      // The time of the last sync is kept in memory and written once a minute.
+      const nowMs = this.now().getTime();
+      const was = this.syncedAt.get(workspaceId);
+      const save = !was || nowMs - was.saved > 60_000 || ws.last_error != null;
+      this.syncedAt.set(workspaceId, {
+        at: this.iso(),
+        saved: save ? nowMs : was.saved,
+      });
+      if (save)
+        this.quiet(() =>
+          this.db
+            .prepare(
+              'UPDATE workspaces SET last_sync = ?, last_error = NULL WHERE id = ?',
+            )
+            .run(this.iso(), workspaceId),
+        );
       if (!wasOnline && (got || sent) && st.problem)
         this.notice(
           workspaceId,
@@ -1971,9 +2161,12 @@ export class Workspaces {
       st.online = false;
       st.problem = e instanceof Error ? e.message : String(e);
       st.waiting = this.waiting(workspaceId);
-      this.db
-        .prepare('UPDATE workspaces SET last_error = ? WHERE id = ?')
-        .run(st.problem, workspaceId);
+      if (str(ws.last_error) !== st.problem)
+        this.quiet(() =>
+          this.db
+            .prepare('UPDATE workspaces SET last_error = ? WHERE id = ?')
+            .run(st.problem, workspaceId),
+        );
     }
     return { in: got, out: sent };
   }
@@ -2038,7 +2231,9 @@ export class Workspaces {
       state: str(ws.state) as WsState,
       offline: Number(ws.offline) === 1,
       online: st?.online ?? false,
-      lastSync: ws.last_sync == null ? null : str(ws.last_sync),
+      lastSync:
+        this.syncedAt.get(id)?.at ??
+        (ws.last_sync == null ? null : str(ws.last_sync)),
       waiting: st?.waiting ?? 0,
       problem:
         st?.problem ?? (ws.last_error == null ? null : str(ws.last_error)),

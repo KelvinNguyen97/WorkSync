@@ -606,11 +606,13 @@ export class Discussions {
         'UPDATE discussions SET summarized_at = ?, summarized_upto = ? WHERE id = ?',
       )
       .run(this.now(), newest || this.now(), id);
-    const range = upto
-      ? from && from < upto
-        ? `comments ${from}–${upto}`
-        : `comment ${upto}`
-      : 'no comments';
+    const range = !upto
+      ? 'no comments'
+      : !from
+        ? 'no new comments'
+        : from < upto
+          ? `comments ${from}–${upto}`
+          : `comment ${upto}`;
     this.store.log(
       taskId,
       'Situation update',

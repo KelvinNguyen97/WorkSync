@@ -22,8 +22,12 @@ interface Pc {
   name: string;
 }
 
-function pc(name: string, account = `CORP\\${name.toLowerCase()}`): Pc {
-  const db = new DatabaseSync(':memory:');
+function pc(
+  name: string,
+  account = `CORP\\${name.toLowerCase()}`,
+  file = ':memory:',
+): Pc {
+  const db = new DatabaseSync(file);
   db.exec('PRAGMA foreign_keys = ON');
   migrate(db);
   const now = () => new Date(wall).toISOString();
@@ -321,6 +325,167 @@ describe('shared workspaces', () => {
     expect(info.state).toBe('member');
     await round(n);
     expect(n.store.listProjects().map((x) => x.name)).toEqual(['P']);
+  });
+
+  it('has nothing to send after receiving, and keeps files out of the comparison copy', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    a.store.createTask(p.id, { ...EMPTY_TASK_INPUT, titleOriginal: 'One' });
+    const d = a.dis.save(p.id, { title: 'D' });
+    a.dis.addComment(d.id, {
+      body: 'x',
+      files: [
+        { name: 'a.bin', type: '', bytes: new Uint8Array(50_000).fill(7) },
+      ],
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b, a, b);
+    // What came in is not sent back.
+    expect(b.ws.stage(p.id)).toBe(0);
+    expect(a.ws.stage(p.id)).toBe(0);
+    expect(
+      fs.readdirSync(path.join(folder, 'projects', p.id, 'log')).length,
+    ).toBe(1);
+    const c = b.dis.comments(b.dis.list(p.id)[0].id)[0];
+    expect(b.dis.attachment(c.attachments[0].id).data.length).toBe(50_000);
+    for (const x of [a, b]) {
+      const n = (
+        x.db.prepare('SELECT SUM(LENGTH(data)) AS n FROM ws_rows').get() as {
+          n: number;
+        }
+      ).n;
+      expect(n).toBeLessThan(20_000);
+    }
+  });
+
+  it('a removal wins over an edit made at the same time, and Undo brings the row back for all', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      titleOriginal: 'One',
+    });
+    const k = a.work.saveTask(p.id, { title: 'Job' });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    // A deletes the ticket; B, not knowing, edits it a moment later.
+    a.store.deleteTask(t.id);
+    await round(a);
+    b.store.updateTask(t.id, { status: 'On hold' });
+    await round(b, a, b, a);
+    expect(a.store.listTasks()).toHaveLength(0);
+    expect(b.store.listTasks()).toHaveLength(0);
+    // A deletes a task and takes it back (Undo): B has it again.
+    const gone = a.work.deleteTask(k.id);
+    await round(a, b);
+    expect(b.work.listTasks(p.id)).toHaveLength(0);
+    a.work.restoreTask(gone);
+    await round(a, b);
+    expect(b.work.listTasks(p.id).map((x) => x.title)).toEqual(['Job']);
+  });
+
+  it('gets its own sent changes back after the database is put back to an older state', async () => {
+    const a = pc('Tanaka');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    const t = a.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      titleOriginal: 'One',
+    });
+    await a.ws.share(w.id, p.id);
+    const backup = path.join(
+      folder,
+      '..',
+      `${path.basename(folder)}-backup.db`,
+    );
+    a.db.exec(`VACUUM INTO '${backup}'`);
+    a.store.updateTask(t.id, { status: 'Done' });
+    await round(a);
+    // A backup from before the change is restored.
+    const r = pc('Tanaka', undefined, backup);
+    expect(r.store.getTask(t.id).status).toBe('Not started');
+    await round(r);
+    expect(r.store.getTask(t.id).status).toBe('Done');
+    // And the next change goes out under a new number.
+    r.store.updateTask(t.id, { status: 'Cancelled' });
+    await round(r);
+    r.db.close();
+    fs.rmSync(backup, { force: true });
+    const mine = fs.readdirSync(path.join(folder, 'projects', p.id, 'log'))[0];
+    expect(
+      fs.readdirSync(path.join(folder, 'projects', p.id, 'log', mine)).sort(),
+    ).toEqual(['000001.wsc', '000002.wsc', '000003.wsc', 'head.wsh']);
+  });
+
+  it('knows the members and keeps working while the folder cannot be reached', async () => {
+    const a = pc('Tanaka');
+    const b = pc('Yamada');
+    const w = await a.ws.create(folder, 'Team');
+    const p = a.store.createProject({
+      name: 'P',
+      customer: '',
+      originalLanguages: ['ja'],
+      workingLanguage: 'en',
+    });
+    await a.ws.share(w.id, p.id);
+    await join(a, b, w.id);
+    await round(b);
+    // WorkSync starts again with the shared drive gone.
+    const away = `${folder}-away`;
+    fs.renameSync(folder, away);
+    const again = new Workspaces(b.db, {
+      protector: { seal: (s) => `p:${s}`, open: (s) => s.slice(2) },
+      now: () => new Date(wall),
+      account: () => 'CORP\\yamada',
+      pcName: () => 'PC-Yamada',
+      myName: () => 'Yamada',
+      myMemberId: () => myMemberId(b.db),
+      setMyMemberId: (id) => setMyMemberId(b.db, id),
+    });
+    await again.syncAll();
+    const info = (await again.info(w.id))!;
+    expect(info.online).toBe(false);
+    expect(info.problem).toMatch(/cannot be reached/);
+    expect(
+      again
+        .membersForProject(p.id)!
+        .map((m) => m.name)
+        .sort(),
+    ).toEqual(['Tanaka', 'Yamada']);
+    b.store.createTask(p.id, {
+      ...EMPTY_TASK_INPUT,
+      titleOriginal: 'Made offline',
+    });
+    await again.syncAll();
+    expect((await again.info(w.id))!.waiting).toBeGreaterThan(0);
+    fs.renameSync(away, folder);
+    wall += 1000;
+    await again.syncAll();
+    await round(a);
+    expect(a.store.listTasks().map((x) => x.titleOriginal)).toEqual([
+      'Made offline',
+    ]);
   });
 
   it('ignores files nobody in the workspace signed', async () => {

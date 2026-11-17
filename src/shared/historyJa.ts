@@ -100,7 +100,7 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
     (no, r) => `ディスカッション ${no} のコメント ${r} から更新しました。`,
   ],
   [
-    /^Updated from discussion (.*?), no comments\.$/,
+    /^Updated from discussion (.*?), no (?:new )?comments\.$/,
     (no) => `ディスカッション ${no} から更新しました。`,
   ],
   [/^Removed\.$/, () => '解除しました。'],

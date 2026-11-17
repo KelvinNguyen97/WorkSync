@@ -109,8 +109,11 @@ export class Store {
     const rows = this.db
       .prepare('SELECT key, value FROM settings')
       .all() as Row[];
+    // Only the app's settings: the same table also keeps this PC's ids and workspace keys.
     const saved = Object.fromEntries(
-      rows.map((r) => [str(r.key), JSON.parse(str(r.value))]),
+      rows
+        .filter((r) => str(r.key) in DEFAULT_SETTINGS)
+        .map((r) => [str(r.key), JSON.parse(str(r.value))]),
     );
     return { ...DEFAULT_SETTINGS, ...saved };
   }

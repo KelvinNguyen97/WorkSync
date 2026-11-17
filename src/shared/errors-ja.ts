@@ -597,6 +597,10 @@ export const ERRORS_JA: [string, string][] = [
     'Back online with {0}: {1} changes came in and {2} were sent.',
     '{0} にオンラインで戻りました: {1} 件を受信し、{2} 件を送信しました。',
   ],
+  [
+    'The workspace folder cannot be reached. Your changes wait on this PC until it is back.',
+    'ワークスペースフォルダーにアクセスできません。変更は、つながるまでこの PC で保留します。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

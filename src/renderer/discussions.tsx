@@ -1384,7 +1384,8 @@ export function SummarizeDialog({
           take: {
             doingNow: !!a.doingNow,
             situation: !!a.situation,
-            next: !!a.nextStep || a.nextDate !== undefined,
+            // Ticked only when the answer gives a next step or a date; "none" does not clear yours.
+            next: !!a.nextStep || !!a.nextDate,
             status: false,
             newDiff: a.difficulties.map(() => true),
             resolved: a.resolved.map(() => true),
@@ -1410,7 +1411,14 @@ export function SummarizeDialog({
           ...(t.doingNow ? { doingNow: a.doingNow } : {}),
           ...(t.situation ? { situation: a.situation } : {}),
           ...(t.next
-            ? { nextStep: a.nextStep, nextDate: a.nextDate ?? null }
+            ? {
+                ...(a.nextStep ? { nextStep: a.nextStep } : {}),
+                ...(a.nextDate !== undefined
+                  ? { nextDate: a.nextDate }
+                  : a.nextStep
+                    ? { nextDate: null }
+                    : {}),
+              }
             : {}),
           difficulties: a.difficulties.filter((_, i) => t.newDiff[i]),
           resolved: a.resolved.filter((_, i) => t.resolved[i]),
@@ -1670,7 +1678,7 @@ export function SummarizeDialog({
                     after={a.situation}
                   />
                 )}
-                {(a.nextStep || a.nextDate !== undefined) && (
+                {(a.nextStep || a.nextDate) && (
                   <Change
                     on={t.next}
                     onChange={(v) => set(r, { next: v })}

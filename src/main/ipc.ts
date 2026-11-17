@@ -18,7 +18,7 @@ import {
   translationMap,
   untranslated,
 } from '../shared/ownerBatch';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
 import { Releases } from './releases';
@@ -552,21 +552,28 @@ const handlers: Omit<
   getAttachment: async (id) => needDiscussions().attachment(id),
   openAttachment: async (id) => {
     const a = needDiscussions().attachment(id);
+    // The id and name can come from another member's PC: neither may choose where the file goes.
     const dir = path.join(
       app.getPath('temp'),
       'WorkSync files',
-      id.slice(0, 8),
+      createHash('sha256').update(id).digest('hex').slice(0, 12),
     );
     fs.mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, a.name);
+    const name = safeFileName(a.name);
+    const file = path.join(dir, name);
     fs.writeFileSync(file, a.data);
+    // A program or script is shown in its folder, never started from a click.
+    if (RUNNABLE.test(name)) {
+      shell.showItemInFolder(file);
+      return;
+    }
     const err = await shell.openPath(file);
     if (err) throw new Error(`The file could not be opened: ${err}`);
   },
   saveAttachment: async (id) => {
     const a = needDiscussions().attachment(id);
     const r = await dialog.showSaveDialog({
-      defaultPath: path.join(app.getPath('downloads'), a.name),
+      defaultPath: path.join(app.getPath('downloads'), safeFileName(a.name)),
     });
     if (r.canceled || !r.filePath) return false;
     fs.writeFileSync(r.filePath, a.data);
@@ -1712,6 +1719,18 @@ export function appSettings(): AppSettings {
   open();
   return store?.getSettings() ?? DEFAULT_SETTINGS;
 }
+
+/** A file name without folders or characters Windows refuses. */
+const safeFileName = (name: string): string =>
+  Array.from(path.basename(name.replace(/\\/g, '/')), (c) =>
+    c.charCodeAt(0) < 32 || '<>:"|?*'.includes(c) ? '_' : c,
+  )
+    .join('')
+    .replace(/^\.+/, '')
+    .slice(0, 200) || 'file';
+/** Files Windows, macOS or Linux would run when opened. */
+const RUNNABLE =
+  /\.(exe|com|bat|cmd|msi|msp|scr|pif|cpl|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|hta|jar|lnk|url|reg|sh|command|app|desktop|appimage|dmg|pkg)$/i;
 
 function notifyWorkspace(): void {
   for (const w of BrowserWindow.getAllWindows())

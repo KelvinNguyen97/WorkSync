@@ -220,7 +220,9 @@ export class Work {
       const t = this.db
         .prepare('SELECT project_id FROM discussions WHERE id = ?')
         .get(v.discussionId) as Row | undefined;
-      if (!t || str(t.project_id) !== projectId)
+      // A discussion deleted meanwhile (by you or another member): the task stays, without it.
+      if (!t) v.discussionId = null;
+      else if (str(t.project_id) !== projectId)
         throw new Error('That ticket is not in this project.');
     }
     return v;

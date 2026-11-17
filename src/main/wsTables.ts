@@ -15,6 +15,11 @@ export interface SharedTable {
   private: string[];
   /** Values for NOT NULL private fields when a row first arrives. */
   defaults?: Record<string, unknown>;
+  /**
+   * A column of bytes that never changes after the row is made (a file).
+   * It is sent once with the new row and left out of the change check.
+   */
+  blob?: string;
   /** The column that points at the parent row, and the parent table. */
   parent?: { column: string; table: string };
 }
@@ -108,8 +113,9 @@ export const SHARED_TABLES: SharedTable[] = [
   },
   {
     name: 'attachments',
-    rows: `SELECT * FROM attachments WHERE discussion_id IN (${inDiscussions})`,
+    rows: `SELECT id, discussion_id, comment_id, name, type, size, hash, created_at FROM attachments WHERE discussion_id IN (${inDiscussions})`,
     private: [],
+    blob: 'data',
     parent: { column: 'discussion_id', table: 'discussions' },
   },
   {
