@@ -4,6 +4,8 @@ import {
   OPEN_EVENT,
   SOURCES_EVENT,
   WORKSPACE_EVENT,
+  AI_EVENT,
+  type AiState,
   type OpenTarget,
   channel,
   type WorkSyncApi,
@@ -51,6 +53,13 @@ api.onWorkspaceChanged = (listener) => {
   const handler = () => listener();
   ipcRenderer.on(WORKSPACE_EVENT, handler);
   return () => ipcRenderer.removeListener(WORKSPACE_EVENT, handler);
+};
+
+api.onAiChanged = (listener) => {
+  const handler = (_e: Electron.IpcRendererEvent, state: AiState) =>
+    listener(state);
+  ipcRenderer.on(AI_EVENT, handler);
+  return () => ipcRenderer.removeListener(AI_EVENT, handler);
 };
 
 contextBridge.exposeInMainWorld('worksync', api);

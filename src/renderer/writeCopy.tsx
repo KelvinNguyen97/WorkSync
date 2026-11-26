@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { WritePlan, WriteResult } from '../shared/writes';
 import { useApp } from './appState';
+import { AiButton, AiNotWorking, useAi } from './aiActions';
 import { Icon } from './Icon';
 import { Modal } from './parts';
 import { OwnerTranslate } from './reports';
@@ -15,6 +16,7 @@ const nameOf = (file: string) => file.split(/[\\/]/).pop() ?? file;
  */
 export function WriteDialog({ onClose }: { onClose: () => void }) {
   const { attempt, toast, reloadTasks, tasks, project } = useApp();
+  const ai = useAi();
   // The source whose remarks are being translated before writing.
   const [translating, setTranslating] = useState<string | null>(null);
   const [plans, setPlans] = useState<WritePlan[] | null>(null);
@@ -217,13 +219,28 @@ export function WriteDialog({ onClose }: { onClose: () => void }) {
                           'not in the file’s language. The customer reads them, so translate them first.',
                         )}
                       </span>
-                      <button
-                        className="btn sm accent-outline"
-                        onClick={() => setTranslating(plan.sourceId)}
-                      >
-                        <Icon name="spark" />
-                        {tr('Translate with Gemini')}
-                      </button>
+                      {ai.usable ? (
+                        <AiButton
+                          small
+                          label={tr('Translate the remarks')}
+                          onClick={() =>
+                            void ai
+                              .run({ kind: 'remarks', taskIds: ids })
+                              .then(() => load())
+                          }
+                        />
+                      ) : (
+                        <>
+                          <AiNotWorking />
+                          <button
+                            className="btn sm accent-outline"
+                            onClick={() => setTranslating(plan.sourceId)}
+                          >
+                            <Icon name="spark" />
+                            {tr('Translate with Gemini')}
+                          </button>
+                        </>
+                      )}
                     </p>
                   );
                 })()}

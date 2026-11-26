@@ -4,6 +4,7 @@ import type { Startup } from '../shared/ipc';
 import {
   BUILT_VIEWS,
   inFocus,
+  isClosed,
   matchesSearch,
   type Project,
   type Task,
@@ -51,6 +52,13 @@ import { tr, uiLanguage } from './i18n';
 import { ImportChoice, MergeWizard } from './importMerge';
 import { ReleasesView } from './releases';
 import { FromProjects, WorkView, workChanged } from './work';
+import {
+  AiButton,
+  AiJobBar,
+  AiNotWorking,
+  OPEN_AI_SETTINGS,
+  useAi,
+} from './aiActions';
 import {
   ConflictCards,
   JoinRequests,
@@ -106,7 +114,7 @@ type Dialog =
   | { kind: 'people'; projectId: string }
   | { kind: 'publish'; projectId: string }
   | { kind: 'write' }
-  | { kind: 'settings' }
+  | { kind: 'settings'; section?: 'ai' }
   | { kind: 'workspaces' }
   | { kind: 'trash'; projectId: string }
   | {
@@ -299,6 +307,36 @@ function Shell({
     [],
   );
 
+  const ai = useAi();
+  // A failed AI's toast and chip open Settings at AI provider.
+  useEffect(() => {
+    const open = () => setDialog({ kind: 'settings', section: 'ai' });
+    window.addEventListener(OPEN_AI_SETTINGS, open);
+    return () => window.removeEventListener(OPEN_AI_SETTINGS, open);
+  }, []);
+  /** The tickets Translate & summarize does: those not translated or without a summary. */
+  const aiCandidates = (projectId: string) =>
+    tasks
+      .filter(
+        (t) =>
+          t.projectId === projectId &&
+          t.fileState !== 'removed' &&
+          t.translationState !== 'Not needed' &&
+          !isClosed(t) &&
+          (t.translationState === 'Not translated' ||
+            t.translationState === 'Needs review' ||
+            !t.summary),
+      )
+      .map((t) => t.id);
+  const translateAll = (projectId: string) => {
+    const ids = aiCandidates(projectId);
+    if (!ids.length) {
+      toast(tr('Every open ticket is translated and summarized.'));
+      return;
+    }
+    void ai.run({ kind: 'translate', projectId, taskIds: ids });
+  };
+
   const { list: wsList } = useWorkspaces();
   const sharedIds = new Set(wsList.flatMap((w) => w.projects.map((p) => p.id)));
   // After a sync brought changes in: show them.
@@ -480,12 +518,18 @@ function Shell({
         projectId={route.projectId}
         props={props}
         onCopyForAi={(ids) =>
-          setDialog({
-            kind: 'ai',
-            projectId: route.projectId,
-            startAt: 'choose',
-            preselect: ids,
-          })
+          ai.usable
+            ? void ai.run({
+                kind: 'translate',
+                projectId: route.projectId,
+                taskIds: ids,
+              })
+            : setDialog({
+                kind: 'ai',
+                projectId: route.projectId,
+                startAt: 'choose',
+                preselect: ids,
+              })
         }
         onReport={(ids) =>
           setDialog({
@@ -903,53 +947,67 @@ function Shell({
                   <Icon name="swap" />
                   <span className="lbl">{tr('Original first')}</span>
                 </button>
-                <button
-                  aria-label={tr('Copy for AI')}
-                  className="btn"
-                  disabled={!currentProjectId}
-                  title={tr('Build a request for the Gemini web app')}
-                  onClick={() =>
-                    currentProjectId &&
-                    setDialog({
-                      kind: 'ai',
-                      projectId:
-                        aiSession?.projectId === currentProjectId
-                          ? aiSession.projectId
-                          : currentProjectId,
-                      startAt: 'choose',
-                    })
-                  }
-                >
-                  <Icon name="spark" />
-                  <span className="lbl">{tr('Copy for AI')}</span>
-                </button>
-                <button
-                  className="btn compact"
-                  aria-label={tr('Paste from AI')}
-                  disabled={!aiSession}
-                  title={
-                    aiSession
-                      ? tr('Paste Gemini’s answer')
-                      : tr('Use Copy for AI first')
-                  }
-                  onClick={() =>
-                    aiSession &&
-                    setDialog({
-                      kind: 'ai',
-                      projectId: aiSession.projectId,
-                      startAt: 'paste',
-                    })
-                  }
-                >
-                  <Icon name="paste" />
-                  <span className="lbl">{tr('Paste from AI')}</span>
-                  {aiSession &&
-                    aiSession.batches.length - aiSession.done.length > 0 && (
-                      <span className="badge">
-                        {aiSession.batches.length - aiSession.done.length}
-                      </span>
-                    )}
-                </button>
+                {ai.usable ? (
+                  <AiButton
+                    label={tr('Translate & summarize')}
+                    disabled={!currentProjectId}
+                    onClick={() =>
+                      currentProjectId && translateAll(currentProjectId)
+                    }
+                  />
+                ) : (
+                  <>
+                    <AiNotWorking />
+                    <button
+                      aria-label={tr('Copy for AI')}
+                      className="btn"
+                      disabled={!currentProjectId}
+                      title={tr('Build a request for the Gemini web app')}
+                      onClick={() =>
+                        currentProjectId &&
+                        setDialog({
+                          kind: 'ai',
+                          projectId:
+                            aiSession?.projectId === currentProjectId
+                              ? aiSession.projectId
+                              : currentProjectId,
+                          startAt: 'choose',
+                        })
+                      }
+                    >
+                      <Icon name="spark" />
+                      <span className="lbl">{tr('Copy for AI')}</span>
+                    </button>
+                    <button
+                      className="btn compact"
+                      aria-label={tr('Paste from AI')}
+                      disabled={!aiSession}
+                      title={
+                        aiSession
+                          ? tr('Paste Gemini’s answer')
+                          : tr('Use Copy for AI first')
+                      }
+                      onClick={() =>
+                        aiSession &&
+                        setDialog({
+                          kind: 'ai',
+                          projectId: aiSession.projectId,
+                          startAt: 'paste',
+                        })
+                      }
+                    >
+                      <Icon name="paste" />
+                      <span className="lbl">{tr('Paste from AI')}</span>
+                      {aiSession &&
+                        aiSession.batches.length - aiSession.done.length >
+                          0 && (
+                          <span className="badge">
+                            {aiSession.batches.length - aiSession.done.length}
+                          </span>
+                        )}
+                    </button>
+                  </>
+                )}
                 {sources.length > 0 && (
                   <button
                     aria-label={tr('Write to copy')}
@@ -1132,13 +1190,15 @@ function Shell({
             setOpenId(id);
           }}
           onSummarize={(id) =>
-            void window.worksync
-              .listDiscussions()
-              .then((l) => {
-                const d = l.find((x) => x.id === id);
-                if (d) setSummarize({ id, projectId: d.projectId });
-              })
-              .catch(() => undefined)
+            ai.usable
+              ? void ai.run({ kind: 'summary', discussionIds: [id] })
+              : void window.worksync
+                  .listDiscussions()
+                  .then((l) => {
+                    const d = l.find((x) => x.id === id);
+                    if (d) setSummarize({ id, projectId: d.projectId });
+                  })
+                  .catch(() => undefined)
           }
         />
       )}
@@ -1254,7 +1314,10 @@ function Shell({
         />
       )}
       {dialog?.kind === 'settings' && (
-        <SettingsDialog onClose={() => setDialog(null)} />
+        <SettingsDialog
+          section={dialog.section}
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog?.kind === 'write' && (
         <WriteDialog onClose={() => setDialog(null)} />
@@ -1306,6 +1369,7 @@ function Shell({
           }}
         />
       )}
+      <AiJobBar />
       <Toast />
     </div>
   );

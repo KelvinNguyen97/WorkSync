@@ -32,6 +32,7 @@ import {
   type ViewKey,
 } from '../shared/model';
 import { DEFAULT_SETTINGS, type AppSettings } from '../shared/settings';
+import { validModelName } from '../shared/ai';
 import type { OwnerTranslation } from '../shared/ownerBatch';
 import { cleanBoard, type BoardSettings } from '../shared/board';
 
@@ -137,6 +138,39 @@ export class Store {
       !['system', 'en', 'ja'].includes(patch.uiLanguage)
     )
       throw new Error('Choose the app language from the list.');
+    if (
+      patch.aiProvider !== undefined &&
+      !['none', 'claude', 'codex', 'local'].includes(patch.aiProvider)
+    )
+      throw new Error('Choose the AI provider from the list.');
+    for (const m of [patch.claudeModel, patch.codexModel, patch.localModel])
+      if (m !== undefined && !validModelName(m))
+        throw new Error(
+          'A model name has only letters, digits and . _ : / - in it.',
+        );
+    if (
+      patch.localUrl !== undefined &&
+      !/^https?:\/\/[^\s]+$/i.test(patch.localUrl.trim())
+    )
+      throw new Error('The address should start with http:// or https://.');
+    if (
+      patch.aiTimeoutSec !== undefined &&
+      !(
+        Number.isInteger(patch.aiTimeoutSec) &&
+        patch.aiTimeoutSec >= 30 &&
+        patch.aiTimeoutSec <= 3600
+      )
+    )
+      throw new Error('The time limit must be between 30 seconds and 1 hour.');
+    if (
+      patch.aiRequestSize !== undefined &&
+      !(
+        Number.isInteger(patch.aiRequestSize) &&
+        patch.aiRequestSize >= 2000 &&
+        patch.aiRequestSize <= 200_000
+      )
+    )
+      throw new Error('Choose a request size from the list.');
     this.tx(() => {
       const put = this.db.prepare(
         'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
@@ -1409,7 +1443,7 @@ export class Store {
   // ------------------------------------------------------------ AI batches
 
   /** Fills in what the owner accepted from an AI batch, and records it in each task's history. */
-  applyAiResults(results: AiResult[]): Task[] {
+  applyAiResults(results: AiResult[], from = 'a Gemini batch'): Task[] {
     return this.tx(() =>
       results.map((r) => {
         const t = this.getTask(r.taskId);
@@ -1441,7 +1475,7 @@ export class Store {
         this.log(
           t.id,
           'AI batch',
-          `Filled in the ${parts.join(' and ')} from a Gemini batch.`,
+          `Filled in the ${parts.join(' and ')} from ${from}.`,
         );
         return this.getTask(t.id);
       }),

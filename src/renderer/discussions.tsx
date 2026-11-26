@@ -23,6 +23,7 @@ import {
 import { shortDate, type Task } from '../shared/model';
 import type { Member } from '../shared/work';
 import { useApp } from './appState';
+import { AiNotWorking, useAi } from './aiActions';
 import { Icon } from './Icon';
 import { tr } from './i18n';
 import { confirmDelete, Modal, StatusChip } from './parts';
@@ -229,6 +230,12 @@ export function DiscussionsView({
   const [openId, setOpenId] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
   const [updating, setUpdating] = useState<string[] | null>(null);
+  const ai = useAi();
+  // With an AI provider, Summarize does the whole job; without, the copy-and-paste dialog opens.
+  const summarize = (ids: string[]) =>
+    ai.usable
+      ? void ai.run({ kind: 'summary', discussionIds: ids })
+      : setUpdating(ids);
   const q = query.trim().toLowerCase();
   const progressNos = new Map(
     tasks
@@ -260,10 +267,11 @@ export function DiscussionsView({
           name: project(projectId)?.name ?? '',
         }),
         <div className="vh-actions">
+          <AiNotWorking />
           <button
             className="btn"
-            disabled={!pending.length}
-            onClick={() => setUpdating(pending.map((d) => d.id))}
+            disabled={!pending.length || ai.busy}
+            onClick={() => summarize(pending.map((d) => d.id))}
             title={tr(
               'Linked discussions with comments since their last summary',
             )}
@@ -370,7 +378,7 @@ export function DiscussionsView({
             setOpenId(null);
             openTicket(id);
           }}
-          onSummarize={(id) => setUpdating([id])}
+          onSummarize={(id) => summarize([id])}
         />
       )}
       {updating && (

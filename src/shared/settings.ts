@@ -1,6 +1,7 @@
 /** App-wide settings (spec 03, Projects and settings) and backups (spec 06). */
 import type { LanguageCode } from './model';
 import type { UiLanguageChoice } from './i18n';
+import type { AiProviderKind } from './ai';
 
 export interface AppSettings {
   /** The working language a new project starts with. */
@@ -26,6 +27,21 @@ export interface AppSettings {
   uiLanguage: UiLanguageChoice;
   /** Your name as others in a workspace see it; empty uses the Windows account. */
   displayName: string;
+  /** The AI the one-click actions use; none keeps Copy for AI (doc 10). */
+  aiProvider: AiProviderKind;
+  /** Where Claude Code is; null finds it on PATH and where its installer puts it. */
+  claudePath: string | null;
+  codexPath: string | null;
+  /** Empty uses the provider's own default model. */
+  claudeModel: string;
+  codexModel: string;
+  /** A local model server: Ollama (port 11434) or LM Studio (port 1234). */
+  localUrl: string;
+  localModel: string;
+  /** How long one request may take before WorkSync gives up. */
+  aiTimeoutSec: number;
+  /** The most characters in one request; bigger jobs are split. */
+  aiRequestSize: number;
 }
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
@@ -41,6 +57,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
   everything: true,
   uiLanguage: 'system',
   displayName: '',
+  aiProvider: 'none',
+  claudePath: null,
+  codexPath: null,
+  claudeModel: '',
+  codexModel: '',
+  localUrl: 'http://localhost:11434',
+  localModel: '',
+  aiTimeoutSec: 300,
+  aiRequestSize: 20_000,
 };
 
 export type BackupKind =

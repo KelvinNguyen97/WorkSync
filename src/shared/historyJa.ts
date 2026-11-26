@@ -131,6 +131,16 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
     /^Filled in the (.+) from a Gemini batch\.$/,
     (list) => `Gemini の一括処理で${words(list, ' and ')}を入力しました。`,
   ],
+  [
+    /^Filled in the (.+) from (Claude Code|Codex|a local model)\.$/,
+    (list, who) =>
+      `${who === 'a local model' ? 'ローカルモデル' : who} で${words(list, ' and ')}を入力しました。`,
+  ],
+  [
+    /^Undid what (Claude Code|Codex|a local model) filled in\.$/,
+    (who) =>
+      `${who === 'a local model' ? 'ローカルモデル' : who} が入力した内容を元に戻しました。`,
+  ],
 ];
 
 /** Parts of an entry that come together: situation updates and links. */

@@ -629,10 +629,90 @@ export const ERRORS_JA: [string, string][] = [
     'Settled after you and another member both changed it: {0} is {1}.',
     'あなたと別のメンバーが両方変更したため決定しました: {0} は {1} です。',
   ],
+  [
+    'The AI is still working on the last job. Wait for it, or cancel it.',
+    'AI はまだ前の処理をしています。終わるまで待つか、キャンセルしてください。',
+  ],
+  [
+    'No AI provider is chosen. Choose one in Settings › AI provider.',
+    'AI プロバイダーが選ばれていません。設定 › AI プロバイダーで選んでください。',
+  ],
+  ['No AI provider is chosen.', 'AI プロバイダーが選ばれていません。'],
+  ['This can no longer be undone.', 'これはもう元に戻せません。'],
+  [
+    '{0} twice answered in a format WorkSync could not read.',
+    '{0} が 2 回続けて、WorkSync が読めない形式で回答しました。',
+  ],
+  [
+    'The local model twice answered in a format WorkSync could not read. A bigger model may follow the format better.',
+    'ローカルモデルが 2 回続けて、WorkSync が読めない形式で回答しました。より大きなモデルのほうが形式を守りやすくなります。',
+  ],
+  [
+    'No answer within {0} seconds. Give it more time in Settings › AI provider, or send smaller requests.',
+    '{0} 秒以内に回答がありませんでした。設定 › AI プロバイダーで時間を延ばすか、依頼を小さくしてください。',
+  ],
+  [
+    'Not found: {0}. Choose where it is in Settings › AI provider.',
+    '見つかりません：{0}。設定 › AI プロバイダーで場所を選んでください。',
+  ],
+  ['It could not be started: {0}', '起動できませんでした：{0}'],
+  [
+    '{0} was not found on this PC. Install it, or choose where it is in Settings › AI provider.',
+    'この PC に {0} が見つかりません。インストールするか、設定 › AI プロバイダーで場所を選んでください。',
+  ],
+  [
+    'The address should start with http:// or https://.',
+    'アドレスは http:// か https:// で始めてください。',
+  ],
+  [
+    'Choose a model in Settings › AI provider.',
+    '設定 › AI プロバイダーでモデルを選んでください。',
+  ],
+  ['The model name is not valid.', 'モデル名が正しくありません。'],
+  [
+    'The model {0} is not on the local server. Choose one of its models in Settings › AI provider.',
+    'モデル {0} はローカルサーバーにありません。設定 › AI プロバイダーで、サーバーにあるモデルを選んでください。',
+  ],
+  [
+    'It answered, but not as asked: “{0}”. A bigger model may follow the format better.',
+    '回答はありましたが、指示どおりではありません：「{0}」。より大きなモデルのほうが形式を守りやすくなります。',
+  ],
+  [
+    '{0} is signed out. Open it once and sign in with your account, then test again.',
+    '{0} にサインインしていません。一度 {0} を開いて自分のアカウントでサインインしてから、もう一度テストしてください。',
+  ],
+  [
+    '{0} reached its usage limit. Try again later.',
+    '{0} の利用上限に達しました。しばらくしてからもう一度お試しください。',
+  ],
+  [
+    '{0} is not running at that address.',
+    '{0} はそのアドレスで動いていません。',
+  ],
+  ['{0} stopped with: {1}', '{0} が次のメッセージで止まりました：{1}'],
+  ['{0} stopped without saying why.', '{0} が理由を示さずに止まりました。'],
+  [
+    'Choose the AI provider from the list.',
+    'AI プロバイダーを一覧から選んでください。',
+  ],
+  [
+    'A model name has only letters, digits and . _ : / - in it.',
+    'モデル名に使えるのは英数字と . _ : / - だけです。',
+  ],
+  [
+    'The time limit must be between 30 seconds and 1 hour.',
+    '制限時間は 30 秒から 1 時間の間にしてください。',
+  ],
+  [
+    'Choose a request size from the list.',
+    '依頼の大きさを一覧から選んでください。',
+  ],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */
 export const ERROR_PARTS_JA: Record<string, string> = {
+  'The local model': 'ローカルモデル',
+  'Local model': 'ローカルモデル',
   'another folder': '別のフォルダー',
   'a folder on your PC, outside Box and the linked file’s folder':
     'Box とリンクしたファイルのフォルダー以外の、PC 上のフォルダー',

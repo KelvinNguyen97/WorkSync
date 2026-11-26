@@ -12,14 +12,9 @@ import os from 'node:os';
 import { Workspaces, type Protector } from './workspace';
 import { safeHref } from '../shared/rich';
 import { fieldLabel } from '../shared/merge';
-import { WORKSPACE_EVENT } from '../shared/ipc';
-import { buildBatches, readAnswer } from '../shared/aiBatch';
-import {
-  buildOwnerBatches,
-  readOwnerAnswer,
-  translationMap,
-  untranslated,
-} from '../shared/ownerBatch';
+import { AI_EVENT, WORKSPACE_EVENT } from '../shared/ipc';
+import { readAnswer } from '../shared/aiBatch';
+import { readOwnerAnswer, translationMap } from '../shared/ownerBatch';
 import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { fileIcons } from './fileIcons';
@@ -33,7 +28,18 @@ import {
   Work,
 } from './work';
 import { Discussions } from './discussions';
-import { buildSummaryBatches } from '../shared/discussions';
+import { AiService } from './aiService';
+import {
+  aiBatchesFor,
+  aiPlan,
+  applyRemarksList,
+  ownerBatchesFor,
+  remarksBatchesFor,
+  summaryBatchesFor,
+  type PlanDeps,
+} from './aiPlans';
+import { findCli, listLocalModels } from './aiProvider';
+import type { AiProgress } from '../shared/ai';
 import type { Member } from '../shared/work';
 import { releaseWorkbook } from './releaseExcel';
 import { releaseHtml } from './releaseHtml';
@@ -194,6 +200,22 @@ function open(): Startup {
     releases = new Releases(db);
     work = new Work(db, (projectId) => membersFor(projectId));
     discussions = new Discussions(db, store, work);
+    ai = new AiService({
+      db: () => {
+        if (!db)
+          throw new Error('The data could not be opened. Restart WorkSync.');
+        return db;
+      },
+      settings: () => need().getSettings(),
+      plan: (job, maxChars, from) => aiPlan(planDeps(), job, maxChars, from),
+      log: (taskId, text) => need().log(taskId, 'AI', text),
+      progress: (p) => {
+        aiProgress = p;
+        notifyAi();
+      },
+      statusChanged: () => notifyAi(),
+    });
+    void ai.check();
     const database = db;
     workspaces = new Workspaces(database, {
       protector,
@@ -279,6 +301,18 @@ const protector: Protector = {
       ? safeStorage.decryptString(Buffer.from(sealed.slice(2), 'base64'))
       : Buffer.from(sealed.slice(2), 'base64').toString(),
 };
+let ai: AiService | null = null;
+let aiProgress: AiProgress | null = null;
+const needAi = (): AiService => {
+  if (!ai) throw new Error('The data could not be opened. Restart WorkSync.');
+  return ai;
+};
+function notifyAi(): void {
+  if (!ai) return;
+  const state = { status: ai.getStatus(), progress: aiProgress };
+  for (const w of BrowserWindow.getAllWindows())
+    w.webContents.send(AI_EVENT, state);
+}
 const needDiscussions = (): Discussions => {
   if (!discussions)
     throw new Error('The data could not be opened. Restart WorkSync.');
@@ -412,9 +446,22 @@ export function checkLinkedFiles(): void {
   }
 }
 
+const planDeps = (): PlanDeps => ({
+  store: need(),
+  discussions: needDiscussions(),
+  members: (projectId) => needWork().membersOf(projectId),
+  fileLanguage: (id) => {
+    try {
+      return needLinks().sources.get(id).mainLanguage;
+    } catch {
+      return null;
+    }
+  },
+});
+
 const handlers: Omit<
   WorkSyncApi,
-  'onSourcesChanged' | 'onOpen' | 'onWorkspaceChanged'
+  'onSourcesChanged' | 'onOpen' | 'onWorkspaceChanged' | 'onAiChanged'
 > = {
   listMyTasks: async () => needMine().listMyTasks(),
   saveMyTask: async (input, id) => needMine().saveMyTask(input, id),
@@ -589,17 +636,8 @@ const handlers: Omit<
     fs.writeFileSync(r.filePath, a.data);
     return true;
   },
-  summaryRequest: async (ids, limit) => {
-    const d = needDiscussions();
-    const first = ids[0] ? d.get(ids[0]) : null;
-    const project = first ? need().getProject(first.projectId) : null;
-    const members = first ? needWork().membersOf(first.projectId) : [];
-    const items = d.summaryItems(
-      ids,
-      (id) => members.find((m) => m.id === id)?.name ?? 'Someone',
-    );
-    return buildSummaryBatches(items, project?.workingLanguage ?? 'en', limit);
-  },
+  summaryRequest: async (ids, limit) =>
+    summaryBatchesFor(planDeps(), ids, limit),
   applySummary: async (id, answer) =>
     needDiscussions().applySummary(id, answer),
   saveProjectTask: async (projectId, input, id) =>
@@ -928,60 +966,13 @@ const handlers: Omit<
   start: async () => open(),
   listOwnerTranslations: async (projectId) =>
     need().listOwnerTranslations(projectId),
-  prepareOwnerBatches: async (projectId, taskIds) => {
-    const st = need();
-    const project = st.getProject(projectId);
-    const to = project.originalLanguages[0] ?? 'ja';
-    const done = st.listOwnerTranslations(projectId);
-    const items = taskIds
-      .map((id) => st.getTask(id))
-      .filter((t) => t.projectId === projectId)
-      .map((task) => ({ task, parts: untranslated(task, done, to) }));
-    return buildOwnerBatches(
-      items,
-      project.workingLanguage,
-      to,
-      st.listGlossary(projectId),
-    );
-  },
+  prepareOwnerBatches: async (projectId, taskIds) =>
+    ownerBatchesFor(planDeps(), projectId, taskIds),
   readOwnerAnswer: async (batch, answer) => readOwnerAnswer(batch, answer),
   saveOwnerTranslations: async (list) => need().saveOwnerTranslations(list),
-  prepareRemarksBatches: async (taskIds) => {
-    const st = need();
-    const { sources: s } = needLinks();
-    const tasks = taskIds
-      .map((id) => st.getTask(id))
-      .filter((t) => t.remarks.trim());
-    if (!tasks.length) return [];
-    const project = st.getProject(tasks[0].projectId);
-    // Remarks go into the file, so they are translated into the file's main language.
-    const src = tasks[0].sourceFileId ? s.get(tasks[0].sourceFileId) : null;
-    const to = src?.mainLanguage ?? project.originalLanguages[0] ?? 'ja';
-    return buildOwnerBatches(
-      tasks
-        .filter((t) => t.projectId === project.id)
-        .map((task) => ({
-          task,
-          parts: [{ field: 'remarks', label: 'REMARKS', source: task.remarks }],
-        })),
-      project.workingLanguage,
-      to,
-      st.listGlossary(project.id),
-    );
-  },
-  applyRemarks: async (list) => {
-    const st = need();
-    let n = 0;
-    for (const x of list) {
-      if (x.field !== 'remarks') continue;
-      const t = st.getTask(x.taskId);
-      // Only if the remarks are still the text that was translated.
-      if (t.remarks !== x.source || !x.text.trim()) continue;
-      st.updateTask(t.id, { remarks: x.text.trim() });
-      n++;
-    }
-    return n;
-  },
+  prepareRemarksBatches: async (taskIds) =>
+    remarksBatchesFor(planDeps(), taskIds),
+  applyRemarks: async (list) => applyRemarksList(planDeps(), list),
   listPeople: async () => need().listPeople(),
   savePerson: async (input) => need().savePerson(input),
   deletePerson: async (id) => need().deletePerson(id),
@@ -1005,6 +996,9 @@ const handlers: Omit<
       );
     const saved = need().updateSettings(patch);
     applyAppSettings(saved);
+    // A changed provider is checked again; a failed one gets a new chance.
+    if (Object.keys(patch).some((k) => /^(ai|claude|codex|local)/.test(k)))
+      void needAi().check();
     return saved;
   },
   storageInfo: async () => storageInfo(),
@@ -1465,28 +1459,33 @@ const handlers: Omit<
   deleteGlossaryTerm: async (id) => need().deleteGlossaryTerm(id),
   // All AI work goes through these calls (spec 06). The only provider is the
   // clipboard: the owner pastes the request into the Gemini web app.
-  prepareAiBatches: async (projectId, taskIds) => {
-    const st = need();
-    const project = st.getProject(projectId);
-    const tasks = taskIds
-      .map((id) => st.getTask(id))
-      .filter((t) => t.projectId === projectId);
-    return buildBatches(
-      tasks.map((t) => ({
-        taskId: t.id,
-        customerId: t.customerId,
-        language: t.language,
-        title: t.titleOriginal,
-        description: t.descriptionOriginal,
-        summary: t.summary,
-      })),
-      project.workingLanguage,
-      st.listGlossary(projectId),
-    );
-  },
+  prepareAiBatches: async (projectId, taskIds) =>
+    aiBatchesFor(planDeps(), projectId, taskIds),
   readAiAnswer: async (batch, answer) => readAnswer(batch, answer),
   applyAiResults: async (results) => need().applyAiResults(results),
   copyText: async (text) => clipboard.writeText(text),
+  aiStatus: async () => ({
+    status: needAi().getStatus(),
+    progress: aiProgress,
+  }),
+  aiTest: async () => needAi().test(),
+  aiFind: async (cli) => findCli(cli),
+  aiChooseFile: async (cli) => {
+    const win = BrowserWindow.getFocusedWindow() ?? getMainWindow();
+    const r = await dialog.showOpenDialog(win!, {
+      title: cli === 'claude' ? 'Where is Claude Code?' : 'Where is Codex?',
+      properties: ['openFile'],
+      filters:
+        process.platform === 'win32'
+          ? [{ name: 'Programs', extensions: ['exe', 'cmd'] }]
+          : [],
+    });
+    return r.canceled ? null : (r.filePaths[0] ?? null);
+  },
+  aiLocalModels: async (url) => listLocalModels(url),
+  aiRun: async (job) => needAi().run(job),
+  aiCancel: async () => needAi().cancel(),
+  aiUndo: async (undoId) => needAi().undo(undoId),
   lastImport: async (projectId) => need().lastImport(projectId),
 
   choosePublishFolder: async (projectId) => {

@@ -26,6 +26,7 @@ import type { AppSettings, StorageInfo } from './settings';
 import type { BoardSettings } from './board';
 import type { OwnerAnswer, OwnerBatch, OwnerTranslation } from './ownerBatch';
 import type { Batch, ReadAnswer } from './aiBatch';
+import type { AiJob, AiProgress, AiRunResult, AiStatus } from './ai';
 import type { PendingChange, WritePlan, WriteResult } from './writes';
 import type { ReportOptions } from './reports';
 import type { MyTask, MyTaskInput } from './myTasks';
@@ -304,6 +305,25 @@ export interface WorkSyncApi {
   /** Fills in what the owner accepted. */
   applyAiResults(results: AiResult[]): Promise<Task[]>;
   copyText(text: string): Promise<void>;
+
+  /** The AI provider's status, and the job running, if any (doc 10). */
+  aiStatus(): Promise<AiState>;
+  /** Sends one tiny request, so sign-in and limits are checked too. */
+  aiTest(): Promise<AiStatus>;
+  /** Looks for Claude Code or Codex on this PC. */
+  aiFind(cli: 'claude' | 'codex'): Promise<string | null>;
+  /** Asks where Claude Code or Codex is. Null when cancelled. */
+  aiChooseFile(cli: 'claude' | 'codex'): Promise<string | null>;
+  /** The models a local server (Ollama, LM Studio) has. */
+  aiLocalModels(url: string): Promise<string[]>;
+  /** Runs a one-click job with the AI provider. */
+  aiRun(job: AiJob): Promise<AiRunResult>;
+  /** Stops the job running. */
+  aiCancel(): Promise<void>;
+  /** Puts back what a job filled in. Returns the tickets changed. */
+  aiUndo(undoId: string): Promise<string[]>;
+  /** Called when the AI's status or progress changes. */
+  onAiChanged(listener: (state: AiState) => void): () => void;
   lastImport(projectId: string): Promise<ImportSummary | null>;
 
   /** Opens the folder dialog and saves the project's publish folder. Returns null when cancelled. */
@@ -575,6 +595,15 @@ export type OpenTarget =
 export const SOURCES_EVENT = 'worksync:sources-changed';
 /** Sent by the main process after a sync brought changes in. */
 export const WORKSPACE_EVENT = 'worksync:workspace-changed';
+/** Sent by the main process when the AI provider's status or progress changes. */
+export const AI_EVENT = 'worksync:ai-changed';
+
+/** The AI provider's status and the job running. */
+export interface AiState {
+  status: AiStatus;
+  progress: AiProgress | null;
+}
+
 /** Sent by the main process to show a page in the window. */
 export const OPEN_EVENT = 'worksync:open';
 
@@ -740,6 +769,14 @@ export const API_METHODS = [
   'readAiAnswer',
   'applyAiResults',
   'copyText',
+  'aiStatus',
+  'aiTest',
+  'aiFind',
+  'aiChooseFile',
+  'aiLocalModels',
+  'aiRun',
+  'aiCancel',
+  'aiUndo',
   'lastImport',
   'choosePublishFolder',
   'setPublishNotes',
@@ -757,7 +794,7 @@ export const API_METHODS = [
   'makeReport',
 ] as const satisfies readonly Exclude<
   keyof WorkSyncApi,
-  'onSourcesChanged' | 'onOpen'
+  'onSourcesChanged' | 'onOpen' | 'onWorkspaceChanged' | 'onAiChanged'
 >[];
 
 export const channel = (method: (typeof API_METHODS)[number]): string =>

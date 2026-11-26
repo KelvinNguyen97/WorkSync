@@ -1876,4 +1876,108 @@ export const JA: Record<string, string> = {
   Theirs: '相手',
   'Keep mine': '自分の変更を残す',
   'Keep theirs': '相手の変更を残す',
+  'Every open ticket is translated and summarized.':
+    '未完了のチケットはすべて翻訳・要約済みです。',
+  'Translate & summarize': '翻訳と要約',
+  'Undone. Changes made since are kept.':
+    '元に戻しました。その後に行った変更は残っています。',
+  'Until it works again, use Copy for AI.':
+    '直るまでは「AI 用にコピー」を使ってください。',
+  'Cancelled.': 'キャンセルしました。',
+  'Nothing needed doing.': '対象はありませんでした。',
+  'Nothing was filled in.': '何も入力されませんでした。',
+  'request {at} of {of}': '依頼 {at}/{of}',
+  'Click to open Settings › AI provider.':
+    'クリックすると 設定 › AI プロバイダー を開きます。',
+  'AI not working': 'AI が使えません',
+  '{who} does it in the background. You can undo it afterwards.':
+    '{who} がバックグラウンドで処理します。あとから元に戻せます。',
+  '{n} was missing from the answer and stays as it was.':
+    '{n} 件は回答になかったため、そのままです。',
+  '{n} were missing from the answer and stay as they were.':
+    '{n} 件は回答になかったため、そのままです。',
+  'AI provider': 'AI プロバイダー',
+  'The AI that Translate & summarize, Translate my notes and Summarize into progress use. Set it up once; the buttons then do the whole job, and you can undo it. If it stops working, the buttons go back to Copy for AI.':
+    '「翻訳と要約」「自分のメモを翻訳」「進捗に要約」で使う AI です。一度設定すれば、ボタンひとつで処理が終わり、あとから元に戻すこともできます。使えなくなったときは、ボタンが「AI 用にコピー」に戻ります。',
+  'None: Copy for AI': 'なし：AI 用にコピー',
+  'Testing…': 'テスト中…',
+  Test: 'テスト',
+  Working: '動作中',
+  'tested {time}': '{time} にテスト済み',
+  'not tested yet': '未テスト',
+  'Not working:': '使えません：',
+  'Checking…': '確認中…',
+  'Test sends one tiny request, so it also checks that you are signed in.':
+    'テストではごく小さな依頼を 1 件送るので、サインインしているかも確認できます。',
+  'Give up after': '待つ時間',
+  '{n} seconds per request': '依頼 1 件につき {n} 秒',
+  '{n} minutes per request': '依頼 1 件につき {n} 分',
+  'Request size': '依頼の大きさ',
+  'Small (8,000 characters)': '小（8,000 文字）',
+  'Normal (20,000 characters)': '標準（20,000 文字）',
+  'Large (40,000 characters)': '大（40,000 文字）',
+  'Found {name} at {path}.': '{name} が見つかりました：{path}',
+  '{name} was not found on this PC.': 'この PC に {name} が見つかりません。',
+  'Where {name} is': '{name} の場所',
+  'Found automatically: {path}': '自動で見つかりました：{path}',
+  'Not found. Install it, or choose where it is.':
+    '見つかりません。インストールするか、場所を選んでください。',
+  'Looking…': '探しています…',
+  'Browse…': '参照…',
+  'Find again': 'もう一度探す',
+  'Leave it empty to use the one WorkSync finds. Both claude.exe and the npm claude.cmd work.':
+    '空にしておくと、WorkSync が見つけたものを使います。claude.exe と npm の claude.cmd のどちらでも使えます。',
+  'Leave it empty to use the one WorkSync finds. Both codex.exe and the npm codex.cmd work.':
+    '空にしておくと、WorkSync が見つけたものを使います。codex.exe と npm の codex.cmd のどちらでも使えます。',
+  Model: 'モデル',
+  '{name}’s default': '{name} の既定',
+  Address: 'アドレス',
+  'This address is not on this PC: requests, with the tickets’ text, go over the network to it.':
+    'このアドレスはこの PC ではありません。依頼はチケットの文章ごと、ネットワーク経由でそこへ送られます。',
+  'Choose a model…': 'モデルを選択…',
+  Refresh: '更新',
+  '{n} models on the server.': 'サーバーに {n} 個のモデルがあります。',
+  'The server has no models yet. Download one in Ollama or LM Studio first.':
+    'サーバーにまだモデルがありません。先に Ollama か LM Studio でダウンロードしてください。',
+  'Translate my notes': '自分のメモを翻訳',
+  'Settings sections': '設定の項目',
+  'Translate the remarks': '備考を翻訳',
+  'Claude Code': 'Claude Code',
+  Codex: 'Codex',
+  'Local model': 'ローカルモデル',
+  'The local model': 'ローカルモデル',
+  '{who} filled in {n} ticket.': '{who} が {n} 件のチケットを入力しました。',
+  '{who} filled in {n} tickets.': '{who} が {n} 件のチケットを入力しました。',
+  '{who} translated your notes on {n} ticket.':
+    '{who} が {n} 件のチケットの自分のメモを翻訳しました。',
+  '{who} translated your notes on {n} tickets.':
+    '{who} が {n} 件のチケットの自分のメモを翻訳しました。',
+  '{who} translated {n} remark.': '{who} が {n} 件の備考を翻訳しました。',
+  '{who} translated {n} remarks.': '{who} が {n} 件の備考を翻訳しました。',
+  '{who} brought {n} progress ticket up to date.':
+    '{who} が {n} 件の進捗チケットを最新にしました。',
+  '{who} brought {n} progress tickets up to date.':
+    '{who} が {n} 件の進捗チケットを最新にしました。',
+  'Translating and summarizing {n} tickets': '{n} 件のチケットを翻訳・要約中',
+  'Translating your notes on {n} tickets':
+    '{n} 件のチケットの自分のメモを翻訳中',
+  'Translating {n} remarks': '{n} 件の備考を翻訳中',
+  'Summarizing {n} discussions into progress':
+    '{n} 件のディスカッションを進捗に要約中',
+  'Uses the Claude Code on this PC, signed in with your account.':
+    'この PC の Claude Code を、自分のアカウントのサインインで使います。',
+  'Uses the Codex command line on this PC, signed in with your account.':
+    'この PC の Codex コマンドラインを、自分のアカウントのサインインで使います。',
+  'A model running on this PC with Ollama or LM Studio. Nothing leaves the PC.':
+    'この PC の Ollama か LM Studio で動くモデルです。データは PC の外に出ません。',
+  'No AI connected. Copy each request and paste the answer yourself.':
+    'AI をつなぎません。依頼をコピーし、回答を自分で貼り付けます。',
+  'Only the text an action needs is sent: the tickets’ text, your notes to translate, or a discussion’s new comments, with the project’s glossary. Claude Code runs in an empty folder with every tool turned off, so it can only answer: it can’t open or change files on this PC. Requests count against your own Claude plan.':
+    '送るのは処理に必要な文章だけです：チケットの文章、翻訳する自分のメモ、ディスカッションの新しいコメントと、プロジェクトの用語集。Claude Code は空のフォルダーで、すべてのツールをオフにして動くため、回答することしかできず、この PC のファイルを開いたり変えたりできません。依頼は自分の Claude プランの利用量に数えられます。',
+  'Only the text an action needs is sent: the tickets’ text, your notes to translate, or a discussion’s new comments, with the project’s glossary. Codex runs in an empty folder in its read-only sandbox, so it can’t change files on this PC. Requests count against your own plan.':
+    '送るのは処理に必要な文章だけです：チケットの文章、翻訳する自分のメモ、ディスカッションの新しいコメントと、プロジェクトの用語集。Codex は空のフォルダーで読み取り専用のサンドボックスとして動くため、この PC のファイルを変えられません。依頼は自分のプランの利用量に数えられます。',
+  'The model only reads the request and writes an answer: it has no tools. A small model on a PC without a graphics card is slow and may not keep the answer format; WorkSync then fills nothing in. A 7B model or bigger, with Small requests, works best.':
+    'モデルは依頼を読んで回答を書くだけで、ツールは持ちません。グラフィックボードのない PC での小さなモデルは遅く、回答の形式を守れないことがあります。その場合 WorkSync は何も入力しません。7B 以上のモデルと「小」の依頼がおすすめです。',
+  'Open settings': '設定を開く',
+  'answered in {n} s': '{n} 秒で回答',
 };

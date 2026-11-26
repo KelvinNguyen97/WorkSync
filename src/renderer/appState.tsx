@@ -16,6 +16,7 @@ import {
 } from '../shared/model';
 import type { SourceFile } from '../shared/sources';
 import type { AppSettings } from '../shared/settings';
+import type { AiState } from '../shared/ipc';
 import { setTheme, setUiLanguage, tr, uiLanguage } from './i18n';
 import { translateMessage } from '../shared/i18n';
 import { useEffect } from 'react';
@@ -51,11 +52,17 @@ interface AppState {
   putProject: (p: Project) => void;
   reloadTasks: () => Promise<void>;
   reloadAll: () => Promise<void>;
-  toast: (text: string, action?: ToastMessage['action']) => void;
+  toast: (
+    text: string,
+    action?: ToastMessage['action'],
+    error?: boolean,
+  ) => void;
   /** Runs a change and shows its error, if any, as a toast. */
   attempt: <T>(fn: () => Promise<T>) => Promise<T | undefined>;
   toastMessage: ToastMessage | null;
   dismissToast: () => void;
+  /** The AI provider's status and the job running (doc 10). */
+  ai: AiState | null;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -113,6 +120,12 @@ export function AppProvider({
   useEffect(() => {
     const stop = window.worksync.onSourcesChanged(setSources);
     void window.worksync.checkSources().then(setSources);
+    return stop;
+  }, []);
+  const [ai, setAi] = useState<AiState | null>(null);
+  useEffect(() => {
+    const stop = window.worksync.onAiChanged(setAi);
+    void window.worksync.aiStatus().then(setAi, () => {});
     return stop;
   }, []);
   const [originalFirst, setOriginalFirst] = useState(false);
@@ -178,10 +191,11 @@ export function AppProvider({
         }
       },
       // Messages and buttons in the app language (also those built in code).
-      toast: (text, action) =>
+      toast: (text, action, error) =>
         show({
           text: translateMessage(uiLanguage(), text),
           action: action && { ...action, label: tr(action.label) },
+          error,
         }),
       attempt: async (fn) => {
         try {
@@ -196,6 +210,7 @@ export function AppProvider({
       },
       toastMessage,
       dismissToast: () => setToastMessage(null),
+      ai,
     }),
     [
       today,
@@ -209,6 +224,7 @@ export function AppProvider({
       originalFirst,
       toastMessage,
       show,
+      ai,
     ],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

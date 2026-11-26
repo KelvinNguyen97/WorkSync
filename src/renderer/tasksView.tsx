@@ -28,6 +28,7 @@ import {
   type TableColumn,
 } from '../shared/taskTable';
 import { useApp } from './appState';
+import { AiButton, useAi } from './aiActions';
 import { Icon } from './Icon';
 import { StatusChip } from './parts';
 import type { ViewProps } from './views';
@@ -604,6 +605,7 @@ function BulkBar({
   onReport: () => void;
 }) {
   const { putTask, toast, attempt } = useApp();
+  const ai = useAi();
   const [label, setLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const n = tasks.length;
@@ -718,10 +720,18 @@ function BulkBar({
         <Icon name="pin" />
         {allPinned ? tr('Unpin') : tr('Pin')}
       </button>
-      <button className="btn sm" onClick={onCopyForAi}>
-        <Icon name="spark" />
-        {tr('Copy for AI')}
-      </button>
+      {ai.usable ? (
+        <AiButton
+          small
+          label={tr('Translate & summarize')}
+          onClick={onCopyForAi}
+        />
+      ) : (
+        <button className="btn sm" onClick={onCopyForAi}>
+          <Icon name="spark" />
+          {tr('Copy for AI')}
+        </button>
+      )}
       <button className="btn sm" onClick={() => void copyBriefs()}>
         <Icon name="copy" />
         {tr('Copy briefs')}

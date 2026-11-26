@@ -78,11 +78,18 @@ server and no account. Your data stays on your PC.
 - Assign tasks to members, get notices when you are assigned or mentioned, and
   see who is online.
 
-**Translation with AI, without an API key**
+**Translation and summaries with AI, without an API key**
 
+- **One-click AI.** In **Settings › AI provider**, choose Claude Code, Codex or
+  a model on your PC (Ollama or LM Studio). **Translate & summarize**,
+  **Translate my notes** and **Summarize into progress** then do the whole job
+  in the background, with your own sign-in, and **Undo** puts it back. Claude
+  Code runs with every tool off and Codex read-only, in an empty folder, so
+  neither can change your files.
 - **Copy for AI** builds one request for many tickets, with your glossary. Paste
   it into an AI chat such as Gemini, paste the answer back, and WorkSync checks
-  it before filling in translations and summaries.
+  it before filling in translations and summaries. The buttons fall back to it
+  when no AI provider is set up, or when the provider stops working.
 
 **Reports and sharing**
 
@@ -180,8 +187,9 @@ app (beside its folder on Windows), so it carries over.
    file to a project.
 4. **Review changes.** When the customer updates the file, open **Files**,
    check what changed, and accept it.
-5. **Translate and summarise** with **Copy for AI** and **Paste from AI**, or
-   type your own.
+5. **Translate and summarise** with **Translate & summarize** once an AI
+   provider is set up, or with **Copy for AI** and **Paste from AI**, or type
+   your own.
 6. **Keep the situation current.** Open a ticket, choose **Update situation**,
    and the brief is ready to copy into chat or email.
 7. **Share.** Publish to a shared folder, make a report, or write your changes
@@ -335,9 +343,11 @@ A few conventions:
 - **No automatic updates.** Download new versions from the Releases page.
 - **macOS builds are for Apple silicon only.** Intel Macs aren't built yet.
 - **No app icon yet.**
-- **Workspaces are new.** Try one with a test project first. Deleted tickets
-  have no Trash yet, a `.worksync` export doesn't carry tasks or discussions
-  yet, and old change files in the workspace folder aren't cleaned up yet.
+- **Workspaces are new.** Try one with a test project first. When two members
+  edit the same long text, one whole version is kept rather than the lines
+  merged.
+- **AI providers are new.** Codex's background mode hasn't been tried with a
+  real sign-in yet. Release import still uses Copy instructions for AI.
 
 ## License
 

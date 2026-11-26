@@ -29,6 +29,7 @@ import {
   type ReportOptions,
 } from '../shared/reports';
 import { useApp } from './appState';
+import { AiButton, AiNotWorking, useAi } from './aiActions';
 import { Icon, type IconName } from './Icon';
 import { Modal } from './parts';
 import { tr, uiLanguage } from './i18n';
@@ -79,6 +80,7 @@ export function ReportDialog({
   onClose: () => void;
 }) {
   const { tasks, today, attempt, toast } = useApp();
+  const ai = useAi();
   const week = thisWeek(today);
   const [o, setO] = useState<ReportOptions>({
     kind: 'progress',
@@ -303,15 +305,33 @@ export function ReportDialog({
                   ? `${needingParts} of your notes on ${needing.length} ticket${needing.length === 1 ? '' : 's'} are only in ${LANGUAGES[project.workingLanguage]}. ${o.language === 'original' ? 'They are marked as not translated.' : 'They show without a translation.'}${translatedNow ? ` ${translatedNow} are translated already.` : ''}`
                   : `Your notes in this report are all translated into ${original}.`}
               </span>
-              {needingParts > 0 && (
-                <button
-                  className="btn sm accent-outline"
-                  onClick={() => setTranslating(true)}
-                >
-                  <Icon name="spark" />
-                  {tr('Translate with Gemini')}
-                </button>
-              )}
+              {needingParts > 0 &&
+                (ai.usable ? (
+                  <AiButton
+                    small
+                    label={tr('Translate my notes')}
+                    onClick={() =>
+                      void ai
+                        .run({
+                          kind: 'notes',
+                          projectId: project.id,
+                          taskIds: needing.map((t) => t.id),
+                        })
+                        .then(() => loadDone())
+                    }
+                  />
+                ) : (
+                  <>
+                    <AiNotWorking />
+                    <button
+                      className="btn sm accent-outline"
+                      onClick={() => setTranslating(true)}
+                    >
+                      <Icon name="spark" />
+                      {tr('Translate with Gemini')}
+                    </button>
+                  </>
+                ))}
             </p>
           ))}
         {o.kind === 'progress' && (
