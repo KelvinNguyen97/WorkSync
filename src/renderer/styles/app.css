@@ -5758,6 +5758,11 @@ button.wk-st:hover {
 }
 
 /* ---------------------------------------------------------- AI provider (doc 11) */
+/* One section at a time, in a window of fixed height: switching sections or
+   opening more options never moves the window, only the content scrolls. */
+.modal.wide:has(.set-layout) {
+  height: min(720px, 100%);
+}
 .set-layout {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
@@ -5787,7 +5792,7 @@ button.wk-st:hover {
 .set-nav button:hover {
   background: rgb(var(--hl) / 0.04);
 }
-.set-nav button[aria-current='true'] {
+.set-nav button[aria-selected='true'] {
   background: var(--accent-soft);
   color: var(--fg);
   font-weight: 600;

@@ -63,17 +63,11 @@ export function SettingsDialog({
   const { settings, setSettings, attempt, toast } = useApp();
   const body = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState<string>(section ?? 'appearance');
+  // Each section is its own page; a new one starts at its top.
   const go = (id: string) => {
     setCurrent(id);
-    body.current
-      ?.querySelector(`[data-section="${id}"]`)
-      ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    body.current?.closest('.m-body')?.scrollTo({ top: 0 });
   };
-  useEffect(() => {
-    if (section) go(section);
-    // Once, when it opens at a section.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [info, setInfo] = useState<StorageInfo | null>(null);
   const [days, setDays] = useState(String(settings.dueSoonDays));
   const [restoring, setRestoring] = useState<{
@@ -208,11 +202,19 @@ export function SettingsDialog({
       }
     >
       <div className="set-layout">
-        <nav className="set-nav" aria-label={tr('Settings sections')}>
+        <nav
+          className="set-nav"
+          role="tablist"
+          aria-orientation="vertical"
+          aria-label={tr('Settings sections')}
+        >
           {SECTIONS.map(([id, label]) => (
             <button
               key={id}
-              aria-current={current === id ? 'true' : undefined}
+              role="tab"
+              id={`set-tab-${id}`}
+              aria-selected={current === id}
+              aria-controls="set-panel"
               onClick={() => go(id)}
             >
               {tr(label)}
@@ -222,302 +224,333 @@ export function SettingsDialog({
             </button>
           ))}
         </nav>
-        <div className="form settings" ref={body}>
-          <fieldset data-section="appearance">
-            <legend>{tr('Appearance')}</legend>
-            <div className="set-row">
-              <span>
-                <b>{tr('App language')}</b>
-                <small>
-                  {tr(
-                    'Menus, buttons and messages. A project’s languages, translations and reports don’t change.',
-                  )}
-                </small>
-              </span>
-              <select
-                className="inp set-select"
-                aria-label={tr('App language')}
-                value={settings.uiLanguage}
-                onChange={(e) =>
-                  void save({ uiLanguage: e.target.value as UiLanguageChoice })
-                }
-              >
-                <option value="system">
-                  {tr('Same as the computer ({lang})', {
-                    lang: UI_LANGUAGES[
-                      resolveUiLanguage('system', navigator.language)
-                    ],
-                  })}
-                </option>
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
-              </select>
-            </div>
-            <div className="set-row">
-              <span>
-                <b>{tr('Theme')}</b>
-                <small>
-                  {tr('System follows your computer’s light or dark setting.')}
-                </small>
-              </span>
-              <div className="seg-ctl" role="group" aria-label={tr('Theme')}>
-                {(
-                  [
-                    ['system', 'System'],
-                    ['light', 'Light'],
-                    ['dark', 'Dark'],
-                  ] as const
-                ).map(([k, l]) => (
-                  <button
-                    key={k}
-                    aria-pressed={settings.theme === k}
-                    onClick={() => void save({ theme: k })}
-                  >
-                    {tr(l)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset data-section="background">
-            <legend>{tr('Running in the background')}</legend>
-            <div className="set-row">
-              <span>
-                <b>{tr('Keep running in the tray when I close the window')}</b>
-                <small>
-                  {tr(
-                    'Reminders and the quick-search shortcut work only while WorkSync runs. Open it again or quit from the tray icon. WorkSync doesn’t start with your computer and writes nothing to the system.',
-                  )}
-                </small>
-              </span>
-              <button
-                className="switch"
-                role="switch"
-                aria-checked={settings.keepInTray}
-                title={
-                  settings.keepInTray
-                    ? tr('On. Click to turn it off.')
-                    : tr('Off. Click to turn it on.')
-                }
-                aria-label={tr('Keep running in the tray')}
-                onClick={() => void save({ keepInTray: !settings.keepInTray })}
-              >
-                <span />
-              </button>
-            </div>
-            <div className="set-row">
-              <span>
-                <b>{tr('Reminders for My tasks')}</b>
-                <small>
-                  {tr(
-                    'Notifications by each task’s status and priority. Turn one task’s bell off in My tasks.',
-                  )}
-                </small>
-              </span>
-              <button
-                className="switch"
-                role="switch"
-                aria-checked={settings.reminders}
-                title={
-                  settings.reminders
-                    ? tr('On. Click to turn it off.')
-                    : tr('Off. Click to turn it on.')
-                }
-                aria-label={tr('Reminders for My tasks')}
-                onClick={() => void save({ reminders: !settings.reminders })}
-              >
-                <span />
-              </button>
-            </div>
-          </fieldset>
-
-          <QuickSearchSettings save={save} />
-          <AiSettings save={save} />
-
-          <fieldset data-section="projects">
-            <legend>{tr('New projects')}</legend>
-            <div className="two">
-              <label>
-                {tr('Working language')}
+        <div
+          className="form settings"
+          ref={body}
+          id="set-panel"
+          role="tabpanel"
+          aria-labelledby={`set-tab-${current}`}
+        >
+          {current === 'appearance' && (
+            <fieldset data-section="appearance">
+              <legend>{tr('Appearance')}</legend>
+              <div className="set-row">
+                <span>
+                  <b>{tr('App language')}</b>
+                  <small>
+                    {tr(
+                      'Menus, buttons and messages. A project’s languages, translations and reports don’t change.',
+                    )}
+                  </small>
+                </span>
                 <select
-                  className="inp"
-                  value={settings.workingLanguage}
+                  className="inp set-select"
+                  aria-label={tr('App language')}
+                  value={settings.uiLanguage}
                   onChange={(e) =>
                     void save({
-                      workingLanguage: e.target.value as LanguageCode,
+                      uiLanguage: e.target.value as UiLanguageChoice,
                     })
                   }
                 >
-                  {(Object.keys(LANGUAGES) as LanguageCode[]).map((l) => (
-                    <option key={l} value={l}>
-                      {LANGUAGES[l]}
-                    </option>
-                  ))}
+                  <option value="system">
+                    {tr('Same as the computer ({lang})', {
+                      lang: UI_LANGUAGES[
+                        resolveUiLanguage('system', navigator.language)
+                      ],
+                    })}
+                  </option>
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
                 </select>
-              </label>
-              <label>
-                {tr('Due soon, in days')}
-                <input
-                  className="inp"
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={days}
-                  onChange={(e) => setDays(e.target.value)}
-                  onBlur={() => {
-                    const n = Number(days);
-                    if (n !== settings.dueSoonDays)
-                      void save({ dueSoonDays: n }).then(
-                        (ok) => ok || setDays(String(settings.dueSoonDays)),
-                      );
-                  }}
-                />
-              </label>
-            </div>
-            <span className="hint-text">
-              {tr(
-                'A new project starts with these. Change them for one project in its Project settings.',
-              )}
-            </span>
-          </fieldset>
+              </div>
+              <div className="set-row">
+                <span>
+                  <b>{tr('Theme')}</b>
+                  <small>
+                    {tr(
+                      'System follows your computer’s light or dark setting.',
+                    )}
+                  </small>
+                </span>
+                <div className="seg-ctl" role="group" aria-label={tr('Theme')}>
+                  {(
+                    [
+                      ['system', 'System'],
+                      ['light', 'Light'],
+                      ['dark', 'Dark'],
+                    ] as const
+                  ).map(([k, l]) => (
+                    <button
+                      key={k}
+                      aria-pressed={settings.theme === k}
+                      onClick={() => void save({ theme: k })}
+                    >
+                      {tr(l)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </fieldset>
+          )}
 
-          <fieldset data-section="data">
-            <legend>{tr('Data')}</legend>
-            <div className="set-row">
-              <span>
-                <b>{tr('Data folder')}</b>
-                <code title={info?.dataFolder}>{info?.dataFolder ?? '…'}</code>
-                <small>
-                  {tr(
-                    'A new version of WorkSync never touches it. On Windows it sits beside the app folder: to move it, move the WorkSync folder and its WorkSync-data folder together.',
-                  )}
-                </small>
-              </span>
-              <button
-                className="btn sm"
-                onClick={() =>
-                  void attempt(() => window.worksync.openFolder('data'))
-                }
-              >
-                <Icon name="folder" />
-                {tr('Open')}
-              </button>
-            </div>
-            <div className="set-row">
-              <span>
-                <b>{tr('Log files')}</b>
-                <code title={info?.logFolder}>{info?.logFolder ?? '…'}</code>
-                <small>
-                  {tr('Errors and steps such as backups, never ticket text.')}
-                </small>
-              </span>
-              <button
-                className="btn sm"
-                onClick={() =>
-                  void attempt(() => window.worksync.openFolder('logs'))
-                }
-              >
-                <Icon name="folder" />
-                {tr('Open')}
-              </button>
-            </div>
-          </fieldset>
-
-          <fieldset data-section="backups">
-            <legend>{tr('Backups')}</legend>
-            <div className="set-row">
-              <span>
-                <b>{tr('Backup folder')}</b>
-                <code title={info?.backupFolder}>
-                  {info?.backupFolder ?? '…'}
-                </code>
-                <small>
-                  {info?.defaultBackupFolder
-                    ? tr(
-                        'In the data folder. A second drive or a USB drive is safer, because it survives a disk failure.',
-                      )
-                    : tr(
-                        'WorkSync backs up when it starts and once a day, and keeps the last 14 days.',
-                      )}
-                </small>
-              </span>
-              <span className="set-actions">
-                <button className="btn sm" onClick={() => void chooseFolder()}>
-                  <Icon name="folder" />
-                  {tr('Change')}
+          {current === 'background' && (
+            <fieldset data-section="background">
+              <legend>{tr('Running in the background')}</legend>
+              <div className="set-row">
+                <span>
+                  <b>
+                    {tr('Keep running in the tray when I close the window')}
+                  </b>
+                  <small>
+                    {tr(
+                      'Reminders and the quick-search shortcut work only while WorkSync runs. Open it again or quit from the tray icon. WorkSync doesn’t start with your computer and writes nothing to the system.',
+                    )}
+                  </small>
+                </span>
+                <button
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.keepInTray}
+                  title={
+                    settings.keepInTray
+                      ? tr('On. Click to turn it off.')
+                      : tr('Off. Click to turn it on.')
+                  }
+                  aria-label={tr('Keep running in the tray')}
+                  onClick={() =>
+                    void save({ keepInTray: !settings.keepInTray })
+                  }
+                >
+                  <span />
                 </button>
-                {info && !info.defaultBackupFolder && (
-                  <button
-                    className="btn sm"
-                    onClick={() =>
-                      void save({ backupFolder: null }).then(async (ok) => {
-                        if (ok) await reload();
+              </div>
+              <div className="set-row">
+                <span>
+                  <b>{tr('Reminders for My tasks')}</b>
+                  <small>
+                    {tr(
+                      'Notifications by each task’s status and priority. Turn one task’s bell off in My tasks.',
+                    )}
+                  </small>
+                </span>
+                <button
+                  className="switch"
+                  role="switch"
+                  aria-checked={settings.reminders}
+                  title={
+                    settings.reminders
+                      ? tr('On. Click to turn it off.')
+                      : tr('Off. Click to turn it on.')
+                  }
+                  aria-label={tr('Reminders for My tasks')}
+                  onClick={() => void save({ reminders: !settings.reminders })}
+                >
+                  <span />
+                </button>
+              </div>
+            </fieldset>
+          )}
+
+          {current === 'search' && <QuickSearchSettings save={save} />}
+          {current === 'ai' && <AiSettings save={save} />}
+
+          {current === 'projects' && (
+            <fieldset data-section="projects">
+              <legend>{tr('New projects')}</legend>
+              <div className="two">
+                <label>
+                  {tr('Working language')}
+                  <select
+                    className="inp"
+                    value={settings.workingLanguage}
+                    onChange={(e) =>
+                      void save({
+                        workingLanguage: e.target.value as LanguageCode,
                       })
                     }
                   >
-                    {tr('Use the data folder')}
-                  </button>
+                    {(Object.keys(LANGUAGES) as LanguageCode[]).map((l) => (
+                      <option key={l} value={l}>
+                        {LANGUAGES[l]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {tr('Due soon, in days')}
+                  <input
+                    className="inp"
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={days}
+                    onChange={(e) => setDays(e.target.value)}
+                    onBlur={() => {
+                      const n = Number(days);
+                      if (n !== settings.dueSoonDays)
+                        void save({ dueSoonDays: n }).then(
+                          (ok) => ok || setDays(String(settings.dueSoonDays)),
+                        );
+                    }}
+                  />
+                </label>
+              </div>
+              <span className="hint-text">
+                {tr(
+                  'A new project starts with these. Change them for one project in its Project settings.',
                 )}
               </span>
-            </div>
-            {info?.backupWarning && (
-              <p className="set-warn" role="alert">
-                <Icon name="alert" />
-                {info.backupWarning}
-              </p>
-            )}
-            <div className="set-head">
-              <b>
-                {info
-                  ? tr(
-                      info.backups.length === 1 ? '{n} backup' : '{n} backups',
-                      {
-                        n: info.backups.length,
-                      },
-                    )
-                  : tr('Backups')}
-              </b>
-              <span className="set-actions">
-                <button className="btn sm" onClick={() => void fromFile()}>
-                  {tr('Restore from a file…')}
-                </button>
+            </fieldset>
+          )}
+
+          {current === 'data' && (
+            <fieldset data-section="data">
+              <legend>{tr('Data')}</legend>
+              <div className="set-row">
+                <span>
+                  <b>{tr('Data folder')}</b>
+                  <code title={info?.dataFolder}>
+                    {info?.dataFolder ?? '…'}
+                  </code>
+                  <small>
+                    {tr(
+                      'A new version of WorkSync never touches it. On Windows it sits beside the app folder: to move it, move the WorkSync folder and its WorkSync-data folder together.',
+                    )}
+                  </small>
+                </span>
                 <button
                   className="btn sm"
-                  disabled={busy}
-                  onClick={() => void backupNow()}
+                  onClick={() =>
+                    void attempt(() => window.worksync.openFolder('data'))
+                  }
                 >
-                  <Icon name="save" />
-                  {tr('Back up now')}
+                  <Icon name="folder" />
+                  {tr('Open')}
                 </button>
-              </span>
-            </div>
-            <div className="backup-list">
-              {info?.backups.map((b) => (
-                <div key={b.file} className="backup-row">
-                  <span className="mono">{when(b.at)}</span>
-                  <span>{KIND_NAME[b.kind]}</span>
-                  <span className="muted">{size(b.size)}</span>
+              </div>
+              <div className="set-row">
+                <span>
+                  <b>{tr('Log files')}</b>
+                  <code title={info?.logFolder}>{info?.logFolder ?? '…'}</code>
+                  <small>
+                    {tr('Errors and steps such as backups, never ticket text.')}
+                  </small>
+                </span>
+                <button
+                  className="btn sm"
+                  onClick={() =>
+                    void attempt(() => window.worksync.openFolder('logs'))
+                  }
+                >
+                  <Icon name="folder" />
+                  {tr('Open')}
+                </button>
+              </div>
+            </fieldset>
+          )}
+
+          {current === 'backups' && (
+            <fieldset data-section="backups">
+              <legend>{tr('Backups')}</legend>
+              <div className="set-row">
+                <span>
+                  <b>{tr('Backup folder')}</b>
+                  <code title={info?.backupFolder}>
+                    {info?.backupFolder ?? '…'}
+                  </code>
+                  <small>
+                    {info?.defaultBackupFolder
+                      ? tr(
+                          'In the data folder. A second drive or a USB drive is safer, because it survives a disk failure.',
+                        )
+                      : tr(
+                          'WorkSync backs up when it starts and once a day, and keeps the last 14 days.',
+                        )}
+                  </small>
+                </span>
+                <span className="set-actions">
                   <button
                     className="btn sm"
-                    onClick={() => void askRestore(b)}
-                    aria-label={tr('Restore the backup from {date}', {
-                      date: when(b.at),
-                    })}
+                    onClick={() => void chooseFolder()}
                   >
-                    {tr('Restore')}
+                    <Icon name="folder" />
+                    {tr('Change')}
                   </button>
-                </div>
-              ))}
-              {info && !info.backups.length && (
-                <p className="muted">
-                  {tr(
-                    'No backups yet. The first one is made the next time WorkSync starts, or now with Back up now.',
+                  {info && !info.defaultBackupFolder && (
+                    <button
+                      className="btn sm"
+                      onClick={() =>
+                        void save({ backupFolder: null }).then(async (ok) => {
+                          if (ok) await reload();
+                        })
+                      }
+                    >
+                      {tr('Use the data folder')}
+                    </button>
                   )}
+                </span>
+              </div>
+              {info?.backupWarning && (
+                <p className="set-warn" role="alert">
+                  <Icon name="alert" />
+                  {info.backupWarning}
                 </p>
               )}
-            </div>
-          </fieldset>
+              <div className="set-head">
+                <b>
+                  {info
+                    ? tr(
+                        info.backups.length === 1
+                          ? '{n} backup'
+                          : '{n} backups',
+                        {
+                          n: info.backups.length,
+                        },
+                      )
+                    : tr('Backups')}
+                </b>
+                <span className="set-actions">
+                  <button className="btn sm" onClick={() => void fromFile()}>
+                    {tr('Restore from a file…')}
+                  </button>
+                  <button
+                    className="btn sm"
+                    disabled={busy}
+                    onClick={() => void backupNow()}
+                  >
+                    <Icon name="save" />
+                    {tr('Back up now')}
+                  </button>
+                </span>
+              </div>
+              <div className="backup-list">
+                {info?.backups.map((b) => (
+                  <div key={b.file} className="backup-row">
+                    <span className="mono">{when(b.at)}</span>
+                    <span>{KIND_NAME[b.kind]}</span>
+                    <span className="muted">{size(b.size)}</span>
+                    <button
+                      className="btn sm"
+                      onClick={() => void askRestore(b)}
+                      aria-label={tr('Restore the backup from {date}', {
+                        date: when(b.at),
+                      })}
+                    >
+                      {tr('Restore')}
+                    </button>
+                  </div>
+                ))}
+                {info && !info.backups.length && (
+                  <p className="muted">
+                    {tr(
+                      'No backups yet. The first one is made the next time WorkSync starts, or now with Back up now.',
+                    )}
+                  </p>
+                )}
+              </div>
+            </fieldset>
+          )}
         </div>
       </div>
     </Modal>
