@@ -1,5 +1,5 @@
 /**
- * The requests the AI gets (doc 10). Copy for AI and the one-click jobs build
+ * The requests the AI gets (doc 11). Copy for AI and the one-click jobs build
  * the same requests; a job also says what to fill in from each answer: what
  * the review screens tick by default.
  */
@@ -147,7 +147,7 @@ export function summaryBatchesFor(
 }
 
 /**
- * A one-click job as requests and what to do with each answer (doc 10). The
+ * A one-click job as requests and what to do with each answer (doc 11). The
  * requests are the ones Copy for AI makes; what is filled in is what the
  * review screens tick by default.
  */

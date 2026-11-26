@@ -43,7 +43,7 @@ const TIMES = [60, 120, 300, 600, 1200];
 
 type Save = (patch: Partial<AppSettings>) => Promise<boolean>;
 
-/** Settings › AI provider (doc 10): set up once, then the buttons do the job. */
+/** Settings › AI provider (doc 11): set up once, then the buttons do the job. */
 export function AiSettings({ save }: { save: Save }) {
   const { settings, ai, attempt } = useApp();
   const p = settings.aiProvider;

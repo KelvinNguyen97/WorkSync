@@ -306,7 +306,7 @@ export interface WorkSyncApi {
   applyAiResults(results: AiResult[]): Promise<Task[]>;
   copyText(text: string): Promise<void>;
 
-  /** The AI provider's status, and the job running, if any (doc 10). */
+  /** The AI provider's status, and the job running, if any (doc 11). */
   aiStatus(): Promise<AiState>;
   /** Sends one tiny request, so sign-in and limits are checked too. */
   aiTest(): Promise<AiStatus>;

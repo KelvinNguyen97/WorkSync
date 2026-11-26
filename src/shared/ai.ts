@@ -1,5 +1,5 @@
 /**
- * AI providers (doc 10): the AI that WorkSync's one-click actions use.
+ * AI providers (doc 11): the AI that WorkSync's one-click actions use.
  * Free of Node.js and Electron imports.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Talking to an AI provider (doc 10): Claude Code or Codex through their
+ * Talking to an AI provider (doc 11): Claude Code or Codex through their
  * command line in the background, or a model on this PC (Ollama, LM Studio)
  * through its local web address.
  *

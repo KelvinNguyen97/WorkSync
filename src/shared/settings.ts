@@ -27,7 +27,7 @@ export interface AppSettings {
   uiLanguage: UiLanguageChoice;
   /** Your name as others in a workspace see it; empty uses the Windows account. */
   displayName: string;
-  /** The AI the one-click actions use; none keeps Copy for AI (doc 10). */
+  /** The AI the one-click actions use; none keeps Copy for AI (doc 11). */
   aiProvider: AiProviderKind;
   /** Where Claude Code is; null finds it on PATH and where its installer puts it. */
   claudePath: string | null;

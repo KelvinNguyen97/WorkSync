@@ -41,7 +41,7 @@ const DOING: Record<AiJob['kind'], string> = {
 };
 
 /**
- * The one-click AI (doc 10): whether it can be used, and running a job with
+ * The one-click AI (doc 11): whether it can be used, and running a job with
  * its messages, Undo, and the fall back to Copy for AI when it fails.
  */
 export function useAi() {

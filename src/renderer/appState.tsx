@@ -61,7 +61,7 @@ interface AppState {
   attempt: <T>(fn: () => Promise<T>) => Promise<T | undefined>;
   toastMessage: ToastMessage | null;
   dismissToast: () => void;
-  /** The AI provider's status and the job running (doc 10). */
+  /** The AI provider's status and the job running (doc 11). */
   ai: AiState | null;
 }
 

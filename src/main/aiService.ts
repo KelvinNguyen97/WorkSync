@@ -1,5 +1,5 @@
 /**
- * The AI provider as the app sees it (doc 10): its status, the one-click
+ * The AI provider as the app sees it (doc 11): its status, the one-click
  * jobs, Cancel, and Undo.
  *
  * A job sends the same requests Copy for AI would, one at a time, reads each
