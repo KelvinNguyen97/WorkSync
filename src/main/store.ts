@@ -1186,6 +1186,16 @@ export class Store {
           .get(str(task.source_file_id))
       )
         task.source_file_id = null;
+      // Another ticket may have its number now: one number, one ticket.
+      const no = str(task.customer_id).trim();
+      const taken =
+        !!no &&
+        !!this.db
+          .prepare(
+            'SELECT 1 FROM tasks WHERE project_id = ? AND customer_id = ? AND id != ?',
+          )
+          .get(str(task.project_id), no, id);
+      if (taken) task.customer_id = '';
       task.updated_at = this.now();
       put('tasks', task);
       for (const x of d.situation_updates) put('situation_updates', x);
@@ -1212,6 +1222,12 @@ export class Store {
           .run(str(task.source_file_id), str(task.customer_id));
       this.db.prepare('DELETE FROM trash WHERE id = ?').run(id);
       this.log(id, 'Created', 'Restored from the Trash.');
+      if (taken)
+        this.log(
+          id,
+          'Edit',
+          `No. ${no} is used by another ticket now, so it came back without a number.`,
+        );
     });
     return this.getTask(id);
   }

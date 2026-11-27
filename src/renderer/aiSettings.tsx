@@ -229,9 +229,11 @@ function CliSetup({ cli, save }: { cli: 'claude' | 'codex'; save: Save }) {
                   : tr('Looking…')
             }
             onChange={(e) => setPath(e.target.value)}
-            onBlur={() =>
-              void save({ [key]: path.trim() ? path.trim() : null })
-            }
+            onBlur={() => {
+              // Saved only when changed: a save checks the provider again.
+              const v = path.trim() ? path.trim() : null;
+              if (v !== chosen) void save({ [key]: v });
+            }}
           />
           <button className="btn sm" onClick={() => void browse()}>
             {tr('Browse…')}
@@ -266,7 +268,10 @@ function CliSetup({ cli, save }: { cli: 'claude' | 'codex'; save: Save }) {
           value={model}
           placeholder={tr('{name}’s default', { name })}
           onChange={(e) => setModel(e.target.value)}
-          onBlur={() => void save({ [modelKey]: model.trim() })}
+          onBlur={() => {
+            if (model.trim() !== settings[modelKey])
+              void save({ [modelKey]: model.trim() });
+          }}
         />
         <datalist id={`ai-models-${cli}`}>
           {(cli === 'claude' ? ['sonnet', 'opus', 'haiku'] : []).map((m) => (
@@ -311,7 +316,9 @@ function LocalSetup({ save }: { save: Save }) {
             className="inp mono"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            onBlur={() => void use(url.trim())}
+            onBlur={() => {
+              if (url.trim() !== settings.localUrl) void use(url.trim());
+            }}
           />
           <button
             className="btn sm"

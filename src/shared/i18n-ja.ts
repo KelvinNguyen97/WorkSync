@@ -1898,7 +1898,7 @@ export const JA: Record<string, string> = {
     '{n} 件は回答になかったため、そのままです。',
   'AI provider': 'AI プロバイダー',
   'The AI that Translate & summarize, Translate my notes and Summarize into progress use. Set it up once; the buttons then do the whole job, and you can undo it. If it stops working, the buttons go back to Copy for AI.':
-    '「翻訳と要約」「自分のメモを翻訳」「進捗に要約」で使う AI です。一度設定すれば、ボタンひとつで処理が終わり、あとから元に戻すこともできます。使えなくなったときは、ボタンが「AI 用にコピー」に戻ります。',
+    '「翻訳と要約」「自分のメモを翻訳」「要約して進捗へ」で使う AI です。一度設定すれば、ボタンひとつで処理が終わり、あとから元に戻すこともできます。使えなくなったときは、ボタンが「AI 用にコピー」に戻ります。',
   'None: Copy for AI': 'なし：AI 用にコピー',
   'Testing…': 'テスト中…',
   Test: 'テスト',
@@ -1980,4 +1980,6 @@ export const JA: Record<string, string> = {
     'モデルは依頼を読んで回答を書くだけで、ツールは持ちません。グラフィックボードのない PC での小さなモデルは遅く、回答の形式を守れないことがあります。その場合 WorkSync は何も入力しません。7B 以上のモデルと「小」の依頼がおすすめです。',
   'Open settings': '設定を開く',
   'answered in {n} s': '{n} 秒で回答',
+  'Made progress ticket {no} and linked it. Press Summarize to fill it in from the discussion.':
+    '進捗チケット {no} を作ってリンクしました。「要約して進捗へ」を押すと、ディスカッションから入力されます。',
 };

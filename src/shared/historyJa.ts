@@ -106,6 +106,11 @@ const RULES: [RegExp, (...m: string[]) => string][] = [
   [/^Removed\.$/, () => '解除しました。'],
   [/^Restored from the Trash\.$/, () => 'ごみ箱から戻しました。'],
   [
+    /^No\. (.+) is used by another ticket now, so it came back without a number\.$/,
+    (no) =>
+      `No. ${no} は今は別のチケットが使っているため、番号なしで戻しました。`,
+  ],
+  [
     /^Settled after you and another member both changed it: (.+?) is (.*)\.$/,
     (f, v) =>
       `あなたと別のメンバーが両方変更したため決定しました：${words(f)} は ${v}。`,

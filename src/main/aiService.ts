@@ -95,8 +95,11 @@ const TABLES: {
 type Snapshot = Map<string, Map<string, Row>>;
 
 interface UndoEntry {
-  before: Snapshot;
-  after: Snapshot;
+  /**
+   * What each answer changed, taken right before and after it was filled in,
+   * so edits made while the AI was working are never counted as its own.
+   */
+  steps: { before: Snapshot; after: Snapshot }[];
   taskIds: string[];
   discussionIds: string[];
   who: string;
@@ -213,8 +216,16 @@ export class AiService {
     if (!plan.steps.length) return result;
     const ctl = new AbortController();
     this.running = ctl;
-    const before = this.snapshot(plan.taskIds, plan.discussionIds);
     const ask = this.deps.ask ?? askProvider;
+    const steps: UndoEntry['steps'] = [];
+    // Filling in is synchronous, so nothing else can change the rows in between.
+    const fill = (step: PlanStep, answer: string) => {
+      const before = this.snapshot(plan.taskIds, plan.discussionIds);
+      const r = step.apply(answer);
+      const after = this.snapshot(plan.taskIds, plan.discussionIds);
+      if (changedAny(before, after)) steps.push({ before, after });
+      return r;
+    };
     try {
       for (let i = 0; i < plan.steps.length; i++) {
         const step = plan.steps[i];
@@ -224,8 +235,8 @@ export class AiService {
           of: plan.steps.length,
           items: plan.items,
         });
-        let r = step.apply(await ask(s, step.text, ctl.signal));
-        if (!r.readable) r = step.apply(await ask(s, step.text, ctl.signal));
+        let r = fill(step, await ask(s, step.text, ctl.signal));
+        if (!r.readable) r = fill(step, await ask(s, step.text, ctl.signal));
         if (!r.readable)
           throw new AiError(
             s.aiProvider === 'local'
@@ -241,19 +252,21 @@ export class AiService {
         result.cancelled = true;
       else {
         result.failure = reasonOf(e);
+        // A check started earlier must not turn this failure back into ok.
+        this.checkRun++;
         this.set({ state: 'failed', reason: result.failure, detail: null });
       }
     } finally {
       this.running = null;
       this.deps.progress(null);
     }
-    const after = this.snapshot(plan.taskIds, plan.discussionIds);
-    const changed = changedTasks(before, after);
-    if (changed.size || changedAny(before, after)) {
+    const changed = new Set(
+      steps.flatMap((x) => [...changedTasks(x.before, x.after)]),
+    );
+    if (steps.length) {
       const id = randomUUID();
       this.undos.set(id, {
-        before,
-        after,
+        steps,
         taskIds: plan.taskIds,
         discussionIds: plan.discussionIds,
         who,
@@ -273,45 +286,48 @@ export class AiService {
     if (!u) throw new Error('This can no longer be undone.');
     this.undos.delete(undoId);
     const db = this.deps.db();
-    const now = this.snapshot(u.taskIds, u.discussionIds);
     const touched = new Set<string>();
     db.exec('BEGIN');
     try {
-      for (const t of TABLES) {
-        const b = u.before.get(t.name)!;
-        const a = u.after.get(t.name)!;
-        const n = now.get(t.name)!;
-        const where = t.key.map((k) => `${k} = ?`).join(' AND ');
-        for (const [key, row] of a) {
-          const cur = n.get(key);
-          if (!cur) continue;
-          const old = b.get(key);
-          if (!old) {
-            // Added by the job: removed, unless changed since.
-            if (Object.keys(row).every((c) => same(row[c], cur[c]))) {
-              db.prepare(`DELETE FROM ${t.name} WHERE ${where}`).run(
-                ...(t.key.map((k) => row[k]) as never[]),
-              );
-              touched.add(taskOf(t.name, row));
+      // Newest answer first, each against the rows as they are now.
+      for (const step of [...u.steps].reverse()) {
+        const now = this.snapshot(u.taskIds, u.discussionIds);
+        for (const t of TABLES) {
+          const b = step.before.get(t.name)!;
+          const a = step.after.get(t.name)!;
+          const n = now.get(t.name)!;
+          const where = t.key.map((k) => `${k} = ?`).join(' AND ');
+          for (const [key, row] of a) {
+            const cur = n.get(key);
+            if (!cur) continue;
+            const old = b.get(key);
+            if (!old) {
+              // Added by the job: removed, unless changed since.
+              if (Object.keys(row).every((c) => same(row[c], cur[c]))) {
+                db.prepare(`DELETE FROM ${t.name} WHERE ${where}`).run(
+                  ...(t.key.map((k) => row[k]) as never[]),
+                );
+                touched.add(taskOf(t.name, row));
+              }
+              continue;
             }
-            continue;
+            const cols = Object.keys(row).filter(
+              (c) =>
+                c !== 'updated_at' &&
+                !same(old[c], row[c]) &&
+                same(cur[c], row[c]),
+            );
+            if (!cols.length) continue;
+            const extra = 'updated_at' in row ? ', updated_at = ?' : '';
+            db.prepare(
+              `UPDATE ${t.name} SET ${cols.map((c) => `${c} = ?`).join(', ')}${extra} WHERE ${where}`,
+            ).run(
+              ...(cols.map((c) => old[c]) as never[]),
+              ...((extra ? [this.now()] : []) as never[]),
+              ...(t.key.map((k) => row[k]) as never[]),
+            );
+            touched.add(taskOf(t.name, row));
           }
-          const cols = Object.keys(row).filter(
-            (c) =>
-              c !== 'updated_at' &&
-              !same(old[c], row[c]) &&
-              same(cur[c], row[c]),
-          );
-          if (!cols.length) continue;
-          const extra = 'updated_at' in row ? ', updated_at = ?' : '';
-          db.prepare(
-            `UPDATE ${t.name} SET ${cols.map((c) => `${c} = ?`).join(', ')}${extra} WHERE ${where}`,
-          ).run(
-            ...(cols.map((c) => old[c]) as never[]),
-            ...((extra ? [this.now()] : []) as never[]),
-            ...(t.key.map((k) => row[k]) as never[]),
-          );
-          touched.add(taskOf(t.name, row));
         }
       }
       db.exec('COMMIT');

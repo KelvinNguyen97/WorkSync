@@ -318,4 +318,42 @@ describe('one-click jobs', () => {
     expect(r).toMatchObject({ applied: 0, missing: 0, undoId: null });
     expect(asked).toEqual([]);
   });
+
+  it('keeps an edit made while the AI was working when the job is undone', async () => {
+    const a = ticket('012', 'バッチが止まる');
+    const b = ticket('013', 'ラベル', { summary: 'Old' });
+    answers.push(() => {
+      // You change ticket 013 while the request is out.
+      store.updateTask(b.id, { summary: 'Typed while waiting' });
+      return block('012', 'Batch stops', 'It stops.');
+    });
+    const ai = service();
+    const r = await ai.run({
+      kind: 'translate',
+      projectId,
+      taskIds: [a.id, b.id],
+    });
+    expect(r.taskIds).toEqual([a.id]);
+    ai.undo(r.undoId!);
+    expect(store.getTask(a.id).titleTranslation).toBe('');
+    expect(store.getTask(b.id).summary).toBe('Typed while waiting');
+  });
+
+  it('a check that started before a failed job does not bring it back', async () => {
+    const a = ticket('012', 'バッチ');
+    let finishCheck: (v: string) => void = () => {};
+    const ai = service({
+      check: () => new Promise((r) => (finishCheck = r)),
+    });
+    const checking = ai.check();
+    answers.push(
+      () => 'x',
+      () => 'y',
+    );
+    const r = await ai.run({ kind: 'translate', projectId, taskIds: [a.id] });
+    expect(r.failure).toBeTruthy();
+    finishCheck('Claude Code 2.1.330');
+    await checking;
+    expect(ai.getStatus().state).toBe('failed');
+  });
 });

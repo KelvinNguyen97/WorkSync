@@ -332,6 +332,22 @@ describe('small helpers', () => {
   });
 
   it('turns what a provider printed into a reason', () => {
+    // Words that only look like sign-in or limit problems are not taken for them.
+    expect(
+      failureReason(
+        'Error: failed to read ~/.codex/login-state.json: permission denied',
+        'codex',
+      ),
+    ).toMatch(/^Codex stopped with: /);
+    expect(failureReason('Ticket 4012 has no title', 'claude')).toMatch(
+      /stopped with/,
+    );
+    expect(failureReason('Request failed with status 401', 'local')).toMatch(
+      /signed out/,
+    );
+    expect(
+      failureReason('Not logged in · Please run /login', 'claude'),
+    ).toMatch(/signed out/);
     expect(failureReason('Error: 429 Too Many Requests', 'codex')).toBe(
       'Codex reached its usage limit. Try again later.',
     );

@@ -287,6 +287,16 @@ export class Workspaces {
       throw e;
     }
   }
+  /** Whether a file is there, without reading it (attachments can be large). */
+  private async exists(file: string): Promise<boolean> {
+    try {
+      await limited(() => fsp.stat(file), this.limit);
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw e;
+    }
+  }
   /** Written under a temporary name, then renamed, so nobody reads half a file. */
   private async write(file: string, text: string): Promise<void> {
     await limited(
@@ -1984,7 +1994,7 @@ export class Workspaces {
       const t = TABLE[r.t];
       if (!t?.blob || r.x) continue;
       const file = this.blobFile(ctx, projectId, r.t, r.id);
-      if (await this.read(file)) continue;
+      if (await this.exists(file)) continue;
       const b = this.db
         .prepare(`SELECT ${t.blob} AS b FROM ${t.name} WHERE id = ?`)
         .get(r.id) as Row | undefined;
@@ -2753,7 +2763,9 @@ export class Workspaces {
               "UPDATE projects SET file_keeper = ? WHERE id = ? AND (file_keeper IS NULL OR file_keeper = '') AND EXISTS (SELECT 1 FROM source_files WHERE project_id = ?)",
             )
             .run(this.d.myMemberId(), pid, pid);
-          if (!this.readOnly(ctx)) await this.keepHouse(ctx, pid);
+          // Tidying up is never worth failing a sync for; it is tried again later.
+          if (!this.readOnly(ctx))
+            await this.keepHouse(ctx, pid).catch(() => undefined);
         }
       }
       if (this.now().getTime() - this.lastPresence > 15_000) {

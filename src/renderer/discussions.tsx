@@ -463,6 +463,7 @@ export function DiscussionWindow({
   onSummarize: (id: string) => void;
 }) {
   const { attempt, toast, tasks, now, project, reloadTasks } = useApp();
+  const ai = useAi();
   const [d, setD] = useState<Discussion | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [history, setHistory] = useState<
@@ -620,12 +621,22 @@ export function DiscussionWindow({
     if (r) {
       workChanged();
       await reloadTasks();
-      toast(
-        tr('Made progress ticket {no} and linked it.', {
-          no: r.task.customerId,
-        }),
-      );
-      onSummarize(d.id);
+      // With an AI provider, nothing is sent until the owner presses Summarize.
+      if (ai.usable)
+        toast(
+          tr(
+            'Made progress ticket {no} and linked it. Press Summarize to fill it in from the discussion.',
+            { no: r.task.customerId },
+          ),
+        );
+      else {
+        toast(
+          tr('Made progress ticket {no} and linked it.', {
+            no: r.task.customerId,
+          }),
+        );
+        onSummarize(d.id);
+      }
     }
   };
   const name = (memberId: string) => {

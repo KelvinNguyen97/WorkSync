@@ -612,3 +612,18 @@ describe('checks from the second test report', () => {
     ).toThrow(/already a column/);
   });
 });
+
+describe('the Trash', () => {
+  it('puts a ticket back without its number when another ticket has it now', () => {
+    const p = project();
+    const t = store.createTask(p.id, input({ customerId: '015' }));
+    store.deleteTask(t.id);
+    const other = store.createTask(p.id, input({ customerId: '015' }));
+    const back = store.restoreTicket(t.id);
+    expect(back.customerId).toBe('');
+    expect(store.getTask(other.id).customerId).toBe('015');
+    expect(store.listActivity(t.id).map((a) => a.text)).toContain(
+      'No. 015 is used by another ticket now, so it came back without a number.',
+    );
+  });
+});

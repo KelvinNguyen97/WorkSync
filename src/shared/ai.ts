@@ -90,13 +90,15 @@ export function failureReason(text: string, provider: AiProviderKind): string {
     provider === 'local' ? 'The local model' : AI_PROVIDER_NAME[provider];
   const t = text.toLowerCase();
   if (
-    /not logged in|log ?in|sign(ed)? ?(in|out)|unauthori[sz]ed|authenticat|credential|invalid api key|oauth|token (has )?expired|401/.test(
+    /not logged in|please (run \/?)?log ?in|(run|use) [`'"]?\/?(codex )?login|signed out|not signed in|sign in again|unauthori[sz]ed|authentication (failed|required|error)|invalid api key|oauth token|token (has )?expired|\b(http|status|error)[ :]*401\b|^401\b/m.test(
       t,
     )
   )
     return `${name} is signed out. Open it once and sign in with your account, then test again.`;
   if (
-    /usage limit|rate limit|quota|too many requests|429|limit reached/.test(t)
+    /usage limit|rate limit|quota exceeded|too many requests|\b(http|status|error)[ :]*429\b|^429\b|limit reached/m.test(
+      t,
+    )
   )
     return `${name} reached its usage limit. Try again later.`;
   if (/econnrefused|connection refused|fetch failed|could not connect/.test(t))
