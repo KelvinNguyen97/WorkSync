@@ -12,7 +12,13 @@ import os from 'node:os';
 import { Workspaces, type Protector } from './workspace';
 import { safeHref } from '../shared/rich';
 import { fieldLabel } from '../shared/merge';
-import { AI_EVENT, WORKSPACE_EVENT } from '../shared/ipc';
+import {
+  AI_EVENT,
+  WORKSPACE_EVENT,
+  type RecipeAnswer,
+  type RecipeAsk,
+  type RecipeLinkable,
+} from '../shared/ipc';
 import { readAnswer } from '../shared/aiBatch';
 import { readOwnerAnswer, translationMap } from '../shared/ownerBatch';
 import { createHash, randomUUID } from 'node:crypto';
@@ -29,6 +35,13 @@ import {
 } from './work';
 import { Discussions } from './discussions';
 import { AiService } from './aiService';
+import { Recipes } from './recipes';
+import {
+  SECTIONS_REMINDER,
+  buildRequest,
+  followUpRequest,
+  readRecipeAnswer,
+} from '../shared/recipes';
 import {
   aiBatchesFor,
   aiPlan,
@@ -200,6 +213,7 @@ function open(): Startup {
     releases = new Releases(db);
     work = new Work(db, (projectId) => membersFor(projectId));
     discussions = new Discussions(db, store, work);
+    recipes = new Recipes(db, store, discussions);
     ai = new AiService({
       db: () => {
         if (!db)
@@ -301,6 +315,48 @@ const protector: Protector = {
       ? safeStorage.decryptString(Buffer.from(sealed.slice(2), 'base64'))
       : Buffer.from(sealed.slice(2), 'base64').toString(),
 };
+let recipes: Recipes | null = null;
+const needRecipes = (): Recipes => {
+  if (!recipes)
+    throw new Error('The data could not be opened. Restart WorkSync.');
+  return recipes;
+};
+/** The request of a recipe run, or of a follow-up to its answer. */
+function recipeRequestFor(a: RecipeAsk): string {
+  if (a.followUp)
+    return followUpRequest(
+      a.followUp.request,
+      a.followUp.answer,
+      a.followUp.ask,
+    );
+  const r = needRecipes().get(a.recipeId);
+  const projectId = a.link?.projectId ?? r.projectId;
+  return buildRequest(
+    r,
+    a.values,
+    projectId ? need().listGlossary(projectId) : [],
+  );
+}
+function keepRecipeRun(
+  a: RecipeAsk,
+  request: string,
+  answer: string,
+  provider: string,
+): RecipeAnswer {
+  const rs = needRecipes();
+  const r = rs.get(a.recipeId);
+  rs.remember(r.id, a.values);
+  const read = readRecipeAnswer(answer, r.sections);
+  const run = rs.addRun({
+    recipeId: r.id,
+    values: a.values,
+    link: a.link,
+    request,
+    answer,
+    provider,
+  });
+  return { run, ...read };
+}
 let ai: AiService | null = null;
 let aiProgress: AiProgress | null = null;
 const needAi = (): AiService => {
@@ -1486,6 +1542,52 @@ const handlers: Omit<
   aiRun: async (job) => needAi().run(job),
   aiCancel: async () => needAi().cancel(),
   aiUndo: async (undoId) => needAi().undo(undoId),
+  listRecipes: async () => needRecipes().list(),
+  saveRecipe: async (input, id) => needRecipes().save(input, id),
+  deleteRecipe: async (id) => needRecipes().delete(id),
+  recipeRuns: async (recipeId) => needRecipes().runs(recipeId),
+  recipeLinkables: async (): Promise<RecipeLinkable[]> => {
+    const st = need();
+    const names = new Map(st.listProjects().map((p) => [p.id, p.name]));
+    const tickets = st.listTasks().map((t) => ({
+      kind: 'ticket' as const,
+      id: t.id,
+      projectId: t.projectId,
+      no: t.customerId,
+      title: t.titleTranslation || t.titleOriginal,
+      project: names.get(t.projectId) ?? '',
+      label: `Ticket ${t.customerId || '—'} · ${t.titleTranslation || t.titleOriginal}`,
+    }));
+    const talks = needDiscussions()
+      .list()
+      .map((d) => ({
+        kind: 'discussion' as const,
+        id: d.id,
+        projectId: d.projectId,
+        no: d.no,
+        title: d.title,
+        project: names.get(d.projectId) ?? '',
+        label: `Discussion ${d.no || '—'} · ${d.title}`,
+      }));
+    return [...tickets, ...talks];
+  },
+  recipeFill: async (link) => needRecipes().fill(link),
+  recipeRequest: async (a) => {
+    const request = recipeRequestFor(a);
+    if (!a.followUp) needRecipes().remember(a.recipeId, a.values);
+    return request;
+  },
+  runRecipe: async (a) => {
+    const r = needRecipes().get(a.recipeId);
+    const request = recipeRequestFor(a);
+    let { answer, provider } = await needAi().ask(request);
+    // No section found: asked once more, with a reminder of the format.
+    if (!readRecipeAnswer(answer, r.sections).ok)
+      ({ answer, provider } = await needAi().ask(request + SECTIONS_REMINDER));
+    return keepRecipeRun(a, request, answer, provider);
+  },
+  pasteRecipeAnswer: async (a) =>
+    keepRecipeRun(a, a.request, a.answer, 'Copy for AI'),
   lastImport: async (projectId) => need().lastImport(projectId),
 
   choosePublishFolder: async (projectId) => {

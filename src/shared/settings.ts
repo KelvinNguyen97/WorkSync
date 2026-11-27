@@ -42,7 +42,13 @@ export interface AppSettings {
   aiTimeoutSec: number;
   /** The most characters in one request; bigger jobs are split. */
   aiRequestSize: number;
+  /** Pages of the Mine section that Choose pages hid. */
+  hiddenPages: MinePage[];
 }
+
+/** The pages of the Mine section. */
+export const MINE_PAGES = ['tasks', 'notes', 'recipes', 'catalog'] as const;
+export type MinePage = (typeof MINE_PAGES)[number];
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
@@ -66,6 +72,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   localModel: '',
   aiTimeoutSec: 300,
   aiRequestSize: 20_000,
+  hiddenPages: [],
 };
 
 export type BackupKind =

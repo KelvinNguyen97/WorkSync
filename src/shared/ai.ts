@@ -42,7 +42,7 @@ export type AiJob =
   | { kind: 'summary'; discussionIds: string[] };
 
 export interface AiProgress {
-  job: AiJob['kind'];
+  job: AiJob['kind'] | 'recipe';
   /** The request being sent, 1-based. */
   at: number;
   of: number;

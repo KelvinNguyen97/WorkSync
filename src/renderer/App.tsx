@@ -52,6 +52,9 @@ import { tr, uiLanguage } from './i18n';
 import { ImportChoice, MergeWizard } from './importMerge';
 import { ReleasesView } from './releases';
 import { FromProjects, WorkView, workChanged } from './work';
+import { RecipesView } from './recipes';
+import { PagesDialog } from './dialogs';
+import type { MinePage } from '../shared/settings';
 import {
   AiButton,
   AiJobBar,
@@ -78,7 +81,7 @@ import {
 
 type Route =
   | { view: 'focus'; scope: 'all' | string }
-  | { view: 'mine'; page: 'tasks' | 'notes' | 'catalog' }
+  | { view: 'mine'; page: MinePage }
   | { view: 'projectNotes'; projectId: string }
   | {
       view:
@@ -91,7 +94,8 @@ type Route =
         | 'published'
         | 'releases'
         | 'work'
-        | 'discussions';
+        | 'discussions'
+        | 'recipes';
       projectId: string;
     };
 
@@ -115,6 +119,7 @@ type Dialog =
   | { kind: 'publish'; projectId: string }
   | { kind: 'write' }
   | { kind: 'settings'; section?: 'ai' }
+  | { kind: 'pages' }
   | { kind: 'workspaces' }
   | { kind: 'trash'; projectId: string }
   | {
@@ -171,6 +176,7 @@ function Shell({
     toast,
     sources,
     people,
+    settings,
   } = useApp();
   const [route, setRoute] = useState<Route>({ view: 'focus', scope: 'all' });
   const [active, setActive] = useState<string | null>(projects[0]?.id ?? null);
@@ -260,7 +266,9 @@ function Shell({
                 ? 'My tasks'
                 : route.page === 'notes'
                   ? 'Notes'
-                  : 'Catalog',
+                  : route.page === 'recipes'
+                    ? 'Recipes'
+                    : 'Catalog',
             )
           : project(route.view === 'focus' ? route.scope : route.projectId)
               ?.name;
@@ -308,6 +316,14 @@ function Shell({
   );
 
   const ai = useAi();
+  const hidden = new Set(settings.hiddenPages);
+  // A page hidden with Choose pages is left for Focus.
+  useEffect(() => {
+    if (route.view === 'mine' && hidden.has(route.page))
+      setRoute({ view: 'focus', scope: 'all' });
+    // When the page or the choice changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, settings.hiddenPages]);
   // A failed AI's toast and chip open Settings at AI provider.
   useEffect(() => {
     const open = () => setDialog({ kind: 'settings', section: 'ai' });
@@ -452,7 +468,10 @@ function Shell({
     }
   };
 
-  const mine = route.view === 'mine' || route.view === 'projectNotes';
+  const mine =
+    route.view === 'mine' ||
+    route.view === 'projectNotes' ||
+    route.view === 'recipes';
   const currentProjectId =
     route.view === 'projectNotes'
       ? route.projectId
@@ -473,6 +492,15 @@ function Shell({
         query={query}
         head={headEl}
       />
+    ) : route.view === 'recipes' ? (
+      <RecipesView
+        key={route.projectId}
+        projectId={route.projectId}
+        query={query}
+        head={headEl}
+      />
+    ) : route.view === 'mine' && route.page === 'recipes' ? (
+      <RecipesView query={query} head={headEl} />
     ) : route.view === 'mine' && route.page === 'catalog' ? (
       <CatalogView
         entries={catalog}
@@ -627,47 +655,77 @@ function Shell({
             </div>
           </div>
           <div>
-            <div className="nav-label">{tr('Mine')}</div>
+            <div className="nav-label nav-label-row">
+              <span className="grow">{tr('Mine')}</span>
+              <button
+                className="icon-btn nav-label-btn"
+                aria-label={tr('Choose pages')}
+                title={tr('Choose pages')}
+                onClick={() => setDialog({ kind: 'pages' })}
+              >
+                <Icon name="eye" />
+              </button>
+            </div>
             <div className="nav">
-              <button
-                className="nav-item"
-                aria-current={
-                  route.view === 'mine' && route.page === 'tasks'
-                    ? 'page'
-                    : undefined
-                }
-                onClick={() => go({ view: 'mine', page: 'tasks' })}
-              >
-                <Icon name="todo" />
-                <span className="grow">{tr('My tasks')}</span>
-                <span className="count">{myTasks.length}</span>
-              </button>
-              <button
-                className="nav-item"
-                aria-current={
-                  route.view === 'mine' && route.page === 'notes'
-                    ? 'page'
-                    : undefined
-                }
-                onClick={() => go({ view: 'mine', page: 'notes' })}
-              >
-                <Icon name="note" />
-                <span className="grow">{tr('Notes')}</span>
-                <span className="count">{notes.length}</span>
-              </button>
-              <button
-                className="nav-item"
-                aria-current={
-                  route.view === 'mine' && route.page === 'catalog'
-                    ? 'page'
-                    : undefined
-                }
-                onClick={() => go({ view: 'mine', page: 'catalog' })}
-              >
-                <Icon name="grid" />
-                <span className="grow">{tr('Catalog')}</span>
-                <span className="count">{catalog.length}</span>
-              </button>
+              {!hidden.has('tasks') && (
+                <button
+                  className="nav-item"
+                  aria-current={
+                    route.view === 'mine' && route.page === 'tasks'
+                      ? 'page'
+                      : undefined
+                  }
+                  onClick={() => go({ view: 'mine', page: 'tasks' })}
+                >
+                  <Icon name="todo" />
+                  <span className="grow">{tr('My tasks')}</span>
+                  <span className="count">{myTasks.length}</span>
+                </button>
+              )}
+              {!hidden.has('notes') && (
+                <button
+                  className="nav-item"
+                  aria-current={
+                    route.view === 'mine' && route.page === 'notes'
+                      ? 'page'
+                      : undefined
+                  }
+                  onClick={() => go({ view: 'mine', page: 'notes' })}
+                >
+                  <Icon name="note" />
+                  <span className="grow">{tr('Notes')}</span>
+                  <span className="count">{notes.length}</span>
+                </button>
+              )}
+              {!hidden.has('recipes') && (
+                <button
+                  className="nav-item"
+                  aria-current={
+                    route.view === 'mine' && route.page === 'recipes'
+                      ? 'page'
+                      : undefined
+                  }
+                  onClick={() => go({ view: 'mine', page: 'recipes' })}
+                >
+                  <Icon name="spark" />
+                  <span className="grow">{tr('Recipes')}</span>
+                </button>
+              )}
+              {!hidden.has('catalog') && (
+                <button
+                  className="nav-item"
+                  aria-current={
+                    route.view === 'mine' && route.page === 'catalog'
+                      ? 'page'
+                      : undefined
+                  }
+                  onClick={() => go({ view: 'mine', page: 'catalog' })}
+                >
+                  <Icon name="grid" />
+                  <span className="grow">{tr('Catalog')}</span>
+                  <span className="count">{catalog.length}</span>
+                </button>
+              )}
               <NoticesBell
                 onOpen={(n) => void openNotice(n)}
                 onShow={() => setSideOpen(false)}
@@ -912,9 +970,12 @@ function Shell({
                     ? tr('Search my tasks')
                     : route.view === 'mine' && route.page === 'catalog'
                       ? tr('Search the Catalog: name, path, tags or note')
-                      : mine
-                        ? tr('Search notes: title, text or tags')
-                        : tr('Search by number, label, title or person')
+                      : (route.view === 'mine' && route.page === 'recipes') ||
+                          route.view === 'recipes'
+                        ? tr('Search recipes: name or description')
+                        : mine
+                          ? tr('Search notes: title, text or tags')
+                          : tr('Search by number, label, title or person')
                 }
                 autoComplete="off"
                 value={query}
@@ -1242,6 +1303,9 @@ function Shell({
             go({ view: 'focus', scope: 'all' });
           }}
         />
+      )}
+      {dialog?.kind === 'pages' && (
+        <PagesDialog onClose={() => setDialog(null)} />
       )}
       {dialog?.kind === 'views' && project(dialog.projectId) && (
         <ViewsDialog

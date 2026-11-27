@@ -27,6 +27,35 @@ import type { BoardSettings } from './board';
 import type { OwnerAnswer, OwnerBatch, OwnerTranslation } from './ownerBatch';
 import type { Batch, ReadAnswer } from './aiBatch';
 import type { AiJob, AiProgress, AiRunResult, AiStatus } from './ai';
+import type {
+  AnswerSection,
+  Recipe,
+  RecipeInput,
+  RecipeLink,
+  RecipeRun,
+} from './recipes';
+
+/** One run of a recipe, or a follow-up to the answer shown. */
+export interface RecipeAsk {
+  recipeId: string;
+  values: Record<string, string>;
+  link: RecipeLink | null;
+  followUp?: { request: string; answer: string; ask: string };
+}
+
+export interface RecipeAnswer {
+  run: RecipeRun;
+  sections: AnswerSection[];
+  /** False when the recipe has sections and the answer had none of them. */
+  ok: boolean;
+}
+
+/** A ticket or discussion a recipe run can be linked to. */
+export interface RecipeLinkable extends RecipeLink {
+  no: string;
+  title: string;
+  project: string;
+}
 import type { PendingChange, WritePlan, WriteResult } from './writes';
 import type { ReportOptions } from './reports';
 import type { MyTask, MyTaskInput } from './myTasks';
@@ -322,6 +351,24 @@ export interface WorkSyncApi {
   aiCancel(): Promise<void>;
   /** Puts back what a job filled in. Returns the tickets changed. */
   aiUndo(undoId: string): Promise<string[]>;
+  /** Every recipe, personal and of every project (doc 12). */
+  listRecipes(): Promise<Recipe[]>;
+  saveRecipe(input: RecipeInput, id?: string): Promise<Recipe>;
+  deleteRecipe(id: string): Promise<void>;
+  /** The last runs of a recipe, newest first. */
+  recipeRuns(recipeId: string): Promise<RecipeRun[]>;
+  /** Tickets and discussions a run can be linked to. */
+  recipeLinkables(): Promise<RecipeLinkable[]>;
+  /** The texts a linked ticket or discussion offers for blanks. */
+  recipeFill(link: RecipeLink): Promise<Record<string, string>>;
+  /** The request, for Copy for AI. Remembers the values. */
+  recipeRequest(ask: RecipeAsk): Promise<string>;
+  /** Sends the request to the AI provider and keeps the run. */
+  runRecipe(ask: RecipeAsk): Promise<RecipeAnswer>;
+  /** Reads an answer pasted from an AI chat and keeps the run. */
+  pasteRecipeAnswer(
+    ask: RecipeAsk & { request: string; answer: string },
+  ): Promise<RecipeAnswer>;
   /** Called when the AI's status or progress changes. */
   onAiChanged(listener: (state: AiState) => void): () => void;
   lastImport(projectId: string): Promise<ImportSummary | null>;
@@ -777,6 +824,15 @@ export const API_METHODS = [
   'aiRun',
   'aiCancel',
   'aiUndo',
+  'listRecipes',
+  'saveRecipe',
+  'deleteRecipe',
+  'recipeRuns',
+  'recipeLinkables',
+  'recipeFill',
+  'recipeRequest',
+  'runRecipe',
+  'pasteRecipeAnswer',
   'lastImport',
   'choosePublishFolder',
   'setPublishNotes',

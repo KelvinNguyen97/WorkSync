@@ -1982,4 +1982,144 @@ export const JA: Record<string, string> = {
   'answered in {n} s': '{n} 秒で回答',
   'Made progress ticket {no} and linked it. Press Summarize to fill it in from the discussion.':
     '進捗チケット {no} を作ってリンクしました。「要約して進捗へ」を押すと、ディスカッションから入力されます。',
+  'Choose pages': 'ページを選ぶ',
+  Recipes: 'レシピ',
+  '{page} is shown again, with all its data.':
+    '{page} を再び表示しました。データはそのままです。',
+  '{page} hidden. Its data is kept.':
+    '{page} を非表示にしました。データは残っています。',
+  'Pick the pages the Mine section shows.':
+    '「自分」セクションに表示するページを選んでください。',
+  'Saved the recipe “{name}”.': 'レシピ「{name}」を保存しました。',
+  '{name} · recipes of this project. They also appear in Recipes, with all your other recipes.':
+    '{name} ・ このプロジェクトのレシピです。ほかのレシピと一緒に「レシピ」にも表示されます。',
+  'AI requests you write once and fill in each time. A recipe can belong to a project, or to none.':
+    '一度書いておき、毎回空欄を埋めて使う AI への依頼です。レシピはプロジェクトに属することも、どれにも属さないこともできます。',
+  'New recipe in this project': 'このプロジェクトに新しいレシピ',
+  'New recipe': '新しいレシピ',
+  Personal: '個人用',
+  'No recipe matches. Try another filter.':
+    '一致するレシピがありません。別の絞り込みを試してください。',
+  'No recipes yet. Choose New recipe to write one.':
+    'レシピはまだありません。「新しいレシピ」で作成してください。',
+  Recipe: 'レシピ',
+  'Choose a recipe, or make a new one.':
+    'レシピを選ぶか、新しく作成してください。',
+  'Request copied. Paste it into any AI chat, then paste its whole answer here.':
+    '依頼文をコピーしました。AI チャットに貼り付け、回答全体をここに貼り付けてください。',
+  'Copied.': 'コピーしました。',
+  'Link a ticket (optional)': 'チケットをリンク（任意）',
+  'Edit recipe': 'レシピを編集',
+  'This recipe has no blanks: Run sends its instructions as they are.':
+    'このレシピには空欄がありません。「実行」で指示がそのまま送られます。',
+  'Fill in: {list}': '入力してください：{list}',
+  'Running…': '実行中…',
+  Run: '実行',
+  'Only the instructions and these blanks are sent{glossary}.':
+    '送るのは指示とこれらの空欄だけです{glossary}。',
+  ', with the project’s glossary': '（プロジェクトの用語集付き）',
+  'Paste it into any AI chat, then paste its whole answer below.':
+    'AI チャットに貼り付け、回答全体を下に貼り付けてください。',
+  'Show the answer': '回答を表示',
+  'Copy the request again': '依頼文をもう一度コピー',
+  Answer: '回答',
+  'Copy all': 'すべてコピー',
+  'The answer did not come in the recipe’s sections, so it is shown as one block.':
+    '回答がレシピの区分どおりではなかったため、ひとまとまりで表示しています。',
+  'Ask again:': 'もう一度依頼：',
+  'Your own follow-up': '自分の追加依頼',
+  'Or say what to change…': 'または変えたい点を入力…',
+  'Last 5 runs of this recipe': 'このレシピの直近 5 回の実行',
+  'Kept on this PC only. Older runs are removed.':
+    'この PC にだけ保存されます。古い実行は削除されます。',
+  'No runs yet.': 'まだ実行していません。',
+  remembered: '前回の値',
+  'filled from the ticket': 'チケットから入力',
+  'Link a ticket to this run': 'この実行にチケットをリンク',
+  'Optional. Its text can fill blanks, and its project’s glossary and people are used. Nothing is added to the ticket.':
+    '任意です。チケットの文章で空欄を埋め、そのプロジェクトの用語集と人の一覧を使います。チケットには何も追加されません。',
+  'Search tickets': 'チケットを検索',
+  'No. or title': 'No. またはタイトル',
+  'Nothing matches.': '一致するものがありません。',
+  '{name} (copy)': '{name}（コピー）',
+  'Delete the recipe “{name}”?': 'レシピ「{name}」を削除しますか？',
+  'The recipe and its last runs are deleted.':
+    'レシピと直近の実行が削除されます。',
+  'Delete recipe': 'レシピを削除',
+  'Deleted “{name}”.': '「{name}」を削除しました。',
+  'Write what you want once. Put each part that changes in double braces, such as {example}: it becomes a blank.':
+    '依頼を一度書いておきます。毎回変わる部分は {example} のように二重の波かっこで囲むと、空欄になります。',
+  Duplicate: '複製',
+  'No project (personal, usable anywhere)':
+    'プロジェクトなし（個人用、どこでも使用可）',
+  'Short description': '短い説明',
+  'Instructions for the AI': 'AI への指示',
+  'Rewrite the message below for {who}, politely, and answer with the message only.\n\nMessage:\n{message}':
+    '下のメッセージを {who} 向けに丁寧に書き直し、メッセージだけを回答してください。\n\nメッセージ：\n{message}',
+  'Sent to the AI as you write it. To get only what you want to copy, say so, such as “Answer with the email only.”':
+    '書いたとおりに AI へ送られます。コピーしたい部分だけが欲しいときは、「メールだけを回答してください」のように書いてください。',
+  Blanks: '空欄',
+  Blank: '空欄',
+  Kind: '種類',
+  Remember: '記憶',
+  'From a linked ticket': 'リンクしたチケットから',
+  'Label of {blank}': '{blank} の表示名',
+  'Choices of {blank}': '{blank} の選択肢',
+  'Choices, separated by commas': '選択肢（カンマ区切り）',
+  'Kind of {blank}': '{blank} の種類',
+  'Remember the last value of {blank}': '{blank} の前回の値を記憶',
+  'Filled from a linked ticket: {blank}': 'リンクしたチケットから入力：{blank}',
+  'No blanks yet. Add one by writing {example} in the instructions.':
+    '空欄はまだありません。指示に {example} と書くと追加されます。',
+  'Every blank must be filled before Run, unless its label ends with “(optional)”.':
+    '表示名が「(optional)」で終わる空欄を除き、実行前にすべて入力が必要です。',
+  'Answer sections (optional, one per line)': '回答の区分（任意、1 行に 1 つ）',
+  'Corrected\nTranslation': 'Corrected\nTranslation',
+  'Each section gets its own Copy. None: the whole answer, with one Copy.':
+    '区分ごとにコピーボタンが付きます。なしの場合は回答全体に 1 つです。',
+  'Follow-up buttons (one per line)': '追加依頼のボタン（1 行に 1 つ）',
+  'Shown under the answer. Yours are sent as you write them.':
+    '回答の下に表示されます。自分で追加したものは書いたとおりに送られます。',
+  'What the AI gets': 'AI に送られる内容',
+  'With a linked ticket or a project, the glossary terms used are added too. Nothing else is sent.':
+    'チケットをリンクしたときやプロジェクトのレシピでは、使われている用語集の語も加わります。ほかには何も送られません。',
+  '{n} recipe': '{n} 件のレシピ',
+  '{n} recipes': '{n} 件のレシピ',
+  'Short text': '短い文',
+  'Long text': '長い文',
+  Choice: '選択',
+  'Person in the project': 'プロジェクトの人',
+  'Not used': '使わない',
+  'Latest comment of its discussion': 'ディスカッションの最新コメント',
+  'Chinese (Simplified)': '中国語（簡体字）',
+  Korean: '韓国語',
+  Shorter: '短く',
+  'More polite': 'もっと丁寧に',
+  'Less formal': 'くだけた調子に',
+  'Try again': 'もう一度',
+  'Running a recipe': 'レシピを実行中',
+  'Your own to-dos, with reminders.': 'リマインダー付きの自分の ToDo。',
+  'Notes of your own and of projects.': '自分とプロジェクトのメモ。',
+  'AI requests you write once and fill in each time.':
+    '一度書いておき、毎回空欄を埋めて使う AI への依頼。',
+  'This project’s recipes: AI requests you write once and fill in each time.':
+    'このプロジェクトのレシピ：一度書いておき、毎回空欄を埋めて使う AI への依頼。',
+  'Go-between': '仲介',
+  'Pass a message between the customer and the vendor, in the words each side expects.':
+    'お客様とベンダーの間で、それぞれに合った言葉でメッセージを伝えます。',
+  'Correct & translate': '添削と翻訳',
+  'Fix the grammar and wording of a paragraph, then translate it.':
+    '文章の文法と言い回しを直してから翻訳します。',
+  'Reply to a customer email': 'お客様メールへの返信',
+  'Suggest a reply from their email and the points you want to make.':
+    '相手のメールと伝えたい点から返信案を作ります。',
+  Vendor: 'ベンダー',
+  Direction: '方向',
+  'The message': 'メッセージ',
+  'Translate into': '翻訳先',
+  Paragraph: '文章',
+  Tone: '口調',
+  'Their email': '相手のメール',
+  'What I want to say': '伝えたいこと',
+  'Search recipes: name or description': 'レシピを検索：名前、説明',
 };

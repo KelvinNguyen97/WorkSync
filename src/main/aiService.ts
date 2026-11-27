@@ -182,6 +182,46 @@ export class AiService {
     return this.status;
   }
 
+  /**
+   * One request whose answer the caller reads itself (a recipe). Fails, and
+   * marks the provider failed, the same way a job does.
+   */
+  async ask(prompt: string): Promise<{ answer: string; provider: string }> {
+    if (this.running)
+      throw new Error(
+        'The AI is still working on the last job. Wait for it, or cancel it.',
+      );
+    const s = this.deps.settings();
+    if (s.aiProvider === 'none')
+      throw new Error(
+        'No AI provider is chosen. Choose one in Settings › AI provider.',
+      );
+    if (this.status.state === 'failed')
+      throw new Error(this.status.reason ?? 'The AI provider is not working.');
+    const ctl = new AbortController();
+    this.running = ctl;
+    this.deps.progress({ job: 'recipe', at: 1, of: 1, items: 1 });
+    try {
+      const answer = await (this.deps.ask ?? askProvider)(
+        s,
+        prompt,
+        ctl.signal,
+      );
+      if (this.status.state !== 'ok') this.set({ state: 'ok', reason: null });
+      return { answer, provider: providerWords(s.aiProvider) };
+    } catch (e) {
+      if (e instanceof AiCancelled || ctl.signal.aborted)
+        throw new Error('Cancelled.');
+      const reason = reasonOf(e);
+      this.checkRun++;
+      this.set({ state: 'failed', reason, detail: null });
+      throw new Error(reason);
+    } finally {
+      this.running = null;
+      this.deps.progress(null);
+    }
+  }
+
   cancel(): void {
     this.running?.abort();
   }

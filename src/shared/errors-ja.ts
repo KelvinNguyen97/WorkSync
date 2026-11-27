@@ -707,6 +707,10 @@ export const ERRORS_JA: [string, string][] = [
     'Choose a request size from the list.',
     '依頼の大きさを一覧から選んでください。',
   ],
+  ['Cancelled.', 'キャンセルしました。'],
+  ['This recipe no longer exists.', 'このレシピはもうありません。'],
+  ['A recipe needs a name.', 'レシピには名前が必要です。'],
+  ['Choose pages from the list.', '一覧からページを選んでください。'],
 ];
 
 /** Parts that fill {0}… and have their own Japanese, such as where to choose instead. */

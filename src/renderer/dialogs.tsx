@@ -20,6 +20,7 @@ import { Icon, type IconName } from './Icon';
 import { Modal, useTaskLabel } from './parts';
 import { RichEditor } from './rich';
 import { tr } from './i18n';
+import type { MinePage } from '../shared/settings';
 
 const CODES = Object.keys(LANGUAGES) as LanguageCode[];
 
@@ -732,6 +733,11 @@ const VIEW_INFO: Record<
     icon: 'chat',
     desc: 'Talk tickets through with comments and files, and summarize them into progress.',
   },
+  recipes: {
+    name: 'Recipes',
+    icon: 'spark',
+    desc: 'This project’s recipes: AI requests you write once and fill in each time.',
+  },
   timeline: {
     name: 'Timeline',
     icon: 'timeline',
@@ -765,6 +771,80 @@ const VIEW_INFO: Record<
 };
 export const viewName = (k: ViewKey) => tr(VIEW_INFO[k].name);
 export const viewIcon = (k: ViewKey) => VIEW_INFO[k].icon;
+
+const PAGES: [MinePage, string, IconName, string][] = [
+  ['tasks', 'My tasks', 'todo', 'Your own to-dos, with reminders.'],
+  ['notes', 'Notes', 'note', 'Notes of your own and of projects.'],
+  [
+    'recipes',
+    'Recipes',
+    'spark',
+    'AI requests you write once and fill in each time.',
+  ],
+  ['catalog', 'Catalog', 'grid', 'Apps, files and folders you open often.'],
+];
+
+/** Choose pages: which pages the Mine section shows. */
+export function PagesDialog({ onClose }: { onClose: () => void }) {
+  const { settings, setSettings, attempt, toast } = useApp();
+  const hidden = new Set(settings.hiddenPages);
+  const toggle = async (k: MinePage, name: string) => {
+    const on = hidden.has(k);
+    const next = on
+      ? settings.hiddenPages.filter((x) => x !== k)
+      : [...settings.hiddenPages, k];
+    const s = await attempt(() =>
+      window.worksync.updateSettings({ hiddenPages: next }),
+    );
+    if (s) {
+      setSettings(s);
+      toast(
+        on
+          ? tr('{page} is shown again, with all its data.', { page: tr(name) })
+          : tr('{page} hidden. Its data is kept.', { page: tr(name) }),
+      );
+    }
+  };
+  return (
+    <Modal
+      title={tr('Choose pages')}
+      subtitle={tr('Pick the pages the Mine section shows.')}
+      onClose={onClose}
+      narrow
+      footer={
+        <button className="btn primary" onClick={onClose}>
+          {tr('Done')}
+        </button>
+      }
+    >
+      <div>
+        {PAGES.map(([k, name, icon, desc]) => {
+          const on = !hidden.has(k);
+          return (
+            <div key={k} className={`vrow ${on ? 'on' : ''}`}>
+              <span className="vic">
+                <Icon name={icon} />
+              </span>
+              <span>
+                <b>{tr(name)}</b>
+                <small>{tr(desc)}</small>
+              </span>
+              <button
+                className="switch"
+                role="switch"
+                aria-checked={on}
+                aria-label={tr('Show {view}', { view: tr(name) })}
+                onClick={() => void toggle(k, name)}
+              >
+                <span />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </Modal>
+  );
+}
 
 export function ViewsDialog({
   project,

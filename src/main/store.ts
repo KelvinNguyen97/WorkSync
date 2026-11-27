@@ -31,7 +31,11 @@ import {
   type TaskLink,
   type ViewKey,
 } from '../shared/model';
-import { DEFAULT_SETTINGS, type AppSettings } from '../shared/settings';
+import {
+  DEFAULT_SETTINGS,
+  MINE_PAGES,
+  type AppSettings,
+} from '../shared/settings';
 import { validModelName } from '../shared/ai';
 import type { OwnerTranslation } from '../shared/ownerBatch';
 import { cleanBoard, type BoardSettings } from '../shared/board';
@@ -138,6 +142,16 @@ export class Store {
       !['system', 'en', 'ja'].includes(patch.uiLanguage)
     )
       throw new Error('Choose the app language from the list.');
+    if (
+      patch.hiddenPages !== undefined &&
+      !(
+        Array.isArray(patch.hiddenPages) &&
+        patch.hiddenPages.every((x) =>
+          (MINE_PAGES as readonly string[]).includes(x),
+        )
+      )
+    )
+      throw new Error('Choose pages from the list.');
     if (
       patch.aiProvider !== undefined &&
       !['none', 'claude', 'codex', 'local'].includes(patch.aiProvider)

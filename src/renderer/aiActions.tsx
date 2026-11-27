@@ -33,7 +33,8 @@ const DONE: Record<AiJob['kind'], [string, string]> = {
   ],
 };
 
-const DOING: Record<AiJob['kind'], string> = {
+const DOING: Record<AiJob['kind'] | 'recipe', string> = {
+  recipe: 'Running a recipe',
   translate: 'Translating and summarizing {n} tickets',
   notes: 'Translating your notes on {n} tickets',
   remarks: 'Translating {n} remarks',

@@ -510,6 +510,32 @@ const MIGRATIONS: string[] = [
     at TEXT NOT NULL
   );
   `,
+  // 27: recipes, AI requests written once with blanks (doc 12), and their last runs
+  `
+  CREATE TABLE recipes (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    instructions TEXT NOT NULL DEFAULT '',
+    blanks TEXT NOT NULL DEFAULT '[]',
+    sections TEXT NOT NULL DEFAULT '[]',
+    followups TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE TABLE recipe_runs (
+    id TEXT PRIMARY KEY,
+    recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    at TEXT NOT NULL,
+    vals TEXT NOT NULL DEFAULT '{}',
+    link TEXT,
+    request TEXT NOT NULL DEFAULT '',
+    answer TEXT NOT NULL DEFAULT '',
+    provider TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX recipe_runs_recipe ON recipe_runs(recipe_id, at);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

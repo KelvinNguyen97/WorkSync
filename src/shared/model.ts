@@ -54,6 +54,7 @@ export const VIEW_KEYS = [
   'releases',
   'work',
   'discussions',
+  'recipes',
 ] as const;
 export type ViewKey = (typeof VIEW_KEYS)[number];
 export const BUILT_VIEWS: ViewKey[] = [
@@ -64,6 +65,7 @@ export const BUILT_VIEWS: ViewKey[] = [
   'tasks',
   'work',
   'discussions',
+  'recipes',
   'dashboard',
   'published',
   'files',
@@ -81,6 +83,7 @@ export const DEFAULT_VIEWS: Record<ViewKey, boolean> = {
   releases: false,
   work: true,
   discussions: true,
+  recipes: true,
 };
 
 export interface Project {
